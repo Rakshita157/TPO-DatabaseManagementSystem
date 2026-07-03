@@ -1,9 +1,10 @@
-const prisma = require("../config/prisma");
+const {
+  getCollegeSettings: getCollegeSettingsService,
+} = require("../services/collegeSettings.service");
 
 const getCollegeSettings = async (req, res) => {
   try {
-    const collegeSettings = await prisma.collegeSettings.findFirst();
-
+    const collegeSettings = await getCollegeSettingsService();
     res.json(collegeSettings);
   } catch (error) {
     console.error(error);

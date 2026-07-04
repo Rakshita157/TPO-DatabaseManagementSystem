@@ -61,6 +61,7 @@ model User {
 
   studentProfile StudentProfile?
 }
+
 model StudentProfile {
   userId                Int      @id
 

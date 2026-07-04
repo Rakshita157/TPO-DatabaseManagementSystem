@@ -1,0 +1,223 @@
+.navbar {
+  background: white;
+  box-shadow: 0 2px 8px rgba(15, 23, 42, 0.08);
+  position: sticky;
+  top: 0;
+  z-index: 1000;
+  border-bottom: 1px solid rgba(15, 23, 42, 0.06);
+}
+
+.navbar-container {
+  width: 100%;
+  max-width: 1400px;
+  margin: 0 auto;
+  padding: 14px 48px;
+  display: flex;
+  align-items: center;
+  gap: 32px;
+}
+
+.navbar-brand {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-shrink: 0;
+}
+
+.navbar-logo {
+  width: 56px;
+  height: 56px;
+  object-fit: contain;
+}
+
+.navbar-college-info {
+  display: flex;
+  flex-direction: column;
+}
+
+.navbar-college-name {
+  font-size: 1.25rem;
+  font-weight: 800;
+  color: #1e3a8a;
+  margin: 0;
+  line-height: 1.2;
+}
+
+.navbar-subtitle {
+  font-size: 0.75rem;
+  color: #64748b;
+  margin: 0;
+  font-weight: 500;
+}
+
+.navbar-links {
+  display: flex;
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  gap: 32px;
+  flex: 1;
+  justify-content: center;
+}
+
+.navbar-link {
+  text-decoration: none;
+  color: #475569;
+  font-weight: 500;
+  font-size: 0.95rem;
+  transition: color 0.2s ease;
+  position: relative;
+  padding-bottom: 4px;
+}
+
+.navbar-link:hover,
+.navbar-link.active {
+  color: #1e3a8a;
+}
+
+.navbar-link.active::after {
+  content: '';
+  position: absolute;
+  bottom: -12px;
+  left: 0;
+  right: 0;
+  height: 2px;
+  background: #1e3a8a;
+}
+
+.navbar-actions {
+  display: flex;
+  gap: 12px;
+  flex-shrink: 0;
+}
+
+.navbar-btn {
+  padding: 10px 20px;
+  border-radius: 8px;
+  font-weight: 600;
+  font-size: 0.9rem;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  border: none;
+  white-space: nowrap;
+}
+
+.navbar-btn-primary {
+  background: #1e3a8a;
+  color: white;
+}
+
+.navbar-btn-primary:hover {
+  background: #1e40af;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(30, 58, 138, 0.25);
+}
+
+.navbar-btn-secondary {
+  background: #f1f5f9;
+  color: #1e3a8a;
+  border: 1px solid #cbd5e1;
+}
+
+.navbar-btn-secondary:hover {
+  background: #e2e8f0;
+  border-color: #1e3a8a;
+}
+
+.navbar-mobile-toggle {
+  display: none;
+  background: none;
+  border: none;
+  color: #1e3a8a;
+  cursor: pointer;
+  padding: 8px;
+  margin-left: auto;
+}
+
+.navbar-mobile-menu {
+  display: none;
+}
+
+@media (max-width: 960px) {
+  .navbar-container {
+    padding: 12px 24px;
+  }
+
+  .footer {
+    padding: 48px 24px 0;
+  }
+
+  .navbar-links,
+  .navbar-actions {
+    display: none;
+  }
+
+  .navbar-mobile-toggle {
+    display: block;
+  }
+
+  .navbar-mobile-menu {
+    display: flex;
+    flex-direction: column;
+    gap: 24px;
+    padding: 24px;
+    background: white;
+    box-shadow: 0 8px 16px rgba(15, 23, 42, 0.1);
+    transform: translateY(-100%);
+    opacity: 0;
+    visibility: hidden;
+    transition: all 0.3s ease;
+    position: absolute;
+    top: 100%;
+    left: 0;
+    right: 0;
+    z-index: 999;
+  }
+
+  .navbar-mobile-menu.navbar-menu-open {
+    transform: translateY(0);
+    opacity: 1;
+    visibility: visible;
+  }
+
+  .navbar-mobile-menu .navbar-links {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    text-align: center;
+  }
+
+  .navbar-mobile-menu .navbar-actions {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    width: 100%;
+  }
+
+  .navbar-mobile-menu .navbar-btn {
+    width: 100%;
+  }
+
+  .navbar-link.active::after {
+    display: none;
+  }
+}
+
+@media (max-width: 640px) {
+  .navbar-container {
+    padding: 10px 16px;
+  }
+
+  .navbar-logo {
+    width: 48px;
+    height: 48px;
+  }
+
+  .navbar-college-name {
+    font-size: 1.1rem;
+  }
+
+  .navbar-subtitle {
+    font-size: 0.7rem;
+  }
+}

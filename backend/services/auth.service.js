@@ -3,7 +3,7 @@ const bcrypt = require("bcrypt");
 
 //signup
 const signup = async (data) => {
-  const { collegeEmail, password } = data;
+  const { fullName,collegeEmail, password } = data;
 
   // Check if user already exists
   const existingUser = await prisma.user.findUnique({
@@ -22,6 +22,7 @@ const signup = async (data) => {
   // Create user
   const user = await prisma.user.create({
     data: {
+      fullName,
       collegeEmail,
       password: hashedPassword,
     },

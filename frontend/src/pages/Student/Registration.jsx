@@ -1,44 +1,57 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
+import axios from 'axios'
 import {
   Check, ChevronRight, ChevronLeft, Upload,
   User, GraduationCap, MapPin, FileText,
-  CheckCircle, Home, Camera, ArrowLeft
+  CheckCircle, Home, Camera, Info
 } from 'lucide-react'
 import './Registration.css'
 
+const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000'
+
 const STEPS = [
-  { id: 0, title: 'Personal Information', icon: User, subtitle: 'Basic details about you' },
-  { id: 1, title: 'Academic Information', icon: GraduationCap, subtitle: 'Course & college details' },
-  { id: 2, title: 'Contact Information', icon: MapPin, subtitle: 'Address & guardian details' },
-  { id: 3, title: 'Additional Details', icon: FileText, subtitle: 'Documents & links' },
+  { id: 0, title: 'Personal Information', icon: User, subtitle: 'Basic details & account setup' },
+  { id: 1, title: 'Academic Information', icon: GraduationCap, subtitle: 'Course, college & marks details' },
+  { id: 2, title: 'Contact Information', icon: MapPin, subtitle: 'Address & contact details' },
+  { id: 3, title: 'Documents', icon: FileText, subtitle: 'Upload documents & links' },
 ]
 
 const INITIAL_DATA = {
-  fullName: '', studentCode: '', email: '', mobileNumber: '', dateOfBirth: '', gender: '',
+  fullName: '', personalEmail: '', alternateEmail: '',
   profilePhoto: null, profilePhotoPreview: '',
-  course: '', department: '', admissionYear: '', currentSemester: '',
-  rollNumber: '', universityRegNumber: '', section: '',
-  fathersName: '', mothersName: '', guardianName: '', guardianMobile: '',
-  alternateMobile: '', contactEmail: '',
-  city: '', state: '', country: '', pinCode: '',
-  resume: null, resumeName: '', skills: '', linkedinProfile: '',
-  githubProfile: '', portfolio: '', additionalInfo: '',
+  mobileNumber: '', whatsappNumber: '', dateOfBirth: '',
+  aadharNumber: '', panNumber: '',
+  course: '', department: '',
+  mbaSpecialization1: '', mbaSpecialization2: '',
+  admissionYear: '', graduationYear: '', currentYear: '', currentSemester: '',
+  btuRollNumber: '', enrollmentNumber: '',
+  cgpa: '', activeBacklogs: '', passiveBacklogs: '',
+  tenthPercentage: '', tenthYear: '', tenthBoard: '',
+  twelfthPercentage: '', twelfthYear: '', twelfthBoard: '',
+  diplomaPercentage: '', diplomaYear: '',
+  alternateMobile: '',
+  currentAddress: '', permanentAddress: '',
+  nativeCity: '', nativeDistrict: '', nativeState: '', pinCode: '',
+  resume: null, resumeName: '',
+  linkedinUrl: '',
+  sgpa: {},
 }
 
-const GENDERS = ['Male', 'Female', 'Other']
-
-const COURSES = ['B.Tech', 'BCA', 'MCA', 'MBA', 'B.Sc']
+const COURSES = ['B.Tech', 'M.Tech', 'MBA', 'MCA']
 
 const COURSE_DEPARTMENTS = {
-  'B.Tech': ['Computer Science', 'Information Technology', 'Mechanical', 'Civil', 'Electrical', 'Electronics', 'AI & ML'],
-  'BCA': ['Computer Applications'],
+  'B.Tech': ['Computer Science', 'Information Technology', 'Mechanical Engineering', 'Civil Engineering', 'Electrical Engineering', 'Electronics & Communication', 'Artificial Intelligence & Machine Learning'],
+  'M.Tech': ['Computer Science', 'VLSI Design', 'Power Systems', 'Structural Engineering'],
   'MCA': ['Computer Applications'],
-  'MBA': ['Business Administration', 'Finance', 'Marketing', 'Human Resources'],
-  'B.Sc': ['Computer Science', 'Mathematics', 'Physics', 'Chemistry'],
 }
 
-const ADMISSION_YEARS = ['2020', '2021', '2022', '2023', '2024', '2025', '2026']
+const MBA_SPECIALIZATIONS = ['Marketing', 'Finance', 'Human Resources']
+
+const COURSE_DURATION = { 'B.Tech': 4, 'M.Tech': 2, 'MBA': 2, 'MCA': 2 }
+
+const CURRENT_YEAR = new Date().getFullYear()
+const ADMISSION_YEARS = Array.from({ length: 10 }, (_, i) => `${CURRENT_YEAR - 9 + i}`)
 
 const SEMESTERS = ['1', '2', '3', '4', '5', '6', '7', '8']
 
@@ -53,20 +66,37 @@ const INDIAN_STATES = [
   'Delhi', 'Jammu and Kashmir', 'Ladakh', 'Lakshadweep', 'Puducherry',
 ]
 
-const COUNTRIES = ['India']
-
 export default function Registration() {
   const navigate = useNavigate()
   const [currentStep, setCurrentStep] = useState(0)
   const [formData, setFormData] = useState(INITIAL_DATA)
   const [errors, setErrors] = useState({})
   const [submitted, setSubmitted] = useState(false)
+  const [submitting, setSubmitting] = useState(false)
+  const [submitError, setSubmitError] = useState('')
+
+  useEffect(() => {
+    if (formData.admissionYear && formData.course) {
+      const duration = COURSE_DURATION[formData.course]
+      if (duration) {
+        const gradYear = parseInt(formData.admissionYear) + duration
+        setFormData(prev => ({ ...prev, graduationYear: String(gradYear) }))
+      }
+    }
+  }, [formData.admissionYear, formData.course])
 
   const updateField = (field, value) => {
     setFormData(prev => ({ ...prev, [field]: value }))
     if (errors[field]) {
       setErrors(prev => ({ ...prev, [field]: '' }))
     }
+  }
+
+  const updateSgpa = (semester, value) => {
+    setFormData(prev => ({
+      ...prev,
+      sgpa: { ...prev.sgpa, [semester]: value }
+    }))
   }
 
   const handlePhotoChange = (e) => {
@@ -93,33 +123,41 @@ export default function Registration() {
 
     if (step === 0) {
       if (!d.fullName.trim()) newErrors.fullName = 'Full name is required'
-      if (!d.studentCode.trim()) newErrors.studentCode = 'Student code is required'
-      if (!d.email.trim()) newErrors.email = 'Email is required'
-      else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(d.email)) newErrors.email = 'Invalid email address'
+      if (!d.personalEmail.trim()) newErrors.personalEmail = 'Personal email is required'
+      else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(d.personalEmail)) newErrors.personalEmail = 'Invalid email address'
       if (!d.mobileNumber.trim()) newErrors.mobileNumber = 'Mobile number is required'
       else if (!/^\d{10}$/.test(d.mobileNumber)) newErrors.mobileNumber = 'Must be 10 digits'
       if (!d.dateOfBirth) newErrors.dateOfBirth = 'Date of birth is required'
-      if (!d.gender) newErrors.gender = 'Please select your gender'
+      if (!d.aadharNumber.trim()) newErrors.aadharNumber = 'Aadhar number is required'
+      else if (!/^\d{12}$/.test(d.aadharNumber)) newErrors.aadharNumber = 'Must be 12 digits'
     }
 
     if (step === 1) {
       if (!d.course) newErrors.course = 'Please select a course'
-      if (!d.department) newErrors.department = 'Please select a department'
+      if (d.course && d.course !== 'MBA') {
+        if (!d.department) newErrors.department = 'Please select a department'
+      }
+      if (d.course === 'MBA') {
+        if (!d.mbaSpecialization1) newErrors.mbaSpecialization1 = 'Please select first specialization'
+      }
       if (!d.admissionYear) newErrors.admissionYear = 'Please select admission year'
+      if (!d.currentYear) newErrors.currentYear = 'Please select current year'
       if (!d.currentSemester) newErrors.currentSemester = 'Please select semester'
-      if (!d.rollNumber.trim()) newErrors.rollNumber = 'Roll number is required'
-      if (!d.universityRegNumber.trim()) newErrors.universityRegNumber = 'University registration number is required'
+      if (!d.btuRollNumber.trim()) newErrors.btuRollNumber = 'BTU roll number is required'
+      if (!d.enrollmentNumber.trim()) newErrors.enrollmentNumber = 'Enrollment number is required'
+      if (!d.tenthPercentage.trim()) newErrors.tenthPercentage = '10th percentage is required'
+      if (!d.tenthYear) newErrors.tenthYear = '10th year is required'
+      if (!d.tenthBoard.trim()) newErrors.tenthBoard = '10th board is required'
+      if (!d.twelfthPercentage.trim()) newErrors.twelfthPercentage = '12th percentage is required'
+      if (!d.twelfthYear) newErrors.twelfthYear = '12th year is required'
+      if (!d.twelfthBoard.trim()) newErrors.twelfthBoard = '12th board is required'
     }
 
     if (step === 2) {
-      if (!d.fathersName.trim()) newErrors.fathersName = "Father's name is required"
-      if (!d.mothersName.trim()) newErrors.mothersName = "Mother's name is required"
-      if (!d.guardianName.trim()) newErrors.guardianName = "Guardian's name is required"
-      if (!d.guardianMobile.trim()) newErrors.guardianMobile = 'Guardian mobile is required'
-      else if (!/^\d{10}$/.test(d.guardianMobile)) newErrors.guardianMobile = 'Must be 10 digits'
-      if (!d.city.trim()) newErrors.city = 'City is required'
-      if (!d.state) newErrors.state = 'Please select a state'
-      if (!d.country) newErrors.country = 'Please select a country'
+      if (!d.currentAddress.trim()) newErrors.currentAddress = 'Current address is required'
+      if (!d.nativeCity.trim()) newErrors.nativeCity = 'City is required'
+      if (!d.nativeDistrict.trim()) newErrors.nativeDistrict = 'District is required'
+      if (!d.nativeState) newErrors.nativeState = 'Please select a state'
       if (!d.pinCode.trim()) newErrors.pinCode = 'PIN code is required'
       else if (!/^\d{6}$/.test(d.pinCode)) newErrors.pinCode = 'Must be 6 digits'
     }
@@ -138,10 +176,75 @@ export default function Registration() {
     setCurrentStep(prev => prev - 1)
   }
 
-  const handleSubmit = () => {
+  const handleSubmit = async () => {
     if (!validateStep(currentStep)) return
-    console.log('Registration data:', formData)
-    setSubmitted(true)
+    setSubmitting(true)
+    setSubmitError('')
+
+    try {
+      const { data: userData } = await axios.post(`${API_URL}/signup`, {
+        fullName: formData.fullName,
+        collegeEmail: formData.email,
+        password: formData.password,
+      })
+
+      const userId = userData.user.id
+
+      const profilePayload = {
+        userId,
+        course: formData.course === 'B.Tech' ? 'BTECH' : formData.course === 'M.Tech' ? 'MTECH' : formData.course.toUpperCase(),
+        department: formData.course === 'MBA' ? null : formData.department,
+        mbaSpecialization1: formData.course === 'MBA' ? formData.mbaSpecialization1 : null,
+        mbaSpecialization2: formData.course === 'MBA' ? formData.mbaSpecialization2 : null,
+        admissionYear: parseInt(formData.admissionYear),
+        graduationYear: parseInt(formData.graduationYear),
+        currentYear: parseInt(formData.currentYear || '1'),
+        currentSemester: parseInt(formData.currentSemester),
+        collegeId: `GWECA_${userId}`,
+        btuRollNumber: formData.btuRollNumber,
+        enrollmentNumber: formData.enrollmentNumber,
+        dob: new Date(formData.dateOfBirth).toISOString(),
+        gender: 'Female',
+        phoneNumber: formData.mobileNumber,
+        whatsappNumber: formData.whatsappNumber || null,
+        alternatePhone: formData.alternateMobile || null,
+        alternateEmail: formData.alternateEmail || null,
+        currentAddress: formData.currentAddress,
+        permanentAddress: formData.permanentAddress || formData.currentAddress,
+        nativeCity: formData.nativeCity,
+        nativeDistrict: formData.nativeDistrict,
+        nativeState: formData.nativeState,
+        aadharNumber: formData.aadharNumber,
+        panNumber: formData.panNumber || null,
+        tenthPercentage: parseFloat(formData.tenthPercentage),
+        tenthYear: parseInt(formData.tenthYear),
+        tenthBoard: formData.tenthBoard,
+        twelfthPercentage: parseFloat(formData.twelfthPercentage),
+        twelfthYear: parseInt(formData.twelfthYear),
+        twelfthBoard: formData.twelfthBoard,
+        diplomaPercentage: formData.diplomaPercentage ? parseFloat(formData.diplomaPercentage) : null,
+        diplomaYear: formData.diplomaYear ? parseInt(formData.diplomaYear) : null,
+        cgpa: formData.cgpa ? parseFloat(formData.cgpa) : null,
+        activeBacklogs: formData.activeBacklogs ? parseInt(formData.activeBacklogs) : null,
+        passiveBacklogs: formData.passiveBacklogs ? parseInt(formData.passiveBacklogs) : null,
+        linkedinUrl: formData.linkedinUrl || null,
+      }
+
+      await axios.post(`${API_URL}/student-profile`, profilePayload)
+
+      setSubmitted(true)
+    } catch (error) {
+      const msg = error.response?.data?.message || error.message || 'Something went wrong'
+      setSubmitError(msg)
+    } finally {
+      setSubmitting(false)
+    }
+  }
+
+  const getSemesterOptions = () => {
+    if (!formData.course) return SEMESTERS
+    const duration = COURSE_DURATION[formData.course]
+    return duration ? SEMESTERS.slice(0, duration * 2) : SEMESTERS
   }
 
   if (submitted) {
@@ -235,6 +338,8 @@ export default function Registration() {
                 data={formData}
                 errors={errors}
                 onChange={updateField}
+                onSgpaChange={updateSgpa}
+                getSemesterOptions={getSemesterOptions}
               />
             )}
             {currentStep === 2 && (
@@ -245,7 +350,7 @@ export default function Registration() {
               />
             )}
             {currentStep === 3 && (
-              <AdditionalDetailsStep
+              <DocumentsStep
                 data={formData}
                 errors={errors}
                 onChange={updateField}
@@ -256,7 +361,7 @@ export default function Registration() {
 
           <div className="form-footer">
             {currentStep > 0 && (
-              <button className="btn-outline" onClick={handleBack}>
+              <button className="btn-outline" onClick={handleBack} disabled={submitting}>
                 <ChevronLeft size={18} />
                 Back
               </button>
@@ -268,13 +373,20 @@ export default function Registration() {
                   <ChevronRight size={18} />
                 </button>
               ) : (
-                <button className="btn-primary" onClick={handleSubmit}>
-                  Submit
+                <button className="btn-primary" onClick={handleSubmit} disabled={submitting}>
+                  {submitting ? 'Submitting...' : 'Submit'}
                   <ChevronRight size={18} />
                 </button>
               )}
             </div>
           </div>
+
+          {submitError && (
+            <div className="submit-error-bar">
+              <Info size={16} />
+              {submitError}
+            </div>
+          )}
         </div>
       </main>
     </div>
@@ -307,20 +419,20 @@ function PersonalInfoStep({ data, errors, onChange, onPhotoChange }) {
             placeholder="Enter your full name"
           />
         </Field>
-        <Field label="Student Code" error={errors.studentCode} required>
-          <input
-            type="text"
-            value={data.studentCode}
-            onChange={e => onChange('studentCode', e.target.value)}
-            placeholder="e.g. 5501"
-          />
-        </Field>
-        <Field label="Email" error={errors.email} required>
+        <Field label="Personal Email" error={errors.personalEmail} required>
           <input
             type="email"
-            value={data.email}
-            onChange={e => onChange('email', e.target.value)}
-            placeholder="you@example.com"
+            value={data.personalEmail}
+            onChange={e => onChange('personalEmail', e.target.value)}
+            placeholder="your@email.com"
+          />
+        </Field>
+        <Field label="Alternative Email (College Email)" error={errors.alternateEmail}>
+          <input
+            type="email"
+            value={data.alternateEmail}
+            onChange={e => onChange('alternateEmail', e.target.value)}
+            placeholder="you@college.edu.in"
           />
         </Field>
         <Field label="Mobile Number" error={errors.mobileNumber} required>
@@ -331,6 +443,14 @@ function PersonalInfoStep({ data, errors, onChange, onPhotoChange }) {
             placeholder="9876543210"
           />
         </Field>
+        <Field label="WhatsApp Number (optional)" error={errors.whatsappNumber}>
+          <input
+            type="tel"
+            value={data.whatsappNumber}
+            onChange={e => onChange('whatsappNumber', e.target.value.replace(/\D/g, '').slice(0, 10))}
+            placeholder="WhatsApp number"
+          />
+        </Field>
         <Field label="Date of Birth" error={errors.dateOfBirth} required>
           <input
             type="date"
@@ -339,76 +459,246 @@ function PersonalInfoStep({ data, errors, onChange, onPhotoChange }) {
           />
         </Field>
         <Field label="Gender" error={errors.gender} required>
-          <select value={data.gender} onChange={e => onChange('gender', e.target.value)}>
-            <option value="">Select gender</option>
-            {GENDERS.map(g => <option key={g} value={g}>{g}</option>)}
-          </select>
+          <div className="gender-fixed">Female</div>
+        </Field>
+        <Field label="Aadhar Number" error={errors.aadharNumber} required>
+          <input
+            type="text"
+            value={data.aadharNumber}
+            onChange={e => onChange('aadharNumber', e.target.value.replace(/\D/g, '').slice(0, 12))}
+            placeholder="12-digit Aadhar number"
+          />
+        </Field>
+        <Field label="PAN Number (optional)" error={errors.panNumber}>
+          <input
+            type="text"
+            value={data.panNumber}
+            onChange={e => onChange('panNumber', e.target.value.toUpperCase())}
+            placeholder="e.g. ABCDE1234F"
+          />
         </Field>
       </div>
     </div>
   )
 }
 
-function AcademicInfoStep({ data, errors, onChange }) {
+function AcademicInfoStep({ data, errors, onChange, onSgpaChange, getSemesterOptions }) {
   const departments = COURSE_DEPARTMENTS[data.course] || []
+  const isMba = data.course === 'MBA'
 
   return (
     <div className="step-form">
+      <h3 className="section-label">Course & College Details</h3>
       <div className="form-grid">
         <Field label="Course" error={errors.course} required>
           <select value={data.course} onChange={e => {
             onChange('course', e.target.value)
             onChange('department', '')
+            onChange('mbaSpecialization1', '')
+            onChange('mbaSpecialization2', '')
           }}>
             <option value="">Select course</option>
             {COURSES.map(c => <option key={c} value={c}>{c}</option>)}
           </select>
         </Field>
-        <Field label="Department" error={errors.department} required>
-          <select
-            value={data.department}
-            onChange={e => onChange('department', e.target.value)}
-            disabled={!data.course}
-          >
-            <option value="">{data.course ? 'Select department' : 'Select a course first'}</option>
-            {departments.map(d => <option key={d} value={d}>{d}</option>)}
-          </select>
-        </Field>
+
+        {isMba ? (
+          <>
+            <Field label="First Specialization" error={errors.mbaSpecialization1} required>
+              <select value={data.mbaSpecialization1} onChange={e => onChange('mbaSpecialization1', e.target.value)}>
+                <option value="">Select specialization</option>
+                {MBA_SPECIALIZATIONS.map(s => <option key={s} value={s}>{s}</option>)}
+              </select>
+            </Field>
+            <Field label="Second Specialization (optional)" error={errors.mbaSpecialization2}>
+              <select value={data.mbaSpecialization2} onChange={e => onChange('mbaSpecialization2', e.target.value)}>
+                <option value="">Select specialization</option>
+                {MBA_SPECIALIZATIONS.map(s => (
+                  <option key={s} value={s} disabled={s === data.mbaSpecialization1}>{s}</option>
+                ))}
+              </select>
+            </Field>
+          </>
+        ) : (
+          <Field label="Department / Branch" error={errors.department} required>
+            <select
+              value={data.department}
+              onChange={e => onChange('department', e.target.value)}
+              disabled={!data.course}
+            >
+              <option value="">{data.course ? 'Select department' : 'Select a course first'}</option>
+              {departments.map(d => <option key={d} value={d}>{d}</option>)}
+            </select>
+          </Field>
+        )}
+
         <Field label="Admission Year" error={errors.admissionYear} required>
           <select value={data.admissionYear} onChange={e => onChange('admissionYear', e.target.value)}>
             <option value="">Select year</option>
             {ADMISSION_YEARS.map(y => <option key={y} value={y}>{y}</option>)}
           </select>
         </Field>
+        <Field label="Graduation Year" error={errors.graduationYear}>
+          <input
+            type="text"
+            value={data.graduationYear}
+            readOnly
+            placeholder="Auto-calculated"
+          />
+        </Field>
+        <Field label="Current Year" error={errors.currentYear} required>
+          <select value={data.currentYear} onChange={e => onChange('currentYear', e.target.value)}>
+            <option value="">Select year</option>
+            <option value="1">1st Year</option>
+            <option value="2">2nd Year</option>
+            <option value="3">3rd Year</option>
+            <option value="4">4th Year</option>
+          </select>
+        </Field>
         <Field label="Current Semester" error={errors.currentSemester} required>
           <select value={data.currentSemester} onChange={e => onChange('currentSemester', e.target.value)}>
             <option value="">Select semester</option>
-            {SEMESTERS.map(s => <option key={s} value={s}>{s}</option>)}
+            {getSemesterOptions().map(s => <option key={s} value={s}>{s}</option>)}
           </select>
         </Field>
-        <Field label="Roll Number" error={errors.rollNumber} required>
+        <Field label="BTU Roll Number" error={errors.btuRollNumber} required>
           <input
             type="text"
-            value={data.rollNumber}
-            onChange={e => onChange('rollNumber', e.target.value)}
-            placeholder="Enter roll number"
+            value={data.btuRollNumber}
+            onChange={e => onChange('btuRollNumber', e.target.value)}
+            placeholder="Enter BTU roll number"
           />
         </Field>
-        <Field label="University Reg. Number" error={errors.universityRegNumber} required>
+        <Field label="Enrollment Number" error={errors.enrollmentNumber} required>
           <input
             type="text"
-            value={data.universityRegNumber}
-            onChange={e => onChange('universityRegNumber', e.target.value)}
-            placeholder="Enter university registration number"
+            value={data.enrollmentNumber}
+            onChange={e => onChange('enrollmentNumber', e.target.value)}
+            placeholder="Enter enrollment number"
           />
         </Field>
-        <Field label="Section (optional)" error={errors.section}>
+      </div>
+
+      <h3 className="section-label">Current Academic Performance</h3>
+      <div className="form-grid">
+        <Field label="CGPA (optional)" error={errors.cgpa}>
           <input
             type="text"
-            value={data.section}
-            onChange={e => onChange('section', e.target.value)}
-            placeholder="e.g. A"
+            value={data.cgpa}
+            onChange={e => onChange('cgpa', e.target.value.replace(/[^0-9.]/g, ''))}
+            placeholder="e.g. 8.5"
           />
+        </Field>
+        <Field label="Active Backlogs (optional)" error={errors.activeBacklogs}>
+          <input
+            type="text"
+            value={data.activeBacklogs}
+            onChange={e => onChange('activeBacklogs', e.target.value.replace(/\D/g, ''))}
+            placeholder="Number of active backlogs"
+          />
+        </Field>
+        <Field label="Passive Backlogs (optional)" error={errors.passiveBacklogs}>
+          <input
+            type="text"
+            value={data.passiveBacklogs}
+            onChange={e => onChange('passiveBacklogs', e.target.value.replace(/\D/g, ''))}
+            placeholder="Number of passive backlogs"
+          />
+        </Field>
+      </div>
+
+      {data.course && data.currentSemester && parseInt(data.currentSemester) > 1 && (
+        <>
+          <h3 className="section-label">Semester-wise SGPA</h3>
+          <div className="form-grid">
+            {Array.from({ length: parseInt(data.currentSemester) - 1 }, (_, i) => {
+              const sem = i + 1
+              return (
+                <Field key={sem} label={`Semester ${sem} SGPA`}>
+                  <input
+                    type="text"
+                    value={data.sgpa?.[sem] || ''}
+                    onChange={e => onSgpaChange(sem, e.target.value.replace(/[^0-9.]/g, ''))}
+                    placeholder={`SGPA for semester ${sem}`}
+                  />
+                </Field>
+              )
+            })}
+          </div>
+        </>
+      )}
+
+      <h3 className="section-label">10th Standard Details</h3>
+      <div className="form-grid">
+        <Field label="Percentage" error={errors.tenthPercentage} required>
+          <input
+            type="text"
+            value={data.tenthPercentage}
+            onChange={e => onChange('tenthPercentage', e.target.value.replace(/[^0-9.]/g, ''))}
+            placeholder="e.g. 85.5"
+          />
+        </Field>
+        <Field label="Year of Passing" error={errors.tenthYear} required>
+          <select value={data.tenthYear} onChange={e => onChange('tenthYear', e.target.value)}>
+            <option value="">Select year</option>
+            {Array.from({ length: 15 }, (_, i) => `${CURRENT_YEAR - 14 + i}`).map(y => <option key={y} value={y}>{y}</option>)}
+          </select>
+        </Field>
+        <div className="field-full">
+          <Field label="Board" error={errors.tenthBoard} required>
+            <input
+              type="text"
+              value={data.tenthBoard}
+              onChange={e => onChange('tenthBoard', e.target.value)}
+              placeholder="e.g. RBSE, CBSE"
+            />
+          </Field>
+        </div>
+      </div>
+
+      <h3 className="section-label">12th Standard Details</h3>
+      <div className="form-grid">
+        <Field label="Percentage" error={errors.twelfthPercentage} required>
+          <input
+            type="text"
+            value={data.twelfthPercentage}
+            onChange={e => onChange('twelfthPercentage', e.target.value.replace(/[^0-9.]/g, ''))}
+            placeholder="e.g. 80.0"
+          />
+        </Field>
+        <Field label="Year of Passing" error={errors.twelfthYear} required>
+          <select value={data.twelfthYear} onChange={e => onChange('twelfthYear', e.target.value)}>
+            <option value="">Select year</option>
+            {Array.from({ length: 15 }, (_, i) => `${CURRENT_YEAR - 14 + i}`).map(y => <option key={y} value={y}>{y}</option>)}
+          </select>
+        </Field>
+        <div className="field-full">
+          <Field label="Board" error={errors.twelfthBoard} required>
+            <input
+              type="text"
+              value={data.twelfthBoard}
+              onChange={e => onChange('twelfthBoard', e.target.value)}
+              placeholder="e.g. RBSE, CBSE"
+            />
+          </Field>
+        </div>
+      </div>
+
+      <h3 className="section-label">Diploma Details (if applicable)</h3>
+      <div className="form-grid">
+        <Field label="Percentage (optional)" error={errors.diplomaPercentage}>
+          <input
+            type="text"
+            value={data.diplomaPercentage}
+            onChange={e => onChange('diplomaPercentage', e.target.value.replace(/[^0-9.]/g, ''))}
+            placeholder="e.g. 78.0"
+          />
+        </Field>
+        <Field label="Year of Passing (optional)" error={errors.diplomaYear}>
+          <select value={data.diplomaYear} onChange={e => onChange('diplomaYear', e.target.value)}>
+            <option value="">Select year</option>
+            {Array.from({ length: 15 }, (_, i) => `${CURRENT_YEAR - 14 + i}`).map(y => <option key={y} value={y}>{y}</option>)}
+          </select>
         </Field>
       </div>
     </div>
@@ -418,88 +708,52 @@ function AcademicInfoStep({ data, errors, onChange }) {
 function ContactInfoStep({ data, errors, onChange }) {
   return (
     <div className="step-form">
-      <h3 className="section-label">Parent / Guardian Details</h3>
-      <div className="form-grid">
-        <Field label="Father's Name" error={errors.fathersName} required>
-          <input
-            type="text"
-            value={data.fathersName}
-            onChange={e => onChange('fathersName', e.target.value)}
-            placeholder="Enter father's name"
-          />
-        </Field>
-        <Field label="Mother's Name" error={errors.mothersName} required>
-          <input
-            type="text"
-            value={data.mothersName}
-            onChange={e => onChange('mothersName', e.target.value)}
-            placeholder="Enter mother's name"
-          />
-        </Field>
-        <Field label="Guardian Name" error={errors.guardianName} required>
-          <input
-            type="text"
-            value={data.guardianName}
-            onChange={e => onChange('guardianName', e.target.value)}
-            placeholder="Enter guardian's name"
-          />
-        </Field>
-        <Field label="Guardian Mobile" error={errors.guardianMobile} required>
-          <input
-            type="tel"
-            value={data.guardianMobile}
-            onChange={e => onChange('guardianMobile', e.target.value.replace(/\D/g, '').slice(0, 10))}
-            placeholder="10-digit mobile number"
-          />
-        </Field>
-        <Field label="Alternate Mobile (optional)" error={errors.alternateMobile}>
-          <input
-            type="tel"
-            value={data.alternateMobile}
-            onChange={e => onChange('alternateMobile', e.target.value.replace(/\D/g, '').slice(0, 10))}
-            placeholder="Alternate contact number"
-          />
-        </Field>
-        <Field label="Contact Email (optional)" error={errors.contactEmail}>
-          <input
-            type="email"
-            value={data.contactEmail}
-            onChange={e => onChange('contactEmail', e.target.value)}
-            placeholder="Alternate email address"
-          />
-        </Field>
-      </div>
-
-      <h3 className="section-label">Address Details</h3>
+      <h3 className="section-label">Permanent Address</h3>
       <div className="form-grid">
         <div className="field-full">
-          <Field label="Address (optional)" error={errors.address}>
+          <Field label="Permanent Address (optional)">
             <textarea
-              value={data.address}
-              onChange={e => onChange('address', e.target.value)}
-              placeholder="Enter full address"
+              value={data.permanentAddress}
+              onChange={e => onChange('permanentAddress', e.target.value)}
+              placeholder="Enter permanent address"
               rows={3}
             />
           </Field>
         </div>
-        <Field label="City" error={errors.city} required>
+      </div>
+
+      <h3 className="section-label">Current Address</h3>
+      <div className="form-grid">
+        <div className="field-full">
+          <Field label="Address" error={errors.currentAddress} required>
+            <textarea
+              value={data.currentAddress}
+              onChange={e => onChange('currentAddress', e.target.value)}
+              placeholder="Enter your current address"
+              rows={3}
+            />
+          </Field>
+        </div>
+        <Field label="City" error={errors.nativeCity} required>
           <input
             type="text"
-            value={data.city}
-            onChange={e => onChange('city', e.target.value)}
+            value={data.nativeCity}
+            onChange={e => onChange('nativeCity', e.target.value)}
             placeholder="Enter city"
           />
         </Field>
-        <Field label="State" error={errors.state} required>
-          <select value={data.state} onChange={e => onChange('state', e.target.value)}>
+        <Field label="District" error={errors.nativeDistrict} required>
+          <input
+            type="text"
+            value={data.nativeDistrict}
+            onChange={e => onChange('nativeDistrict', e.target.value)}
+            placeholder="Enter district"
+          />
+        </Field>
+        <Field label="State" error={errors.nativeState} required>
+          <select value={data.nativeState} onChange={e => onChange('nativeState', e.target.value)}>
             <option value="">Select state</option>
             {INDIAN_STATES.map(s => <option key={s} value={s}>{s}</option>)}
-          </select>
-        </Field>
-        <Field label="Country" error={errors.country} required>
-          <select value={data.country} onChange={e => onChange('country', e.target.value)}>
-            <option value="">Select country</option>
-            {COUNTRIES.map(c => <option key={c} value={c}>{c}</option>)}
           </select>
         </Field>
         <Field label="PIN Code" error={errors.pinCode} required>
@@ -515,9 +769,10 @@ function ContactInfoStep({ data, errors, onChange }) {
   )
 }
 
-function AdditionalDetailsStep({ data, errors, onChange, onResumeChange }) {
+function DocumentsStep({ data, errors, onChange, onResumeChange }) {
   return (
     <div className="step-form">
+      <h3 className="section-label">Academic Documents</h3>
       <div className="form-grid">
         <div className="field-full">
           <Field label="Resume (optional)" error={errors.resume}>
@@ -528,48 +783,18 @@ function AdditionalDetailsStep({ data, errors, onChange, onResumeChange }) {
             <input type="file" id="resume-input" accept=".pdf,.doc,.docx" onChange={onResumeChange} hidden />
           </Field>
         </div>
-        <Field label="Skills (optional)" error={errors.skills}>
-          <input
-            type="text"
-            value={data.skills}
-            onChange={e => onChange('skills', e.target.value)}
-            placeholder="e.g. Python, JavaScript, React"
-          />
-        </Field>
-        <Field label="LinkedIn Profile (optional)" error={errors.linkedinProfile}>
+      </div>
+
+      <h3 className="section-label">Professional Links</h3>
+      <div className="form-grid">
+        <Field label="LinkedIn Profile (optional)" error={errors.linkedinUrl}>
           <input
             type="url"
-            value={data.linkedinProfile}
-            onChange={e => onChange('linkedinProfile', e.target.value)}
+            value={data.linkedinUrl}
+            onChange={e => onChange('linkedinUrl', e.target.value)}
             placeholder="https://linkedin.com/in/username"
           />
         </Field>
-        <Field label="GitHub Profile (optional)" error={errors.githubProfile}>
-          <input
-            type="url"
-            value={data.githubProfile}
-            onChange={e => onChange('githubProfile', e.target.value)}
-            placeholder="https://github.com/username"
-          />
-        </Field>
-        <Field label="Portfolio (optional)" error={errors.portfolio}>
-          <input
-            type="url"
-            value={data.portfolio}
-            onChange={e => onChange('portfolio', e.target.value)}
-            placeholder="https://your-portfolio.com"
-          />
-        </Field>
-        <div className="field-full">
-          <Field label="Additional Information (optional)" error={errors.additionalInfo}>
-            <textarea
-              value={data.additionalInfo}
-              onChange={e => onChange('additionalInfo', e.target.value)}
-              placeholder="Any other information you'd like to share"
-              rows={3}
-            />
-          </Field>
-        </div>
       </div>
     </div>
   )

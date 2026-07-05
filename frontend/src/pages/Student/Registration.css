@@ -530,6 +530,59 @@
   justify-content: center;
 }
 
+/* Auto-generated ID */
+.auto-id-field .auto-id-display {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 12px;
+  background: #f8f9fb;
+  border: 1.5px solid #e2e6ec;
+  border-radius: 10px;
+  color: #64748b;
+  font-size: 0.85rem;
+}
+
+.auto-id-display svg {
+  color: #94a3b8;
+  flex-shrink: 0;
+}
+
+/* Fixed Gender */
+.gender-fixed {
+  padding: 10px 12px;
+  background: #f8f9fb;
+  border: 1.5px solid #e2e6ec;
+  border-radius: 10px;
+  color: #0f172a;
+  font-size: 0.9rem;
+  font-weight: 500;
+}
+
+/* Submit Error Bar */
+.submit-error-bar {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 12px 32px 20px;
+  color: #ef4444;
+  font-size: 0.85rem;
+  font-weight: 500;
+}
+
+/* Disabled button */
+.btn-primary:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  transform: none;
+  box-shadow: none;
+}
+
+.btn-outline:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
 /* Responsive */
 @media (max-width: 1024px) {
   .reg-sidebar {

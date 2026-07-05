@@ -20,7 +20,7 @@ export default function HeroSection({ settings, loading, getImageUrl, collegeIma
             </button>
           </div>
           <p className="hero-subtext">
-            New user? <a href="/auth">Login to create your profile</a>
+            New user? <a href="/auth">Sign up to create your profile</a>
           </p>
         </div>
 

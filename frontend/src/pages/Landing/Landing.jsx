@@ -88,8 +88,9 @@ export default function Landing() {
     if (!photoPath) return null;
     // If it's already a full URL, return it
     if (photoPath.startsWith('http')) return photoPath;
-    // Otherwise, construct the URL to the backend's static files
-    return `http://localhost:5000/${photoPath}`;
+    // Normalize: remove leading slash to avoid double-slash in URL
+    const normalized = photoPath.startsWith('/') ? photoPath.slice(1) : photoPath;
+    return `http://localhost:5000/${normalized}`;
   };
 
   const recruiterPage = useMemo(() => {
@@ -127,34 +128,37 @@ export default function Landing() {
           <div className="tpo-card">
             {loading ? (
               <div className="tpo-loading">Loading officer information…</div>
-            ) : (
+            ) : settings ? (
               <>
-                <img
-                  className="tpo-photo"
-                  src={getImageUrl(settings?.tpoHeadPhoto) || collegeImage}
-                  alt={settings?.tpoHeadName || 'TPO Head'}
-                  onError={(e) => {
-                    console.error('Image failed to load:', e.target.src);
-                    e.target.src = collegeImage;
-                  }}
-                />
-                <div className="tpo-info">
+                <div className="tpo-image-container">
+                  <img
+                    className="tpo-photo"
+                    src={getImageUrl(settings.tpoHeadPhoto) || collegeImage}
+                    alt={settings.tpoHeadName || 'TPO Head'}
+                    onError={(e) => {
+                      console.error('Image failed to load:', e.target.src);
+                      e.target.src = collegeImage;
+                    }}
+                  />
+                </div>
+                <div className="tpo-details">
                   <div className="tpo-badge">TPO HEAD</div>
-                  <h3 className="tpo-name">{settings?.tpoHeadName || 'Mr. Rahul Sharma'}</h3>
+                  <h3 className="tpo-name">{settings.tpoHeadName}</h3>
                   <p className="tpo-designation">Training & Placement Officer</p>
-                  <div className="tpo-contact">
-                    <div className="tpo-contact-item">
-                      <Mail size={16} />
-                      <span>{settings?.tpoHeadEmail || 'tpo@gweca.ac.in'}</span>
-                    </div>
-                    <div className="tpo-contact-item">
-                      <Phone size={16} />
-                      <span>{settings?.tpoHeadPhone || '+91 12345 67890'}</span>
-                    </div>
+                  <div className="tpo-divider"></div>
+                  <div className="tpo-contact-grid">
+                    <a href={`mailto:${settings.tpoHeadEmail}`} className="tpo-contact-item">
+                      <Mail size={20} className="tpo-icon" />
+                      <span>{settings.tpoHeadEmail}</span>
+                    </a>
+                    <a href={`tel:${settings.tpoHeadPhone}`} className="tpo-contact-item">
+                      <Phone size={20} className="tpo-icon" />
+                      <span>{settings.tpoHeadPhone}</span>
+                    </a>
                   </div>
                 </div>
               </>
-            )}
+            ) : null}
           </div>
         </div>
       </header>

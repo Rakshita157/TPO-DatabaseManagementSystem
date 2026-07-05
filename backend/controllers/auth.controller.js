@@ -10,7 +10,7 @@ const signup = async (req, res) => {
 
     res.status(201).json({
       message: "User created successfully",
-      user: userData,
+      user,
     });
   } catch (error) {
     res.status(400).json({

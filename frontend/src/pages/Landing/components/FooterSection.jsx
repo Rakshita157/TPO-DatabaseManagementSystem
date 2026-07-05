@@ -3,15 +3,15 @@ import collegeLogo from '../../../assets/logos/govt.mahila_engineering-removebg-
 import './FooterSection.css';
 
 const socialLinks = [
-  { label: 'Facebook', href: '#', path: 'M18 2h-3a5 5 0 0 0-5 5v3H7v4h3v8h4v-8h3l1-4h-4V7a1 1 0 0 1 1-1h3z' },
-  { label: 'LinkedIn', href: '#', path: 'M16 8a6 6 0 0 1 6 6v7h-4v-7a2 2 0 0 0-2-2 2 2 0 0 0-2 2v7h-4v-7a6 6 0 0 1 6-6z', rect: { x: 2, y: 9, w: 4, h: 12 }, circle: { cx: 4, cy: 4, r: 2 } },
-  { label: 'Instagram', href: '#', path: 'M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z', rect: { x: 2, y: 2, w: 20, h: 20, rx: 5, ry: 5 }, line: { x1: 17.5, y1: 6.5, x2: 17.51, y2: 6.5 } },
-  { label: 'YouTube', href: '#', path: 'M22.54 6.42a2.78 2.78 0 0 0-1.94-2C18.88 4 12 4 12 4s-6.88 0-8.6.46a2.78 2.78 0 0 0-1.94 2A29 29 0 0 0 1 12a29 29 0 0 0 .46 5.58 2.78 2.78 0 0 0 1.94 2C5.12 20 12 20 12 20s6.88 0 8.6-.46a2.78 2.78 0 0 0 1.94-2A29 29 0 0 0 23 12a29 29 0 0 0-.46-5.58z', polygon: { points: '9.75 15.02 15.5 11.75 9.75 8.48 9.75 15.02' } },
+  { label: 'Facebook', href: 'https://www.facebook.com/official.gweca/', path: 'M18 2h-3a5 5 0 0 0-5 5v3H7v4h3v8h4v-8h3l1-4h-4V7a1 1 0 0 1 1-1h3z' },
+  { label: 'LinkedIn', href: 'https://www.linkedin.com/in/tpo-gweca-52257a158/', path: 'M16 8a6 6 0 0 1 6 6v7h-4v-7a2 2 0 0 0-2-2 2 2 0 0 0-2 2v7h-4v-7a6 6 0 0 1 6-6z', rect: { x: 2, y: 9, w: 4, h: 12 }, circle: { cx: 4, cy: 4, r: 2 } },
+  { label: 'Instagram', href: 'https://www.instagram.com/gwecaofficial?igsh=dXMxcWl5cHRpbDhp', path: 'M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z', rect: { x: 2, y: 2, w: 20, h: 20, rx: 5, ry: 5 }, line: { x1: 17.5, y1: 6.5, x2: 17.51, y2: 6.5 } },
+  { label: 'YouTube', href: 'https://youtube.com/@govt.womenengineeringcolle6338?si=SthkCoqO-KYMyE53', path: 'M22.54 6.42a2.78 2.78 0 0 0-1.94-2C18.88 4 12 4 12 4s-6.88 0-8.6.46a2.78 2.78 0 0 0-1.94 2A29 29 0 0 0 1 12a29 29 0 0 0 .46 5.58 2.78 2.78 0 0 0 1.94 2C5.12 20 12 20 12 20s6.88 0 8.6-.46a2.78 2.78 0 0 0 1.94-2A29 29 0 0 0 23 12a29 29 0 0 0-.46-5.58z', polygon: { points: '9.75 15.02 15.5 11.75 9.75 8.48 9.75 15.02' } },
 ];
 
 function SocialIcon({ link }) {
   return (
-    <a href={link.href} className="footer-social-link" aria-label={link.label}>
+    <a href={link.href} target="_blank" rel="noopener noreferrer" className="footer-social-link" aria-label={link.label}>
       <svg viewBox="0 0 24 24" width="18" height="18" fill="currentColor">
         <path d={link.path} />
         {link.rect && <rect x={link.rect.x} y={link.rect.y} width={link.rect.w} height={link.rect.h} rx={link.rect.rx} ry={link.rect.ry} />}

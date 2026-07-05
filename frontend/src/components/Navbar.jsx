@@ -25,6 +25,7 @@ export default function Navbar() {
           <li><a href="/" className="navbar-link active">Home</a></li>
           <li><a href="#about" className="navbar-link">About TPO</a></li>
           <li><a href="#contact" className="navbar-link">Contact</a></li>
+          <li><a href="/student-registration" className="navbar-link">Register</a></li>
         </ul>
 
         <div className="navbar-actions">
@@ -46,6 +47,7 @@ export default function Navbar() {
           <li><a href="/" className="navbar-link active">Home</a></li>
           <li><a href="#about" className="navbar-link">About TPO</a></li>
           <li><a href="#contact" className="navbar-link">Contact</a></li>
+          <li><a href="/student-registration" className="navbar-link">Register</a></li>
         </ul>
         <div className="navbar-actions">
           <button className="navbar-btn navbar-btn-secondary" onClick={() => window.location.href = '/auth'}>

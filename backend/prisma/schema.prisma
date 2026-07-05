@@ -79,8 +79,8 @@ model StudentProfile {
   currentSemester       Int
 
   collegeId             String   @unique
-  btuRollNumber         String?  @unique
-  enrollmentNumber      String?  @unique
+  btuRollNumber         String  @unique
+  enrollmentNumber      String  @unique
 
   dob                   DateTime
   gender                String
@@ -113,8 +113,8 @@ model StudentProfile {
 
   cgpa                  Decimal?
 
-  activeBacklogs        Int?
-  passiveBacklogs       Int?
+  activeBacklogs        Int
+  passiveBacklogs       Int
 
   linkedinUrl           String?
 

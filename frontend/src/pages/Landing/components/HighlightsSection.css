@@ -1,0 +1,40 @@
+@keyframes fade-in-up {
+  from {
+    opacity: 0;
+    transform: translateY(30px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.highlights-grid .highlight-item {
+  opacity: 0;
+  transform: translateY(30px);
+}
+
+.highlights-animated .highlight-item {
+  animation: fade-in-up 0.5s ease-out forwards;
+}
+
+.highlight-item {
+  position: relative;
+  overflow: hidden;
+}
+
+.highlight-item::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 3px;
+  border-radius: 12px 12px 0 0;
+}
+
+.highlight-item:nth-child(1)::before { background: #3b82f6; }
+.highlight-item:nth-child(2)::before { background: #22c55e; }
+.highlight-item:nth-child(3)::before { background: #f59e0b; }
+.highlight-item:nth-child(4)::before { background: #a855f7; }
+.highlight-item:nth-child(5)::before { background: #ef4444; }

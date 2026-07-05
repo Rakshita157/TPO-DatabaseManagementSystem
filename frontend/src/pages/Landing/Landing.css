@@ -15,7 +15,7 @@
   background-size: cover;
   background-position: center top;
   background-repeat: no-repeat;
-  min-height: 420px;
+  min-height: 380px;
   width: 100%;
 }
 
@@ -34,10 +34,10 @@
   width: 100%;
   max-width: 1400px;
   margin: 0 auto;
-  padding: 40px 48px 56px;
+  padding: 32px 48px 48px;
   display: grid;
   grid-template-columns: 1.3fr 0.7fr;
-  gap: 40px;
+  gap: 32px;
   align-items: center;
 }
 
@@ -50,35 +50,35 @@
   font-weight: 600;
   letter-spacing: 1px;
   color: rgba(255, 255, 255, 0.85);
-  margin-bottom: 12px;
+  margin-bottom: 10px;
 }
 
 .hero-title {
-  font-size: clamp(2.2rem, 4.5vw, 3.2rem);
+  font-size: clamp(1.8rem, 4vw, 2.8rem);
   font-weight: 800;
   line-height: 1.1;
-  margin: 0 0 18px 0;
+  margin: 0 0 14px 0;
   color: white;
   text-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
 }
 
 .hero-description {
-  font-size: 1.125rem;
-  line-height: 1.7;
+  font-size: 1rem;
+  line-height: 1.6;
   color: rgba(255, 255, 255, 0.95);
-  margin-bottom: 30px;
+  margin-bottom: 24px;
 }
 
 .hero-actions {
-  margin-bottom: 14px;
+  margin-bottom: 12px;
 }
 
 .hero-btn-primary {
   background: white;
   color: #1e3a8a;
   border: none;
-  padding: 12px 28px;
-  font-size: 1rem;
+  padding: 10px 24px;
+  font-size: 0.95rem;
   font-weight: 600;
   border-radius: 8px;
   cursor: pointer;
@@ -91,7 +91,7 @@
 }
 
 .hero-subtext {
-  font-size: 0.95rem;
+  font-size: 0.875rem;
   color: rgba(255, 255, 255, 0.9);
 }
 
@@ -122,7 +122,7 @@
 
 .tpo-image-container {
   width: 100%;
-  height: 320px;
+  height: 260px;
   overflow: hidden;
   background: #f5f5f5;
   position: relative;
@@ -137,7 +137,7 @@
 }
 
 .tpo-details {
-  padding: 14px 28px 22px;
+  padding: 12px 24px 18px;
   background: white;
   text-align: center;
 }
@@ -146,50 +146,50 @@
   display: inline-block;
   background: #dbeafe;
   color: #1e3a8a;
-  padding: 6px 16px;
+  padding: 5px 14px;
   border-radius: 20px;
-  font-size: 0.75rem;
+  font-size: 0.7rem;
   font-weight: 700;
   letter-spacing: 1px;
-  margin-bottom: 14px;
+  margin-bottom: 10px;
   text-transform: uppercase;
 }
 
 .tpo-name {
-  font-size: 1.75rem;
+  font-size: 1.5rem;
   font-weight: 700;
   color: #1e3a8a;
-  margin: 0 0 8px 0;
+  margin: 0 0 6px 0;
   line-height: 1.2;
 }
 
 .tpo-designation {
-  font-size: 1rem;
+  font-size: 0.9rem;
   color: #64748b;
-  margin: 0 0 18px 0;
+  margin: 0 0 14px 0;
   font-weight: 400;
 }
 
 .tpo-divider {
-  width: 60px;
+  width: 50px;
   height: 3px;
   background: #1e3a8a;
-  margin: 0 0 22px 0;
+  margin: 0 0 16px 0;
 }
 
 .tpo-contact-grid {
   display: flex;
   flex-direction: column;
-  gap: 16px;
+  gap: 12px;
 }
 
 .tpo-contact-item {
   display: flex;
   align-items: center;
-  gap: 12px;
+  gap: 10px;
   color: #475569;
   text-decoration: none;
-  font-size: 0.95rem;
+  font-size: 0.875rem;
   transition: color 0.2s ease;
   padding: 4px 0;
 }
@@ -245,19 +245,19 @@
 
 /* Placement Highlights */
 .highlights-section {
-  margin-bottom: 64px;
+  margin-bottom: 56px;
 }
 
 .highlights-grid {
   display: grid;
   grid-template-columns: repeat(5, 1fr);
-  gap: 24px;
+  gap: 20px;
 }
 
 .highlight-item {
   background: white;
-  padding: 32px 20px;
-  border-radius: 12px;
+  padding: 28px 18px;
+  border-radius: 10px;
   text-align: center;
   border: 1px solid rgba(15, 23, 42, 0.08);
   box-shadow: 0 4px 16px rgba(15, 23, 42, 0.06);
@@ -270,9 +270,9 @@
 }
 
 .highlight-icon {
-  width: 56px;
-  height: 56px;
-  margin: 0 auto 16px;
+  width: 50px;
+  height: 50px;
+  margin: 0 auto 14px;
   background: #dbeafe;
   color: #1e3a8a;
   border-radius: 50%;
@@ -282,14 +282,14 @@
 }
 
 .highlight-value {
-  font-size: 1.875rem;
+  font-size: 1.65rem;
   font-weight: 800;
   color: #0f172a;
-  margin: 0 0 8px 0;
+  margin: 0 0 6px 0;
 }
 
 .highlight-label {
-  font-size: 0.9rem;
+  font-size: 0.85rem;
   color: #64748b;
   margin: 0;
 }
@@ -387,12 +387,12 @@
 
 /* Recruiters Section */
 .recruiters-section {
-  margin-bottom: 64px;
+  margin-bottom: 56px;
 }
 
 .recruiters-content {
   background: white;
-  padding: 48px;
+  padding: 40px;
   border-radius: 16px;
   box-shadow: 0 4px 16px rgba(15, 23, 42, 0.06);
 }
@@ -400,19 +400,19 @@
 .recruiters-grid {
   display: grid;
   grid-template-columns: repeat(5, 1fr);
-  gap: 16px;
-  margin-bottom: 32px;
+  gap: 14px;
+  margin-bottom: 28px;
 }
 
 .recruiter-logo {
   background: white;
-  padding: 16px;
+  padding: 14px;
   border-radius: 10px;
   border: 1px solid rgba(15, 23, 42, 0.08);
   display: flex;
   align-items: center;
   justify-content: center;
-  min-height: 100px;
+  min-height: 88px;
   transition: all 0.2s ease;
 }
 
@@ -424,7 +424,7 @@
 
 .recruiter-logo img {
   max-width: 100%;
-  max-height: 64px;
+  max-height: 56px;
   width: auto;
   height: auto;
   object-fit: contain;
@@ -443,8 +443,8 @@
 }
 
 .nav-btn {
-  width: 44px;
-  height: 44px;
+  width: 40px;
+  height: 40px;
   border-radius: 50%;
   border: none;
   background: #1e3a8a;
@@ -486,11 +486,15 @@
   border-radius: 4px;
 }
 
+html {
+  scroll-behavior: smooth;
+}
+
 /* Footer */
 .footer {
   background: #1e3a8a;
   color: #e2e8f0;
-  padding: 48px 40px 0;
+  padding: 44px 40px 0;
 }
 
 .footer-content {
@@ -499,8 +503,8 @@
   margin: 0 auto;
   display: grid;
   grid-template-columns: 1.5fr 0.8fr 1fr 1fr;
-  gap: 40px;
-  padding: 0 48px 32px;
+  gap: 36px;
+  padding: 0 48px 28px;
 }
 
 .footer-col h3 {
@@ -547,13 +551,7 @@
   justify-content: center;
   color: white;
   text-decoration: none;
-  font-weight: 600;
   transition: all 0.2s ease;
-}
-
-.footer-social a:hover {
-  background: rgba(255, 255, 255, 0.2);
-  transform: translateY(-2px);
 }
 
 .footer-col ul {
@@ -607,7 +605,7 @@
 
 .footer-bottom {
   border-top: 1px solid rgba(255, 255, 255, 0.1);
-  padding: 20px 48px;
+  padding: 18px 48px;
   text-align: center;
   width: 100%;
   max-width: 1400px;
@@ -640,7 +638,7 @@
 
 
   .tpo-details {
-    padding: 14px 24px 22px;
+    padding: 12px 24px 18px;
   }
 
   .tpo-name {

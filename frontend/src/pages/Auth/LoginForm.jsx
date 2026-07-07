@@ -1,17 +1,22 @@
 import { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { login } from '../../services/auth.service';
 
 export default function LoginForm({ onSwitchToSignup, onForgotPassword }) {
+  const navigate = useNavigate();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [errors, setErrors] = useState({});
+  const [apiError, setApiError] = useState('');
+  const [isLoading, setIsLoading] = useState(false);
 
   const validateForm = () => {
     const newErrors = {};
     if (!email) {
       newErrors.email = 'Email is required';
-    } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
-      newErrors.email = 'Please enter a valid email';
+    } else if (!/^[^\s@]+@gweca\.ac\.in$/.test(email)) {
+      newErrors.email = 'Only @gweca.ac.in email addresses are allowed';
     }
     if (!password) {
       newErrors.password = 'Password is required';
@@ -22,10 +27,32 @@ export default function LoginForm({ onSwitchToSignup, onForgotPassword }) {
     return Object.keys(newErrors).length === 0;
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    if (validateForm()) {
-      console.log('Form submitted:', { email, password });
+    setApiError('');
+
+    if (!validateForm()) return;
+
+    setIsLoading(true);
+    try {
+      const response = await login({
+        collegeEmail: email,
+        password,
+      });
+      const { user, token } = response.data;
+
+      if (token) {
+        localStorage.setItem('token', token);
+      }
+      localStorage.setItem('user', JSON.stringify(user));
+
+      navigate('/dashboard');
+    } catch (error) {
+      const message =
+        error.response?.data?.message || 'Something went wrong. Please try again.';
+      setApiError(message);
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -35,6 +62,8 @@ export default function LoginForm({ onSwitchToSignup, onForgotPassword }) {
         <h2>Welcome Back</h2>
         <p>Sign in to your account to continue</p>
       </div>
+
+      {apiError && <div className="error-message" style={{ marginBottom: 0 }}>{apiError}</div>}
 
       <div className="form-group">
         <label htmlFor="login-email" className="form-label">
@@ -109,8 +138,8 @@ export default function LoginForm({ onSwitchToSignup, onForgotPassword }) {
         {errors.password && <span className="error-message">{errors.password}</span>}
       </div>
 
-      <button type="submit" className="btn btn-primary btn-large">
-        Sign In
+      <button type="submit" className="btn btn-primary btn-large" disabled={isLoading}>
+        {isLoading ? 'Signing In...' : 'Sign In'}
       </button>
 
       <div className="form-divider">
@@ -121,6 +150,7 @@ export default function LoginForm({ onSwitchToSignup, onForgotPassword }) {
         type="button"
         className="btn btn-secondary btn-large"
         onClick={onSwitchToSignup}
+        disabled={isLoading}
       >
         Create Account
       </button>

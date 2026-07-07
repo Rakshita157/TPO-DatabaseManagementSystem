@@ -9,8 +9,8 @@ export default function ForgotPasswordForm({ onBackToLogin }) {
     const newErrors = {};
     if (!email) {
       newErrors.email = 'Email is required';
-    } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
-      newErrors.email = 'Please enter a valid email';
+    } else if (!/^[^\s@]+@gweca\.ac\.in$/.test(email)) {
+      newErrors.email = 'Only @gweca.ac.in email addresses are allowed';
     }
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;

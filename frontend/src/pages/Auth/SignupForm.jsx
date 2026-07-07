@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { signup } from '../../services/auth.service';
 
 export default function SignupForm({ onSwitchToLogin }) {
   const [fullName, setFullName] = useState('');
@@ -8,6 +9,9 @@ export default function SignupForm({ onSwitchToLogin }) {
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [errors, setErrors] = useState({});
+  const [apiError, setApiError] = useState('');
+  const [isLoading, setIsLoading] = useState(false);
+  const [isSuccess, setIsSuccess] = useState(false);
 
   const validateForm = () => {
     const newErrors = {};
@@ -20,8 +24,8 @@ export default function SignupForm({ onSwitchToLogin }) {
 
     if (!email) {
       newErrors.email = 'Email is required';
-    } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
-      newErrors.email = 'Please enter a valid email';
+    } else if (!/^[^\s@]+@gweca\.ac\.in$/.test(email)) {
+      newErrors.email = 'Only @gweca.ac.in email addresses are allowed';
     }
 
     if (!password) {
@@ -42,17 +46,46 @@ export default function SignupForm({ onSwitchToLogin }) {
     return Object.keys(newErrors).length === 0;
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    if (validateForm()) {
-      console.log('Form submitted:', {
+    setApiError('');
+
+    if (!validateForm()) return;
+
+    setIsLoading(true);
+    try {
+      await signup({
         fullName,
-        email,
+        collegeEmail: email,
         password,
-        confirmPassword,
       });
+      setIsSuccess(true);
+      setTimeout(() => {
+        onSwitchToLogin();
+      }, 2000);
+    } catch (error) {
+      const message =
+        error.response?.data?.message || 'Something went wrong. Please try again.';
+      setApiError(message);
+    } finally {
+      setIsLoading(false);
     }
   };
+
+  if (isSuccess) {
+    return (
+      <div className="auth-form">
+        <div className="form-header">
+          <h2>Account Created!</h2>
+        </div>
+        <div className="success-message">
+          <div className="success-icon">✓</div>
+          <p>Account created successfully</p>
+          <p className="success-hint">Redirecting to login...</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <form className="auth-form" onSubmit={handleSubmit}>
@@ -60,6 +93,8 @@ export default function SignupForm({ onSwitchToLogin }) {
         <h2>Create Account</h2>
         <p>Join us to get started with your placement journey</p>
       </div>
+
+      {apiError && <div className="error-message" style={{ marginBottom: 0 }}>{apiError}</div>}
 
       <div className="form-group">
         <label htmlFor="signup-name" className="form-label">
@@ -194,8 +229,8 @@ export default function SignupForm({ onSwitchToLogin }) {
         )}
       </div>
 
-      <button type="submit" className="btn btn-primary btn-large">
-        Create Account
+      <button type="submit" className="btn btn-primary btn-large" disabled={isLoading}>
+        {isLoading ? 'Creating Account...' : 'Create Account'}
       </button>
 
       <div className="form-divider">
@@ -206,6 +241,7 @@ export default function SignupForm({ onSwitchToLogin }) {
         type="button"
         className="btn btn-secondary btn-large"
         onClick={onSwitchToLogin}
+        disabled={isLoading}
       >
         Sign In
       </button>

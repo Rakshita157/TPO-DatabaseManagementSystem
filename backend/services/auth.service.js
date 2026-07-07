@@ -3,7 +3,11 @@ const bcrypt = require("bcrypt");
 
 //signup
 const signup = async (data) => {
-  const { fullName,collegeEmail, password } = data;
+  const { fullName, collegeEmail, password } = data;
+
+  if (!collegeEmail.endsWith('@gweca.ac.in')) {
+    throw new Error('Only @gweca.ac.in email addresses are allowed');
+  }
 
   // Check if user already exists
   const existingUser = await prisma.user.findUnique({
@@ -28,7 +32,12 @@ const signup = async (data) => {
     },
   });
 
-  return user;
+// Remove password before returning
+const { password: _, ...userWithoutPassword } = user;
+
+return userWithoutPassword;
+
+  // return user;
 };
 
 //login
@@ -51,7 +60,9 @@ const login = async (data) => {
     throw new Error("Invalid email or password");
   }
 
-  return user;
+const { password: _, ...userWithoutPassword } = user;
+
+return userWithoutPassword;
 };
 
 

@@ -6,6 +6,7 @@ import {
   User, GraduationCap, MapPin, FileText,
   CheckCircle, Home, Camera, Info
 } from 'lucide-react'
+import { createSemesterResult, uploadDocument } from '../../services/student.service'
 import './Registration.css'
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000'
@@ -18,7 +19,7 @@ const STEPS = [
 ]
 
 const INITIAL_DATA = {
-  fullName: '', personalEmail: '', alternateEmail: '',
+  fullName: '', email: '', password: '', personalEmail: '', alternateEmail: '',
   profilePhoto: null, profilePhotoPreview: '',
   mobileNumber: '', whatsappNumber: '', dateOfBirth: '',
   aadharNumber: '', panNumber: '',
@@ -123,6 +124,8 @@ export default function Registration() {
 
     if (step === 0) {
       if (!d.fullName.trim()) newErrors.fullName = 'Full name is required'
+      if (!d.email.trim()) newErrors.email = 'College email is required'
+      else if (!/^[^\s@]+@gweca\.ac\.in$/.test(d.email)) newErrors.email = 'Only @gweca.ac.in emails allowed'
       if (!d.personalEmail.trim()) newErrors.personalEmail = 'Personal email is required'
       else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(d.personalEmail)) newErrors.personalEmail = 'Invalid email address'
       if (!d.mobileNumber.trim()) newErrors.mobileNumber = 'Mobile number is required'
@@ -151,6 +154,9 @@ export default function Registration() {
       if (!d.twelfthPercentage.trim()) newErrors.twelfthPercentage = '12th percentage is required'
       if (!d.twelfthYear) newErrors.twelfthYear = '12th year is required'
       if (!d.twelfthBoard.trim()) newErrors.twelfthBoard = '12th board is required'
+      if (!d.graduationYear) newErrors.graduationYear = 'Graduation year is required'
+      if (!d.activeBacklogs.trim()) newErrors.activeBacklogs = 'Active backlogs is required'
+      if (!d.passiveBacklogs.trim()) newErrors.passiveBacklogs = 'Passive backlogs is required'
     }
 
     if (step === 2) {
@@ -160,6 +166,11 @@ export default function Registration() {
       if (!d.nativeState) newErrors.nativeState = 'Please select a state'
       if (!d.pinCode.trim()) newErrors.pinCode = 'PIN code is required'
       else if (!/^\d{6}$/.test(d.pinCode)) newErrors.pinCode = 'Must be 6 digits'
+      if (!d.permanentAddress.trim()) newErrors.permanentAddress = 'Permanent address is required'
+    }
+
+    if (step === 3) {
+      if (!d.resume) newErrors.resume = 'Resume is required'
     }
 
     setErrors(newErrors)
@@ -225,12 +236,34 @@ export default function Registration() {
         diplomaPercentage: formData.diplomaPercentage ? parseFloat(formData.diplomaPercentage) : null,
         diplomaYear: formData.diplomaYear ? parseInt(formData.diplomaYear) : null,
         cgpa: formData.cgpa ? parseFloat(formData.cgpa) : null,
-        activeBacklogs: formData.activeBacklogs ? parseInt(formData.activeBacklogs) : null,
-        passiveBacklogs: formData.passiveBacklogs ? parseInt(formData.passiveBacklogs) : null,
+        activeBacklogs: parseInt(formData.activeBacklogs),
+        passiveBacklogs: parseInt(formData.passiveBacklogs),
         linkedinUrl: formData.linkedinUrl || null,
       }
 
       await axios.post(`${API_URL}/student-profile`, profilePayload)
+
+      const sgpaEntries = Object.entries(formData.sgpa).filter(
+        ([, sgpa]) => sgpa && sgpa.trim() !== ''
+      )
+      if (sgpaEntries.length > 0) {
+        await Promise.all(
+          sgpaEntries.map(([semester, sgpa]) =>
+            createSemesterResult({
+              userId,
+              semester: parseInt(semester),
+              sgpa: parseFloat(sgpa),
+            })
+          )
+        )
+      }
+
+      if (formData.resume) {
+        const docFormData = new FormData()
+        docFormData.append('resume', formData.resume)
+        docFormData.append('userId', String(userId))
+        await uploadDocument(docFormData)
+      }
 
       setSubmitted(true)
     } catch (error) {
@@ -419,6 +452,14 @@ function PersonalInfoStep({ data, errors, onChange, onPhotoChange }) {
             placeholder="Enter your full name"
           />
         </Field>
+        <Field label="College Email" error={errors.email} required>
+          <input
+            type="email"
+            value={data.email}
+            onChange={e => onChange('email', e.target.value)}
+            placeholder="@gweca.ac.in"
+          />
+        </Field>
         <Field label="Personal Email" error={errors.personalEmail} required>
           <input
             type="email"
@@ -538,7 +579,7 @@ function AcademicInfoStep({ data, errors, onChange, onSgpaChange, getSemesterOpt
             {ADMISSION_YEARS.map(y => <option key={y} value={y}>{y}</option>)}
           </select>
         </Field>
-        <Field label="Graduation Year" error={errors.graduationYear}>
+        <Field label="Graduation Year" error={errors.graduationYear} required>
           <input
             type="text"
             value={data.graduationYear}
@@ -589,7 +630,7 @@ function AcademicInfoStep({ data, errors, onChange, onSgpaChange, getSemesterOpt
             placeholder="e.g. 8.5"
           />
         </Field>
-        <Field label="Active Backlogs (optional)" error={errors.activeBacklogs}>
+        <Field label="Active Backlogs" error={errors.activeBacklogs} required>
           <input
             type="text"
             value={data.activeBacklogs}
@@ -597,7 +638,7 @@ function AcademicInfoStep({ data, errors, onChange, onSgpaChange, getSemesterOpt
             placeholder="Number of active backlogs"
           />
         </Field>
-        <Field label="Passive Backlogs (optional)" error={errors.passiveBacklogs}>
+        <Field label="Passive Backlogs" error={errors.passiveBacklogs} required>
           <input
             type="text"
             value={data.passiveBacklogs}
@@ -711,7 +752,7 @@ function ContactInfoStep({ data, errors, onChange }) {
       <h3 className="section-label">Permanent Address</h3>
       <div className="form-grid">
         <div className="field-full">
-          <Field label="Permanent Address (optional)">
+          <Field label="Permanent Address" error={errors.permanentAddress} required>
             <textarea
               value={data.permanentAddress}
               onChange={e => onChange('permanentAddress', e.target.value)}
@@ -775,7 +816,7 @@ function DocumentsStep({ data, errors, onChange, onResumeChange }) {
       <h3 className="section-label">Academic Documents</h3>
       <div className="form-grid">
         <div className="field-full">
-          <Field label="Resume (optional)" error={errors.resume}>
+          <Field label="Resume" error={errors.resume} required>
             <div className="file-upload" onClick={() => document.getElementById('resume-input')?.click()}>
               <Upload size={20} />
               <span>{data.resumeName || 'Upload Resume (PDF, DOC)'}</span>

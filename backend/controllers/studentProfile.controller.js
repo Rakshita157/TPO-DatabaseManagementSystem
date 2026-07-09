@@ -142,14 +142,14 @@ const getDocument = async (req, res) => {
 const uploadDocument = async (req, res) => {
   try {
     const data = {
-      userId: Number(req.body.userId),
-      resumeUrl: req.file.path,
+      userId: req.user.userId,
+      resumeUrl: req.body.resumeUrl,
     };
 
     const document = await uploadDocumentService(data);
 
     res.status(201).json({
-      message: "Resume uploaded successfully",
+      message: "Resume link saved successfully",
       document,
     });
   } catch (error) {
@@ -165,11 +165,13 @@ const updateDocument = async (req, res) => {
 
     const document = await updateDocumentService(
       Number(userId),
-      req.body
+      {
+        resumeUrl: req.body.resumeUrl,
+      }
     );
 
     res.json({
-      message: "Document updated successfully",
+      message: "Resume link updated successfully",
       document,
     });
   } catch (error) {

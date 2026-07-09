@@ -133,6 +133,8 @@ export default function Registration() {
       if (!d.dateOfBirth) newErrors.dateOfBirth = 'Date of birth is required'
       if (!d.aadharNumber.trim()) newErrors.aadharNumber = 'Aadhar number is required'
       else if (!/^\d{12}$/.test(d.aadharNumber)) newErrors.aadharNumber = 'Must be 12 digits'
+      if (!d.whatsappNumber.trim()) newErrors.whatsappNumber = 'WhatsApp number is required'
+      else if (!/^\d{10}$/.test(d.whatsappNumber)) newErrors.whatsappNumber = 'Must be 10 digits'
     }
 
     if (step === 1) {
@@ -157,6 +159,8 @@ export default function Registration() {
       if (!d.graduationYear) newErrors.graduationYear = 'Graduation year is required'
       if (!d.activeBacklogs.trim()) newErrors.activeBacklogs = 'Active backlogs is required'
       if (!d.passiveBacklogs.trim()) newErrors.passiveBacklogs = 'Passive backlogs is required'
+      if (!d.cgpa.trim()) newErrors.cgpa = 'CGPA is required'
+      else if (isNaN(parseFloat(d.cgpa)) || parseFloat(d.cgpa) < 0 || parseFloat(d.cgpa) > 10) newErrors.cgpa = 'Enter a valid CGPA (0-10)'
     }
 
     if (step === 2) {
@@ -217,7 +221,7 @@ export default function Registration() {
         dob: new Date(formData.dateOfBirth).toISOString(),
         gender: 'Female',
         phoneNumber: formData.mobileNumber,
-        whatsappNumber: formData.whatsappNumber || null,
+        whatsappNumber: formData.whatsappNumber,
         alternatePhone: formData.alternateMobile || null,
         alternateEmail: formData.alternateEmail || null,
         currentAddress: formData.currentAddress,
@@ -235,7 +239,7 @@ export default function Registration() {
         twelfthBoard: formData.twelfthBoard,
         diplomaPercentage: formData.diplomaPercentage ? parseFloat(formData.diplomaPercentage) : null,
         diplomaYear: formData.diplomaYear ? parseInt(formData.diplomaYear) : null,
-        cgpa: formData.cgpa ? parseFloat(formData.cgpa) : null,
+        cgpa: parseFloat(formData.cgpa),
         activeBacklogs: parseInt(formData.activeBacklogs),
         passiveBacklogs: parseInt(formData.passiveBacklogs),
         linkedinUrl: formData.linkedinUrl || null,
@@ -484,7 +488,7 @@ function PersonalInfoStep({ data, errors, onChange, onPhotoChange }) {
             placeholder="9876543210"
           />
         </Field>
-        <Field label="WhatsApp Number (optional)" error={errors.whatsappNumber}>
+        <Field label="WhatsApp Number" error={errors.whatsappNumber} required>
           <input
             type="tel"
             value={data.whatsappNumber}
@@ -622,7 +626,7 @@ function AcademicInfoStep({ data, errors, onChange, onSgpaChange, getSemesterOpt
 
       <h3 className="section-label">Current Academic Performance</h3>
       <div className="form-grid">
-        <Field label="CGPA (optional)" error={errors.cgpa}>
+        <Field label="CGPA" error={errors.cgpa} required>
           <input
             type="text"
             value={data.cgpa}

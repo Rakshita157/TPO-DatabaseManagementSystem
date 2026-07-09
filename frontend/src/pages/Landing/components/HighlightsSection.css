@@ -37,4 +37,3 @@
 .highlight-item:nth-child(2)::before { background: #22c55e; }
 .highlight-item:nth-child(3)::before { background: #f59e0b; }
 .highlight-item:nth-child(4)::before { background: #a855f7; }
-.highlight-item:nth-child(5)::before { background: #ef4444; }

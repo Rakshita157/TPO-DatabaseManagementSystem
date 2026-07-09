@@ -687,7 +687,14 @@
 .resume-info p {
   font-size: 0.8rem;
   color: #64748b;
-  margin: 0;
+  margin: 0 0 4px 0;
+}
+
+.resume-link {
+  font-size: 0.75rem;
+  color: #1e3a8a;
+  word-break: break-all;
+  text-decoration: underline;
 }
 
 .resume-actions {
@@ -911,6 +918,11 @@
 .modal-field textarea {
   resize: vertical;
   min-height: 60px;
+}
+
+.modal-field-hint {
+  font-size: 0.78rem;
+  color: #94a3b8;
 }
 
 .modal-field input[type="file"] {

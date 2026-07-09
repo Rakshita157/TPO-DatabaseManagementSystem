@@ -1,4 +1,4 @@
-import { Users, Briefcase, TrendingUp, Building2, Trophy, UserCheck } from 'lucide-react';
+import { Users, Briefcase, TrendingUp, Trophy, UserCheck } from 'lucide-react';
 import useScrollAnimation from '../../../hooks/useScrollAnimation';
 import './HighlightsSection.css';
 
@@ -6,7 +6,6 @@ const placementHighlights = [
   { value: '2,487+', label: 'Students Registered', icon: Users },
   { value: '1,735+', label: 'Students Placed', icon: UserCheck },
   { value: '69.8%', label: 'Placement Rate', icon: TrendingUp },
-  { value: '150+', label: 'Recruiting Companies', icon: Building2 },
   { value: '₹ 52 LPA', label: 'Highest Package', icon: Trophy },
 ];
 

@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback, useRef } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { 
   Bell, ChevronDown, Calendar, FileText, 
@@ -56,7 +56,6 @@ export default function StudentProfile() {
   const [editForm, setEditForm] = useState({});
   const [saving, setSaving] = useState(false);
   const [saveError, setSaveError] = useState('');
-  const fileInputRef = useRef(null);
 
   const storedUser = JSON.parse(localStorage.getItem('user') || '{}');
   const userId = storedUser.id;
@@ -147,7 +146,7 @@ export default function StudentProfile() {
         };
         break;
       case 'resume':
-        form = {};
+        form = { resumeUrl: resumeDoc?.resumeUrl || '' };
         break;
     }
     setEditForm(form);
@@ -229,12 +228,9 @@ export default function StudentProfile() {
           break;
         }
         case 'resume': {
-          const file = editForm.file;
-          if (file) {
-            const formData = new FormData();
-            formData.append('resume', file);
-            formData.append('userId', String(userId));
-            await uploadDocument(formData);
+          const url = editForm.resumeUrl?.trim();
+          if (url) {
+            await uploadDocument({ resumeUrl: url });
           }
           break;
         }
@@ -293,7 +289,6 @@ export default function StudentProfile() {
   const isVerified = profile.isVerified;
   const lastUpdated = formatDate(profile.updatedAt);
 
-  const resumeFileName = resumeDoc?.resumeUrl?.split('\\').pop()?.split('/').pop() || 'Not uploaded';
   const resumeUploadedOn = formatDate(resumeDoc?.uploadedAt);
   const resumeUrl = resumeDoc?.resumeUrl || '';
 
@@ -714,8 +709,13 @@ export default function StudentProfile() {
               <div className="resume-file">
                 <div className="pdf-icon">PDF</div>
                 <div className="resume-info">
-                  <h4>{resumeDoc ? resumeFileName : 'Not Uploaded'}</h4>
+                  <h4>{resumeDoc ? 'Resume Uploaded' : 'Not Uploaded'}</h4>
                   <p>{resumeDoc ? `Uploaded on ${resumeUploadedOn}` : 'No resume uploaded yet'}</p>
+                  {resumeDoc && resumeUrl && (
+                    <a href={resumeUrl} target="_blank" rel="noopener noreferrer" className="resume-link">
+                      {resumeUrl}
+                    </a>
+                  )}
                 </div>
               </div>
               {resumeDoc && (
@@ -730,12 +730,6 @@ export default function StudentProfile() {
                   </button>
                 </div>
               )}
-              <div className={`expanded-content ${expanded.resume ? 'show' : ''}`}>
-                <div className="info-row">
-                  <span className="info-label">File Path</span>
-                  <span className="info-value" style={{ fontSize: '0.8rem', wordBreak: 'break-all' }}>{resumeUrl || 'N/A'}</span>
-                </div>
-              </div>
             </div>
             <button className="view-details-btn" onClick={() => toggleSection('resume')}>
               {expanded.resume ? 'Show Less' : 'View Details'} {expanded.resume ? <ChevronUp size={16} /> : '\u2192'}
@@ -988,21 +982,14 @@ export default function StudentProfile() {
               {editingSection === 'resume' && (
                 <div className="modal-form">
                   <div className="modal-field">
-                    <label>Upload Resume (PDF, DOC)</label>
+                    <label>Resume Link</label>
                     <input
-                      type="file"
-                      accept=".pdf,.doc,.docx"
-                      ref={fileInputRef}
-                      onChange={e => {
-                        const file = e.target.files?.[0];
-                        if (file) updateField('file', file);
-                      }}
+                      type="url"
+                      value={editForm.resumeUrl || ''}
+                      onChange={e => updateField('resumeUrl', e.target.value)}
+                      placeholder="https://drive.google.com/file/d/..."
                     />
-                    {editForm.file && (
-                      <p style={{ fontSize: '0.85rem', color: '#16a34a', marginTop: '8px' }}>
-                        Selected: {editForm.file.name}
-                      </p>
-                    )}
+                    <span className="modal-field-hint">Paste your Google Drive or cloud storage link</span>
                   </div>
                 </div>
               )}

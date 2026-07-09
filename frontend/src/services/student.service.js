@@ -14,7 +14,5 @@ export const updateUser = (userId, data) => api.put(`/user/${userId}`, data);
 
 export const createSemesterResult = (data) => api.post('/semester-results', data);
 
-export const uploadDocument = (formData) =>
-  api.post('/documents', formData, {
-    headers: { 'Content-Type': 'multipart/form-data' },
-  });
+export const uploadDocument = (data) =>
+  api.post('/documents', data);

@@ -14,13 +14,11 @@ export default function HeroSection({ settings, loading, getImageUrl, collegeIma
             Our mission is to empower students with skills, guidance and<br />
             industry connections to build successful careers.
           </p>
-          <div className="hero-actions">
-            <button className="hero-btn-primary" onClick={() => window.location.href = '/auth'}>
-              Student Login →
-            </button>
-          </div>
-          <p className="hero-subtext">
-            New user? <a href="/auth">Sign up to create your profile</a>
+          <p className="hero-description">
+            The Training &amp; Placement Cell at GWECA works closely with
+            industry partners to bring diverse recruitment opportunities,
+            internships, and skill development programs — ensuring every
+            student is well-prepared for their professional journey.
           </p>
         </div>
 

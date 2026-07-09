@@ -46,7 +46,7 @@ export default function LoginForm({ onSwitchToSignup, onForgotPassword }) {
       }
       localStorage.setItem('user', JSON.stringify(user));
 
-      navigate('/dashboard');
+      navigate('/');
     } catch (error) {
       const message =
         error.response?.data?.message || 'Something went wrong. Please try again.';

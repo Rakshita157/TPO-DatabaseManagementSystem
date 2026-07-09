@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import {
-  Check, ChevronRight, ChevronLeft, Upload,
+  Check, ChevronRight, ChevronLeft,
   User, GraduationCap, MapPin, FileText,
   CheckCircle, Home, Camera, Info
 } from 'lucide-react'
@@ -31,7 +31,7 @@ const INITIAL_DATA = {
   alternateMobile: '',
   currentAddress: '', permanentAddress: '',
   nativeCity: '', nativeDistrict: '', nativeState: '', pinCode: '',
-  resume: null, resumeName: '',
+  resumeUrl: '',
   linkedinUrl: '',
   sgpa: {},
 }
@@ -126,14 +126,6 @@ export default function Registration() {
     }
   }
 
-  const handleResumeChange = (e) => {
-    const file = e.target.files?.[0]
-    if (file) {
-      updateField('resume', file)
-      updateField('resumeName', file.name)
-    }
-  }
-
   const validateStep = (step) => {
     const newErrors = {}
     const d = formData
@@ -190,7 +182,7 @@ export default function Registration() {
     }
 
     if (step === 3) {
-      if (!d.resume) newErrors.resume = 'Resume is required'
+      if (!d.resumeUrl.trim()) newErrors.resume = 'Resume link is required'
     }
 
     setErrors(newErrors)
@@ -279,11 +271,8 @@ export default function Registration() {
         )
       }
 
-      if (formData.resume) {
-        const docFormData = new FormData()
-        docFormData.append('resume', formData.resume)
-        docFormData.append('userId', String(userId))
-        await uploadDocument(docFormData)
+      if (formData.resumeUrl.trim()) {
+        await uploadDocument({ resumeUrl: formData.resumeUrl })
       }
 
       setSubmitted(true)
@@ -316,7 +305,7 @@ export default function Registration() {
             <div className="success-actions">
               <button className="btn-primary" onClick={() => navigate('/')}>
                 <Home size={18} />
-                Go to Dashboard
+                Go to Home
               </button>
               <button className="btn-secondary" onClick={() => navigate('/auth')}>
                 Go to Login
@@ -408,7 +397,6 @@ export default function Registration() {
                 data={formData}
                 errors={errors}
                 onChange={updateField}
-                onResumeChange={handleResumeChange}
               />
             )}
           </div>
@@ -831,18 +819,20 @@ function ContactInfoStep({ data, errors, onChange }) {
   )
 }
 
-function DocumentsStep({ data, errors, onChange, onResumeChange }) {
+function DocumentsStep({ data, errors, onChange }) {
   return (
     <div className="step-form">
       <h3 className="section-label">Academic Documents</h3>
       <div className="form-grid">
         <div className="field-full">
-          <Field label="Resume" error={errors.resume} required>
-            <div className="file-upload" onClick={() => document.getElementById('resume-input')?.click()}>
-              <Upload size={20} />
-              <span>{data.resumeName || 'Upload Resume (PDF, DOC)'}</span>
-            </div>
-            <input type="file" id="resume-input" accept=".pdf,.doc,.docx" onChange={onResumeChange} hidden />
+          <Field label="Resume Link" error={errors.resume} required>
+            <input
+              type="url"
+              value={data.resumeUrl}
+              onChange={e => onChange('resumeUrl', e.target.value)}
+              placeholder="https://drive.google.com/file/d/..."
+            />
+            <span className="field-hint">Paste your Google Drive or cloud storage link</span>
           </Field>
         </div>
       </div>

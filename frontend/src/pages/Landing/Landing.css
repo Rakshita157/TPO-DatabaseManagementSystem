@@ -262,14 +262,14 @@
 
 .highlights-grid {
   display: grid;
-  grid-template-columns: repeat(5, 1fr);
+  grid-template-columns: repeat(4, 1fr);
   gap: 20px;
 }
 
 .highlight-item {
   background: white;
-  padding: 22px 14px;
-  border-radius: 10px;
+  padding: 28px 18px;
+  border-radius: 12px;
   text-align: center;
   border: 1px solid rgba(15, 23, 42, 0.08);
   box-shadow: 0 4px 16px rgba(15, 23, 42, 0.06);
@@ -277,33 +277,52 @@
 }
 
 .highlight-item:hover {
-  transform: translateY(-3px);
+  transform: translateY(-4px);
   box-shadow: 0 12px 28px rgba(15, 23, 42, 0.12);
 }
 
 .highlight-icon {
-  width: 42px;
-  height: 42px;
-  margin: 0 auto 12px;
-  background: #dbeafe;
-  color: #1e3a8a;
-  border-radius: 50%;
+  width: 52px;
+  height: 52px;
+  margin: 0 auto 14px;
+  border-radius: 14px;
   display: flex;
   align-items: center;
   justify-content: center;
 }
 
+.highlight-item:nth-child(1) .highlight-icon {
+  background: #dbeafe;
+  color: #2563eb;
+}
+
+.highlight-item:nth-child(2) .highlight-icon {
+  background: #dcfce7;
+  color: #16a34a;
+}
+
+.highlight-item:nth-child(3) .highlight-icon {
+  background: #fef3c7;
+  color: #d97706;
+}
+
+.highlight-item:nth-child(4) .highlight-icon {
+  background: #f3e8ff;
+  color: #9333ea;
+}
+
 .highlight-value {
-  font-size: 1.4rem;
+  font-size: 1.5rem;
   font-weight: 800;
   color: #0f172a;
   margin: 0 0 6px 0;
 }
 
 .highlight-label {
-  font-size: 0.8rem;
+  font-size: 0.85rem;
   color: #64748b;
   margin: 0;
+  font-weight: 500;
 }
 
 /* About Section */
@@ -659,9 +678,7 @@ html {
 
   .highlights-grid {
     grid-template-columns: repeat(2, 1fr);
-  }
-
-  .about-content {
+  }  .about-content {
     grid-template-columns: 1fr;
   }
 

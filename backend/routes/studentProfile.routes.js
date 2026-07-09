@@ -27,7 +27,7 @@ router.put(
   updateSemesterResult
 );
 router.get("/documents/:userId", getDocument);
-router.put("/documents/:userId", updateDocument);
+router.put("/documents/:userId", upload.single("resume"),updateDocument);
 router.post(
   "/documents",
   upload.single("resume"),

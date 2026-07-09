@@ -30,8 +30,16 @@ const getStudentProfile = async (req, res) => {
 
 const createStudentProfile = async (req, res) => {
   try {
-  const profile = await createStudentProfileService(req.body);
+   console.log(req.user);
 
+const data = {
+  ...req.body,
+  userId: req.user.userId,
+};
+
+console.log(data);
+
+const profile = await createStudentProfileService(data);
     res.status(201).json({
       message: "Student profile created successfully",
       profile,

@@ -1,5 +1,6 @@
 const express = require("express");
 const router = express.Router();
+const verifyToken = require("../middleware/auth.middleware");
 
 const {
   getStudentProfile,
@@ -18,7 +19,7 @@ const {
 const upload = require("../middleware/upload.middleware");
 
 router.get("/student-profile/:userId", getStudentProfile);
-router.post("/student-profile", createStudentProfile);
+router.post("/student-profile",verifyToken, createStudentProfile);
 router.put("/student-profile/:userId", updateStudentProfile);
 router.post("/semester-results", createSemesterResult);
 router.get("/semester-results/:userId", getSemesterResults);

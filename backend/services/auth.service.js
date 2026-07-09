@@ -1,6 +1,6 @@
 const prisma = require("../config/prisma");
 const bcrypt = require("bcrypt");
-
+const jwt = require("jsonwebtoken");
 //signup
 const signup = async (data) => {
   const { fullName, collegeEmail, password } = data;
@@ -60,9 +60,23 @@ const login = async (data) => {
     throw new Error("Invalid email or password");
   }
 
+  const token = jwt.sign(
+  {
+    userId: user.id,
+    role: user.role,
+  },
+  process.env.JWT_SECRET,
+  {
+    expiresIn: "7d",
+  }
+);
+
 const { password: _, ...userWithoutPassword } = user;
 
-return userWithoutPassword;
+return {
+  user: userWithoutPassword,
+  token,
+};
 };
 
 

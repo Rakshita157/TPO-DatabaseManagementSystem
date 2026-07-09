@@ -1,6 +1,7 @@
 const {
      signup: signupService ,
     login: loginService,
+    updateUser: updateUserService,
 } = require("../services/auth.service");
 
 //Signup 
@@ -38,7 +39,18 @@ const login = async (req, res) => {
 };
 
 
+const updateUser = async (req, res) => {
+  try {
+    const { userId } = req.params;
+    const user = await updateUserService(Number(userId), req.body);
+    res.json({ message: "User updated successfully", user });
+  } catch (error) {
+    res.status(400).json({ message: error.message });
+  }
+};
+
 module.exports = {
   signup,
   login,
+  updateUser,
 };

@@ -1,15 +1,12 @@
 import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
-import axios from 'axios'
 import {
   Check, ChevronRight, ChevronLeft, Upload,
   User, GraduationCap, MapPin, FileText,
   CheckCircle, Home, Camera, Info
 } from 'lucide-react'
-import { createSemesterResult, uploadDocument } from '../../services/student.service'
+import { createStudentProfile, createSemesterResult, uploadDocument } from '../../services/student.service'
 import './Registration.css'
-
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000'
 
 const STEPS = [
   { id: 0, title: 'Personal Information', icon: User, subtitle: 'Basic details & account setup' },
@@ -19,7 +16,7 @@ const STEPS = [
 ]
 
 const INITIAL_DATA = {
-  fullName: '', email: '', password: '', personalEmail: '', alternateEmail: '',
+  fullName: '', email: '', personalEmail: '', alternateEmail: '',
   profilePhoto: null, profilePhotoPreview: '',
   mobileNumber: '', whatsappNumber: '', dateOfBirth: '',
   aadharNumber: '', panNumber: '',
@@ -75,6 +72,25 @@ export default function Registration() {
   const [submitted, setSubmitted] = useState(false)
   const [submitting, setSubmitting] = useState(false)
   const [submitError, setSubmitError] = useState('')
+
+  useEffect(() => {
+    const token = localStorage.getItem('token')
+    if (!token) {
+      navigate('/auth')
+      return
+    }
+    const storedUser = localStorage.getItem('user')
+    if (storedUser) {
+      try {
+        const user = JSON.parse(storedUser)
+        setFormData(prev => ({
+          ...prev,
+          fullName: user.fullName || '',
+          email: user.collegeEmail || '',
+        }))
+      } catch (_) {}
+    }
+  }, [navigate])
 
   useEffect(() => {
     if (formData.admissionYear && formData.course) {
@@ -197,13 +213,14 @@ export default function Registration() {
     setSubmitError('')
 
     try {
-      const { data: userData } = await axios.post(`${API_URL}/signup`, {
-        fullName: formData.fullName,
-        collegeEmail: formData.email,
-        password: formData.password,
-      })
-
-      const userId = userData.user.id
+      const storedUser = localStorage.getItem('user')
+      if (!storedUser) {
+        setSubmitError('You must be logged in to register')
+        setSubmitting(false)
+        return
+      }
+      const user = JSON.parse(storedUser)
+      const userId = user.id
 
       const profilePayload = {
         userId,
@@ -245,7 +262,7 @@ export default function Registration() {
         linkedinUrl: formData.linkedinUrl || null,
       }
 
-      await axios.post(`${API_URL}/student-profile`, profilePayload)
+      await createStudentProfile(profilePayload)
 
       const sgpaEntries = Object.entries(formData.sgpa).filter(
         ([, sgpa]) => sgpa && sgpa.trim() !== ''
@@ -452,7 +469,7 @@ function PersonalInfoStep({ data, errors, onChange, onPhotoChange }) {
           <input
             type="text"
             value={data.fullName}
-            onChange={e => onChange('fullName', e.target.value)}
+            readOnly
             placeholder="Enter your full name"
           />
         </Field>
@@ -460,7 +477,7 @@ function PersonalInfoStep({ data, errors, onChange, onPhotoChange }) {
           <input
             type="email"
             value={data.email}
-            onChange={e => onChange('email', e.target.value)}
+            readOnly
             placeholder="@gweca.ac.in"
           />
         </Field>

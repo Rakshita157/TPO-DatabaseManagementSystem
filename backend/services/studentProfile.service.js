@@ -75,8 +75,10 @@ const getDocument = async (userId) => {
 };
 
 const uploadDocument = async (data) => {
-  return await prisma.document.create({
-    data,
+  return await prisma.document.upsert({
+    where: { userId: data.userId },
+    update: data,
+    create: data,
   });
 };
 

@@ -44,7 +44,7 @@ export default function Dashboard() {
           gap: '20px',
         }}
       >
-        <DashboardCard title="My Profile" description="View and edit your profile information" />
+        <DashboardCard title="My Profile" description="View and edit your profile information" onClick={() => navigate('/student/profile')} />
         <DashboardCard title="Placement Drives" description="View upcoming and ongoing placement drives" />
         <DashboardCard title="Applications" description="Track your job applications" />
         <DashboardCard title="Documents" description="Upload and manage your documents" />
@@ -53,9 +53,10 @@ export default function Dashboard() {
   );
 }
 
-function DashboardCard({ title, description }) {
+function DashboardCard({ title, description, onClick }) {
   return (
     <div
+      onClick={onClick}
       style={{
         background: 'white',
         borderRadius: '12px',

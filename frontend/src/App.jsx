@@ -3,6 +3,7 @@ import Landing from './pages/Landing/Landing'
 import AuthContainer from './pages/Auth/AuthContainer'
 import Registration from './pages/Student/Registration'
 import Dashboard from './pages/Student/Dashboard'
+import StudentProfile from './pages/Student/Profile'
 import './App.css'
 
 function App() {
@@ -13,6 +14,7 @@ function App() {
         <Route path="/auth" element={<AuthContainer />} />
         <Route path="/student-registration" element={<Registration />} />
         <Route path="/dashboard" element={<Dashboard />} />
+        <Route path="/student/profile" element={<StudentProfile />} />
       </Routes>
     </Router>
   )

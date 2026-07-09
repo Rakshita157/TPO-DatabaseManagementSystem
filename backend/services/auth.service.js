@@ -82,7 +82,18 @@ return {
 
 
 
+const updateUser = async (userId, data) => {
+  const { fullName } = data;
+  const user = await prisma.user.update({
+    where: { id: userId },
+    data: { fullName },
+  });
+  const { password: _, ...userWithoutPassword } = user;
+  return userWithoutPassword;
+};
+
 module.exports = {
   signup,
-  login
+  login,
+  updateUser,
 };

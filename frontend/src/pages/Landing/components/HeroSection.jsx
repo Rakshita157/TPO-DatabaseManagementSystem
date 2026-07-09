@@ -14,12 +14,6 @@ export default function HeroSection({ settings, loading, getImageUrl, collegeIma
             Our mission is to empower students with skills, guidance and<br />
             industry connections to build successful careers.
           </p>
-          <p className="hero-description">
-            The Training &amp; Placement Cell at GWECA works closely with
-            industry partners to bring diverse recruitment opportunities,
-            internships, and skill development programs — ensuring every
-            student is well-prepared for their professional journey.
-          </p>
         </div>
 
         <div className="tpo-card">

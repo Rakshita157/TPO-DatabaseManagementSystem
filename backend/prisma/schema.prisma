@@ -86,7 +86,7 @@ model StudentProfile {
   gender                String
 
   phoneNumber           String   @unique
-  whatsappNumber        String?
+  whatsappNumber        String
   alternatePhone        String?
   alternateEmail        String?
 
@@ -111,7 +111,7 @@ model StudentProfile {
   diplomaPercentage     Decimal?
   diplomaYear           Int?
 
-  cgpa                  Decimal?
+  cgpa                  Decimal
 
   activeBacklogs        Int
   passiveBacklogs       Int

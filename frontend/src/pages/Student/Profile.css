@@ -510,6 +510,34 @@
   color: #16a34a;
 }
 
+/* Section Subheader */
+.section-subheader {
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: #1e3a8a;
+  margin: 20px 0 12px 0;
+  padding-bottom: 6px;
+  border-bottom: 1px solid #e2e8f0;
+}
+
+.section-subheader:first-of-type {
+  margin-top: 0;
+}
+
+.info-grid-two {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 16px;
+  margin-bottom: 8px;
+}
+
+.info-grid-three {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 16px;
+  margin-bottom: 8px;
+}
+
 /* Information Sections */
 .info-sections {
   display: grid;

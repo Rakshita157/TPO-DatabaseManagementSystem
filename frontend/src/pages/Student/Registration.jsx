@@ -275,7 +275,7 @@ export default function Registration() {
         await uploadDocument({ resumeUrl: formData.resumeUrl })
       }
 
-      setSubmitted(true)
+      navigate('/student/profile')
     } catch (error) {
       const msg = error.response?.data?.message || error.message || 'Something went wrong'
       setSubmitError(msg)

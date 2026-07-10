@@ -82,6 +82,19 @@ return {
 
 
 
+const getMe = async (userId) => {
+  const user = await prisma.user.findUnique({
+    where: { id: userId },
+  });
+
+  if (!user) {
+    throw new Error("User not found");
+  }
+
+  const { password: _, ...userWithoutPassword } = user;
+  return userWithoutPassword;
+};
+
 const updateUser = async (userId, data) => {
   const { fullName } = data;
   const user = await prisma.user.update({
@@ -95,5 +108,6 @@ const updateUser = async (userId, data) => {
 module.exports = {
   signup,
   login,
+  getMe,
   updateUser,
 };

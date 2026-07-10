@@ -1,7 +1,8 @@
 const {
-     signup: signupService ,
-    login: loginService,
-    updateUser: updateUserService,
+  signup: signupService,
+  login: loginService,
+  getMe: getMeService,
+  updateUser: updateUserService,
 } = require("../services/auth.service");
 
 //Signup 
@@ -39,6 +40,15 @@ const login = async (req, res) => {
 };
 
 
+const getMe = async (req, res) => {
+  try {
+    const user = await getMeService(req.user.userId);
+    res.json({ user });
+  } catch (error) {
+    res.status(401).json({ message: "Invalid token or user not found" });
+  }
+};
+
 const updateUser = async (req, res) => {
   try {
     const { userId } = req.params;
@@ -52,5 +62,6 @@ const updateUser = async (req, res) => {
 module.exports = {
   signup,
   login,
+  getMe,
   updateUser,
 };

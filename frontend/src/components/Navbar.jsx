@@ -1,10 +1,27 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Menu, X } from 'lucide-react';
+import { getMe } from '../services/auth.service';
 import './Navbar.css';
 import collegeLogo from '../assets/logos/govt.mahila_engineering-removebg-preview.png';
 
 export default function Navbar() {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
+
+  useEffect(() => {
+    const token = localStorage.getItem('token');
+    if (!token) {
+      setIsLoggedIn(false);
+      return;
+    }
+    getMe()
+      .then(() => setIsLoggedIn(true))
+      .catch(() => {
+        localStorage.removeItem('token');
+        localStorage.removeItem('user');
+        setIsLoggedIn(false);
+      });
+  }, []);
 
   const toggleMenu = () => {
     setIsMenuOpen(!isMenuOpen);
@@ -28,14 +45,16 @@ export default function Navbar() {
           <li><a href="/student-registration" className="navbar-link">Register</a></li>
         </ul>
 
-        <div className="navbar-actions">
-          <button className="navbar-btn navbar-btn-secondary" onClick={() => window.location.href = '/auth'}>
-            Student Login
-          </button>
-          <button className="navbar-btn navbar-btn-primary" onClick={() => window.location.href = '/auth'}>
-            Admin Login
-          </button>
-        </div>
+        {!isLoggedIn && (
+          <div className="navbar-actions">
+            <button className="navbar-btn navbar-btn-secondary" onClick={() => window.location.href = '/auth'}>
+              Student Login
+            </button>
+            <button className="navbar-btn navbar-btn-primary" onClick={() => window.location.href = '/auth'}>
+              Admin Login
+            </button>
+          </div>
+        )}
 
         <button className="navbar-mobile-toggle" onClick={toggleMenu} aria-label="Toggle menu">
           {isMenuOpen ? <X size={24} /> : <Menu size={24} />}
@@ -49,14 +68,16 @@ export default function Navbar() {
           <li><a href="#contact" className="navbar-link">Contact</a></li>
           <li><a href="/student-registration" className="navbar-link">Register</a></li>
         </ul>
-        <div className="navbar-actions">
-          <button className="navbar-btn navbar-btn-secondary" onClick={() => window.location.href = '/auth'}>
-            Student Login
-          </button>
-          <button className="navbar-btn navbar-btn-primary" onClick={() => window.location.href = '/auth'}>
-            Admin Login
-          </button>
-        </div>
+        {!isLoggedIn && (
+          <div className="navbar-actions">
+            <button className="navbar-btn navbar-btn-secondary" onClick={() => window.location.href = '/auth'}>
+              Student Login
+            </button>
+            <button className="navbar-btn navbar-btn-primary" onClick={() => window.location.href = '/auth'}>
+              Admin Login
+            </button>
+          </div>
+        )}
       </div>
     </nav>
   );

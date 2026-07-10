@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { 
   Bell, ChevronDown, Calendar, FileText, 
   User, GraduationCap, Phone, Mail, MapPin,
-  Edit, Eye, RefreshCw, Headphones, Clock, ChevronUp, X, Save
+  Edit, Headphones, Clock, ChevronUp, X, Save
 } from 'lucide-react';
 import { 
   getStudentProfile, getSemesterResults, getDocument,
@@ -41,31 +41,6 @@ function toDateInputValue(dateStr) {
   if (!dateStr) return '';
   const d = new Date(dateStr);
   return d.toISOString().split('T')[0];
-}
-
-const REQUIRED_COMPLETION_FIELDS = [
-  'btuRollNumber', 'enrollmentNumber', 'collegeId',
-  'course', 'admissionYear', 'graduationYear', 'currentYear', 'currentSemester',
-  'dob', 'gender',
-  'phoneNumber', 'whatsappNumber',
-  'currentAddress', 'permanentAddress', 'nativeCity', 'nativeDistrict', 'nativeState',
-  'aadharNumber',
-  'tenthPercentage', 'tenthYear', 'tenthBoard',
-  'twelfthPercentage', 'twelfthYear', 'twelfthBoard',
-  'cgpa',
-];
-
-function computeCompletion(profile) {
-  if (!profile) return { percentage: 0, filled: 0, total: REQUIRED_COMPLETION_FIELDS.length };
-  const filled = REQUIRED_COMPLETION_FIELDS.filter(f => {
-    const val = profile[f];
-    return val !== null && val !== undefined && val !== '';
-  }).length;
-  return {
-    percentage: Math.round((filled / REQUIRED_COMPLETION_FIELDS.length) * 100),
-    filled,
-    total: REQUIRED_COMPLETION_FIELDS.length,
-  };
 }
 
 export default function StudentProfile() {
@@ -167,11 +142,13 @@ export default function StudentProfile() {
           nativeCity: profile?.nativeCity || '',
           nativeDistrict: profile?.nativeDistrict || '',
           nativeState: profile?.nativeState || '',
-          linkedinUrl: profile?.linkedinUrl || '',
         };
         break;
       case 'resume':
-        form = { resumeUrl: resumeDoc?.resumeUrl || '' };
+        form = {
+          resumeUrl: resumeDoc?.resumeUrl || '',
+          linkedinUrl: profile?.linkedinUrl || '',
+        };
         break;
     }
     setEditForm(form);
@@ -248,7 +225,6 @@ export default function StudentProfile() {
             nativeCity: editForm.nativeCity,
             nativeDistrict: editForm.nativeDistrict,
             nativeState: editForm.nativeState,
-            linkedinUrl: editForm.linkedinUrl || null,
           });
           break;
         }
@@ -257,6 +233,9 @@ export default function StudentProfile() {
           if (url) {
             await uploadDocument({ resumeUrl: url });
           }
+          await updateStudentProfile(userId, {
+            linkedinUrl: editForm.linkedinUrl || null,
+          });
           break;
         }
       }
@@ -314,7 +293,6 @@ export default function StudentProfile() {
   const isVerified = profile.isVerified;
   const lastUpdated = formatDate(profile.updatedAt);
 
-  const completion = computeCompletion(profile);
   const resumeUploadedOn = formatDate(resumeDoc?.uploadedAt);
   const resumeUrl = resumeDoc?.resumeUrl || '';
 
@@ -464,13 +442,6 @@ export default function StudentProfile() {
               <span className="stat-value success">{resumeDoc ? 'Uploaded' : 'Not Uploaded'}</span>
             </div>
           </div>
-          <div className="stat-card">
-            <User className="stat-icon purple" />
-            <div className="stat-content">
-              <span className="stat-label">Profile Completion</span>
-              <span className="stat-value">{completion.percentage === 100 ? '100%' : `${completion.percentage}%`}</span>
-            </div>
-          </div>
         </section>
 
         <section className="info-sections">
@@ -526,122 +497,108 @@ export default function StudentProfile() {
               </button>
             </div>
             <div className="info-card-body">
-              <h4 className="section-subheader">University Info</h4>
-              <div className="info-grid-three">
-                <div className="info-grid-item">
-                  <span className="info-label">University Roll No.</span>
-                  <span className="info-value">{profile.btuRollNumber}</span>
-                </div>
-                <div className="info-grid-item">
-                  <span className="info-label">Enrollment No.</span>
-                  <span className="info-value">{profile.enrollmentNumber}</span>
-                </div>
-                <div className="info-grid-item">
+              <div className="info-row">
+                <span className="info-label">University Roll No.</span>
+                <span className="info-value">{profile.btuRollNumber}</span>
+              </div>
+              <div className="info-row">
+                <span className="info-label">Enrollment No.</span>
+                <span className="info-value">{profile.enrollmentNumber}</span>
+              </div>
+              <div className="info-row">
+                <span className="info-label">Course</span>
+                <span className="info-value">{courseDisplay}</span>
+              </div>
+              <div className="info-row">
+                <span className="info-label">Department</span>
+                <span className="info-value">{department || 'N/A'}</span>
+              </div>
+              <div className={`expanded-content ${expanded.academic ? 'show' : ''}`}>
+                <div className="info-row">
                   <span className="info-label">College ID</span>
                   <span className="info-value">{profile.collegeId}</span>
                 </div>
-              </div>
-              <div className="info-grid-four">
-                <div className="info-grid-item">
-                  <span className="info-label">Course</span>
-                  <span className="info-value">{courseDisplay}</span>
+                <div className="info-row">
+                  <span className="info-label">Batch</span>
+                  <span className="info-value">{batch}</span>
                 </div>
-                <div className="info-grid-item">
-                  <span className="info-label">Department</span>
-                  <span className="info-value">{department || 'N/A'}</span>
-                </div>
-                <div className="info-grid-item">
+                <div className="info-row">
                   <span className="info-label">Admission Year</span>
                   <span className="info-value">{profile.admissionYear}</span>
                 </div>
-                <div className="info-grid-item">
-                  <span className="info-label">Grad. Year</span>
+                <div className="info-row">
+                  <span className="info-label">Graduation Year</span>
                   <span className="info-value">{profile.graduationYear}</span>
                 </div>
-              </div>
-              <div className="info-grid-two">
-                <div className="info-grid-item">
+                <div className="info-row">
                   <span className="info-label">Current Year</span>
                   <span className="info-value">{profile.currentYear}</span>
                 </div>
-                <div className="info-grid-item">
+                <div className="info-row">
                   <span className="info-label">Current Semester</span>
                   <span className="info-value">{profile.currentSemester}</span>
                 </div>
-              </div>
-
-              <h4 className="section-subheader">10th Standard</h4>
-              <div className="info-grid-three">
-                <div className="info-grid-item">
-                  <span className="info-label">Percentage</span>
+                <div className="info-row">
+                  <span className="info-label">10th Percentage</span>
                   <span className="info-value">{Number(profile.tenthPercentage).toFixed(2)}%</span>
                 </div>
-                <div className="info-grid-item">
-                  <span className="info-label">Year of Passing</span>
+                <div className="info-row">
+                  <span className="info-label">10th Year</span>
                   <span className="info-value">{profile.tenthYear}</span>
                 </div>
-                <div className="info-grid-item">
-                  <span className="info-label">Board</span>
+                <div className="info-row">
+                  <span className="info-label">10th Board</span>
                   <span className="info-value">{profile.tenthBoard}</span>
                 </div>
-              </div>
-
-              <h4 className="section-subheader">12th Standard</h4>
-              <div className="info-grid-three">
-                <div className="info-grid-item">
-                  <span className="info-label">Percentage</span>
+                <div className="info-row">
+                  <span className="info-label">12th Percentage</span>
                   <span className="info-value">{Number(profile.twelfthPercentage).toFixed(2)}%</span>
                 </div>
-                <div className="info-grid-item">
-                  <span className="info-label">Year of Passing</span>
+                <div className="info-row">
+                  <span className="info-label">12th Year</span>
                   <span className="info-value">{profile.twelfthYear}</span>
                 </div>
-                <div className="info-grid-item">
-                  <span className="info-label">Board</span>
+                <div className="info-row">
+                  <span className="info-label">12th Board</span>
                   <span className="info-value">{profile.twelfthBoard}</span>
                 </div>
-              </div>
-
-              {(profile.diplomaPercentage || profile.diplomaYear) && (
-                <>
-                  <h4 className="section-subheader">Diploma</h4>
-                  <div className="info-grid-two">
-                    <div className="info-grid-item">
-                      <span className="info-label">Percentage</span>
-                      <span className="info-value">{profile.diplomaPercentage ? `${Number(profile.diplomaPercentage).toFixed(2)}%` : '-'}</span>
-                    </div>
-                    <div className="info-grid-item">
-                      <span className="info-label">Year of Passing</span>
-                      <span className="info-value">{profile.diplomaYear || '-'}</span>
-                    </div>
+                {profile.diplomaPercentage != null && (
+                  <div className="info-row">
+                    <span className="info-label">Diploma Percentage</span>
+                    <span className="info-value">{Number(profile.diplomaPercentage).toFixed(2)}%</span>
                   </div>
-                </>
-              )}
-
-              <h4 className="section-subheader">Current Performance</h4>
-              <div className="info-grid-three">
-                <div className="info-grid-item">
+                )}
+                {profile.diplomaYear != null && (
+                  <div className="info-row">
+                    <span className="info-label">Diploma Year</span>
+                    <span className="info-value">{profile.diplomaYear}</span>
+                  </div>
+                )}
+                <div className="info-row">
                   <span className="info-label">CGPA</span>
                   <span className="info-value">{Number(profile.cgpa).toFixed(2)}</span>
                 </div>
-                <div className="info-grid-item">
+                <div className="info-row">
                   <span className="info-label">Active Backlogs</span>
                   <span className="info-value">{profile.activeBacklogs}</span>
                 </div>
-                <div className="info-grid-item">
+                <div className="info-row">
                   <span className="info-label">Passive Backlogs</span>
                   <span className="info-value">{profile.passiveBacklogs}</span>
                 </div>
+                {semesterResults.length > 0 && (
+                  <div className="info-row">
+                    <span className="info-label">SGPA</span>
+                    <span className="info-value">
+                      {semesterResults.map(sr => `Sem ${sr.semester}: ${Number(sr.sgpa).toFixed(2)}`).join(', ')}
+                    </span>
+                  </div>
+                )}
               </div>
-              {semesterResults.length > 0 && (
-                <div className="info-row" style={{ marginTop: '8px' }}>
-                  <span className="info-label">SGPA</span>
-                  <span className="info-value">
-                    {semesterResults.map(sr => `Sem ${sr.semester}: ${Number(sr.sgpa).toFixed(2)}`).join(', ')}
-                  </span>
-                </div>
-              )}
             </div>
+            <button className="view-details-btn" onClick={() => toggleSection('academic')}>
+              {expanded.academic ? 'Show Less' : 'View Details'} {expanded.academic ? <ChevronUp size={16} /> : '\u2192'}
+            </button>
           </div>
 
           {/* Contact Information */}
@@ -716,63 +673,48 @@ export default function StudentProfile() {
                 <span className="info-label">District</span>
                 <span className="info-value">{profile.nativeDistrict}</span>
               </div>
-              <div className="info-row">
-                <span className="info-label">State</span>
-                <span className="info-value">{profile.nativeState}</span>
-              </div>
-              <div className="info-row">
-                <span className="info-label">LinkedIn</span>
-                <span className="info-value">{profile.linkedinUrl || 'Not Provided'}</span>
+              <div className={`expanded-content ${expanded.address ? 'show' : ''}`}>
+                <div className="info-row">
+                  <span className="info-label">State</span>
+                  <span className="info-value">{profile.nativeState}</span>
+                </div>
               </div>
             </div>
+            <button className="view-details-btn" onClick={() => toggleSection('address')}>
+              {expanded.address ? 'Show Less' : 'View Details'} {expanded.address ? <ChevronUp size={16} /> : '\u2192'}
+            </button>
           </div>
 
-          {/* Resume */}
+          {/* Resume & LinkedIn */}
           <div className="info-card">
             <div className="info-card-header">
               <div className="info-card-title">
                 <FileText className="info-icon purple" />
-                <h3>Resume</h3>
+                <h3>Resume & LinkedIn</h3>
               </div>
               <button className="edit-icon-btn" onClick={() => openEdit('resume')}>
                 <Edit size={18} />
               </button>
             </div>
-            <div className="resume-content">
-              {resumeDoc ? (
-                <>
-                  <div className="resume-file">
-                    <div className="pdf-icon">PDF</div>
-                    <div className="resume-info">
-                      <h4>Resume Uploaded</h4>
-                      <p>Uploaded on {resumeUploadedOn}</p>
-                      {resumeUrl && (
-                        <a href={resumeUrl} target="_blank" rel="noopener noreferrer" className="resume-link">
-                          {resumeUrl}
-                        </a>
-                      )}
-                    </div>
-                  </div>
-                  <div className="resume-actions">
-                    <a href={resumeUrl} target="_blank" rel="noopener noreferrer" className="resume-action-btn view" style={{ textDecoration: 'none' }}>
-                      <Eye size={16} />
-                      View
+            <div className="info-card-body">
+              <div className="info-row">
+                <span className="info-label">Resume</span>
+                <span className="info-value">{resumeDoc ? 'Uploaded' : 'Not Provided'}</span>
+              </div>
+              {resumeDoc && resumeUrl && (
+                <div className="info-row">
+                  <span className="info-label">Resume Link</span>
+                  <span className="info-value">
+                    <a href={resumeUrl} target="_blank" rel="noopener noreferrer" style={{ color: '#1e3a8a', textDecoration: 'underline' }}>
+                      View Resume
                     </a>
-                    <button className="resume-action-btn replace" onClick={() => openEdit('resume')}>
-                      <RefreshCw size={16} />
-                      Replace
-                    </button>
-                  </div>
-                </>
-              ) : (
-                <div className="resume-file">
-                  <div className="pdf-icon">PDF</div>
-                  <div className="resume-info">
-                    <h4>Not Provided</h4>
-                    <p>No resume uploaded yet</p>
-                  </div>
+                  </span>
                 </div>
               )}
+              <div className="info-row">
+                <span className="info-label">LinkedIn URL</span>
+                <span className="info-value">{profile.linkedinUrl || 'Not Provided'}</span>
+              </div>
             </div>
           </div>
         </section>
@@ -788,7 +730,7 @@ export default function StudentProfile() {
                 {editingSection === 'academic' && 'Edit Academic Information'}
                 {editingSection === 'contact' && 'Edit Contact Information'}
                 {editingSection === 'address' && 'Edit Address & Location'}
-                {editingSection === 'resume' && 'Upload Resume'}
+                {editingSection === 'resume' && 'Resume & LinkedIn'}
               </h2>
               <button className="modal-close-btn" onClick={closeEdit}>
                 <X size={20} />
@@ -1011,10 +953,6 @@ export default function StudentProfile() {
                       {INDIAN_STATES.map(s => <option key={s} value={s}>{s}</option>)}
                     </select>
                   </div>
-                  <div className="modal-field">
-                    <label>LinkedIn URL</label>
-                    <input type="url" value={editForm.linkedinUrl || ''} onChange={e => updateField('linkedinUrl', e.target.value)} placeholder="https://linkedin.com/in/username" />
-                  </div>
                 </div>
               )}
 
@@ -1030,6 +968,10 @@ export default function StudentProfile() {
                       placeholder="https://drive.google.com/file/d/..."
                     />
                     <span className="modal-field-hint">Paste your Google Drive or cloud storage link</span>
+                  </div>
+                  <div className="modal-field">
+                    <label>LinkedIn URL</label>
+                    <input type="url" value={editForm.linkedinUrl || ''} onChange={e => updateField('linkedinUrl', e.target.value)} placeholder="https://linkedin.com/in/username" />
                   </div>
                 </div>
               )}

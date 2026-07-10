@@ -510,34 +510,6 @@
   color: #16a34a;
 }
 
-/* Section Subheader */
-.section-subheader {
-  font-size: 0.85rem;
-  font-weight: 700;
-  color: #1e3a8a;
-  margin: 20px 0 12px 0;
-  padding-bottom: 6px;
-  border-bottom: 1px solid #e2e8f0;
-}
-
-.section-subheader:first-of-type {
-  margin-top: 0;
-}
-
-.info-grid-two {
-  display: grid;
-  grid-template-columns: repeat(2, 1fr);
-  gap: 16px;
-  margin-bottom: 8px;
-}
-
-.info-grid-three {
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 16px;
-  margin-bottom: 8px;
-}
-
 /* Information Sections */
 .info-sections {
   display: grid;
@@ -676,96 +648,7 @@
   color: #1e40af;
 }
 
-/* Resume Card */
-.resume-content {
-  padding: 24px;
-}
-
-.resume-file {
-  display: flex;
-  align-items: center;
-  gap: 16px;
-  padding: 16px;
-  background: #fef2f2;
-  border-radius: 8px;
-  margin-bottom: 16px;
-}
-
-.pdf-icon {
-  width: 56px;
-  height: 56px;
-  background: #dc2626;
-  color: white;
-  border-radius: 8px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 0.85rem;
-  font-weight: 700;
-  flex-shrink: 0;
-}
-
-.resume-info h4 {
-  font-size: 1rem;
-  font-weight: 600;
-  color: #0f172a;
-  margin: 0 0 4px 0;
-}
-
-.resume-info p {
-  font-size: 0.8rem;
-  color: #64748b;
-  margin: 0 0 4px 0;
-}
-
-.resume-link {
-  font-size: 0.75rem;
-  color: #1e3a8a;
-  word-break: break-all;
-  text-decoration: underline;
-}
-
-.resume-actions {
-  display: grid;
-  grid-template-columns: repeat(2, 1fr);
-  gap: 12px;
-}
-
-.resume-action-btn {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 8px;
-  padding: 10px 16px;
-  border: 1px solid #e2e8f0;
-  border-radius: 8px;
-  font-size: 0.9rem;
-  font-weight: 600;
-  cursor: pointer;
-  transition: all 0.2s ease;
-}
-
-.resume-action-btn.view {
-  background: white;
-  color: #1e3a8a;
-}
-
-.resume-action-btn.view:hover {
-  background: #f8fafc;
-  border-color: #1e3a8a;
-}
-
-.resume-action-btn.replace {
-  background: white;
-  color: #f59e0b;
-}
-
-.resume-action-btn.replace:hover {
-  background: #fff7ed;
-  border-color: #f59e0b;
-}
-
-/* Expanded Section */
+/* View Details button with icon */
 .expanded-content {
   display: none;
 }

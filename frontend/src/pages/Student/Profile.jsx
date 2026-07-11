@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { 
   Bell, ChevronDown, Calendar, FileText, 
   User, GraduationCap, Phone, Mail, MapPin,
-  Edit, Headphones, Clock, ChevronUp, X, Save
+  Edit, ChevronUp, X, Save
 } from 'lucide-react';
 import { 
   getStudentProfile, getSemesterResults, getDocument,
@@ -291,9 +291,6 @@ export default function StudentProfile() {
   const courseDisplay = COURSE_LABELS[profile.course] || profile.course;
   const department = profile.department || profile.mbaSpecialization1 || '';
   const isVerified = profile.isVerified;
-  const lastUpdated = formatDate(profile.updatedAt);
-
-  const resumeUploadedOn = formatDate(resumeDoc?.uploadedAt);
   const resumeUrl = resumeDoc?.resumeUrl || '';
 
   const handleLogout = () => {
@@ -329,43 +326,6 @@ export default function StudentProfile() {
             Logout
           </button>
         </nav>
-
-        <div className="sidebar-section">
-          <div className="section-title">PROFILE UPDATE</div>
-          <div className="update-alert">
-            <Bell className="alert-icon" />
-            <p>Keep your profile updated for better placement opportunities.</p>
-          </div>
-          <button className="update-btn">
-            Update Now <ChevronDown size={16} />
-          </button>
-        </div>
-
-        <div className="sidebar-section">
-          <div className="section-title">NEED ASSISTANCE?</div>
-          <div className="help-section">
-            <Headphones className="help-icon" />
-            <h4>We're here to help!</h4>
-            <p>For any queries related to profile, resume or portal.</p>
-            <div className="help-contacts">
-              <div className="help-contact-item">
-                <Mail size={14} />
-                tpo@gweca.ac.in
-              </div>
-              <div className="help-contact-item">
-                <Phone size={14} />
-                +91 87654 32109
-              </div>
-              <div className="help-contact-item">
-                <Clock size={14} />
-                Mon - Fri | 9:00 AM - 5:00 PM
-              </div>
-            </div>
-            <button className="contact-tpo-btn">
-              Contact TPO <ChevronDown size={16} />
-            </button>
-          </div>
-        </div>
 
         <div className="sidebar-footer">
           <p>&copy; 2025 T&P Cell</p>
@@ -423,23 +383,6 @@ export default function StudentProfile() {
                   <span className="detail-value">{batch}</span>
                 </div>
               </div>
-            </div>
-          </div>
-        </section>
-
-        <section className="quick-stats">
-          <div className="stat-card">
-            <Calendar className="stat-icon blue" />
-            <div className="stat-content">
-              <span className="stat-label">Last Updated</span>
-              <span className="stat-value">{lastUpdated || 'N/A'}</span>
-            </div>
-          </div>
-          <div className="stat-card">
-            <FileText className="stat-icon green" />
-            <div className="stat-content">
-              <span className="stat-label">Resume</span>
-              <span className="stat-value success">{resumeDoc ? 'Uploaded' : 'Not Uploaded'}</span>
             </div>
           </div>
         </section>
@@ -539,29 +482,89 @@ export default function StudentProfile() {
                   <span className="info-value">{profile.currentSemester}</span>
                 </div>
                 <div className="info-row">
-                  <span className="info-label">10th Percentage</span>
-                  <span className="info-value">{Number(profile.tenthPercentage).toFixed(2)}%</span>
+                  <span className="info-label">CGPA</span>
+                  <span className="info-value">{Number(profile.cgpa).toFixed(2)}</span>
                 </div>
                 <div className="info-row">
-                  <span className="info-label">10th Year</span>
-                  <span className="info-value">{profile.tenthYear}</span>
+                  <span className="info-label">Active Backlogs</span>
+                  <span className="info-value">{profile.activeBacklogs}</span>
                 </div>
                 <div className="info-row">
-                  <span className="info-label">10th Board</span>
-                  <span className="info-value">{profile.tenthBoard}</span>
+                  <span className="info-label">Passive Backlogs</span>
+                  <span className="info-value">{profile.passiveBacklogs}</span>
                 </div>
-                <div className="info-row">
-                  <span className="info-label">12th Percentage</span>
-                  <span className="info-value">{Number(profile.twelfthPercentage).toFixed(2)}%</span>
-                </div>
-                <div className="info-row">
-                  <span className="info-label">12th Year</span>
-                  <span className="info-value">{profile.twelfthYear}</span>
-                </div>
-                <div className="info-row">
-                  <span className="info-label">12th Board</span>
-                  <span className="info-value">{profile.twelfthBoard}</span>
-                </div>
+              </div>
+              {(() => {
+                const currentSem = parseInt(profile.currentSemester) || 0;
+                const filteredResults = semesterResults.filter(sr => sr.semester < currentSem);
+                if (filteredResults.length > 0) {
+                  return (
+                    <div className="sgpa-list">
+                      <span className="info-label sgpa-title">Semester-wise SGPA</span>
+                      <div className="sgpa-grid">
+                        {filteredResults.map(sr => (
+                          <div key={sr.semester} className="sgpa-item">
+                            <span className="sgpa-sem">Sem {sr.semester}</span>
+                            <span className="sgpa-value">{Number(sr.sgpa).toFixed(2)}</span>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  );
+                }
+                if (currentSem > 1) {
+                  return (
+                    <div className="sgpa-list">
+                      <span className="info-label sgpa-title">Semester-wise SGPA</span>
+                      <p style={{ fontSize: '0.85rem', color: '#94a3b8', margin: '8px 0 0' }}>No SGPA data available yet.</p>
+                    </div>
+                  );
+                }
+                return null;
+              })()}
+            </div>
+            <button className="view-details-btn" onClick={() => toggleSection('academic')}>
+              {expanded.academic ? 'Show Less' : 'View Details'} {expanded.academic ? <ChevronUp size={16} /> : '\u2192'}
+            </button>
+          </div>
+
+          {/* School Information */}
+          <div className="info-card">
+            <div className="info-card-header">
+              <div className="info-card-title">
+                <GraduationCap className="info-icon orange" />
+                <h3>School Information</h3>
+              </div>
+              <button className="edit-icon-btn" onClick={() => openEdit('academic')}>
+                <Edit size={18} />
+              </button>
+            </div>
+            <div className="info-card-body">
+              <div className="info-row">
+                <span className="info-label">10th Board</span>
+                <span className="info-value">{profile.tenthBoard}</span>
+              </div>
+              <div className="info-row">
+                <span className="info-label">10th Percentage</span>
+                <span className="info-value">{Number(profile.tenthPercentage).toFixed(2)}%</span>
+              </div>
+              <div className="info-row">
+                <span className="info-label">10th Passing Year</span>
+                <span className="info-value">{profile.tenthYear}</span>
+              </div>
+              <div className="info-row">
+                <span className="info-label">12th Board</span>
+                <span className="info-value">{profile.twelfthBoard}</span>
+              </div>
+              <div className="info-row">
+                <span className="info-label">12th Percentage</span>
+                <span className="info-value">{Number(profile.twelfthPercentage).toFixed(2)}%</span>
+              </div>
+              <div className="info-row">
+                <span className="info-label">12th Passing Year</span>
+                <span className="info-value">{profile.twelfthYear}</span>
+              </div>
+              <div className={`expanded-content ${expanded.school ? 'show' : ''}`}>
                 {profile.diplomaPercentage != null && (
                   <div className="info-row">
                     <span className="info-label">Diploma Percentage</span>
@@ -574,31 +577,13 @@ export default function StudentProfile() {
                     <span className="info-value">{profile.diplomaYear}</span>
                   </div>
                 )}
-                <div className="info-row">
-                  <span className="info-label">CGPA</span>
-                  <span className="info-value">{Number(profile.cgpa).toFixed(2)}</span>
-                </div>
-                <div className="info-row">
-                  <span className="info-label">Active Backlogs</span>
-                  <span className="info-value">{profile.activeBacklogs}</span>
-                </div>
-                <div className="info-row">
-                  <span className="info-label">Passive Backlogs</span>
-                  <span className="info-value">{profile.passiveBacklogs}</span>
-                </div>
-                {semesterResults.length > 0 && (
-                  <div className="info-row">
-                    <span className="info-label">SGPA</span>
-                    <span className="info-value">
-                      {semesterResults.map(sr => `Sem ${sr.semester}: ${Number(sr.sgpa).toFixed(2)}`).join(', ')}
-                    </span>
-                  </div>
-                )}
               </div>
             </div>
-            <button className="view-details-btn" onClick={() => toggleSection('academic')}>
-              {expanded.academic ? 'Show Less' : 'View Details'} {expanded.academic ? <ChevronUp size={16} /> : '\u2192'}
-            </button>
+            {(profile.diplomaPercentage != null || profile.diplomaYear != null) && (
+              <button className="view-details-btn" onClick={() => toggleSection('school')}>
+                {expanded.school ? 'Show Less' : 'View Details'} {expanded.school ? <ChevronUp size={16} /> : '\u2192'}
+              </button>
+            )}
           </div>
 
           {/* Contact Information */}

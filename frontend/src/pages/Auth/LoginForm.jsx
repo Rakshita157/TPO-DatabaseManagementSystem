@@ -46,7 +46,11 @@ export default function LoginForm({ onSwitchToSignup, onForgotPassword }) {
       }
       localStorage.setItem('user', JSON.stringify(user));
 
-      navigate('/');
+      if (user.role === 'ADMIN') {
+        navigate('/admin/dashboard');
+      } else {
+        navigate('/');
+      }
     } catch (error) {
       const message =
         error.response?.data?.message || 'Something went wrong. Please try again.';

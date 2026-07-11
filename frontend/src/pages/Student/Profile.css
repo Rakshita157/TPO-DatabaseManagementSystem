@@ -661,6 +661,47 @@
   padding-left: 0;
 }
 
+/* SGPA Grid */
+.sgpa-list {
+  padding: 12px 0;
+}
+
+.sgpa-title {
+  display: block;
+  margin-bottom: 12px;
+  font-weight: 600;
+  color: #0f172a;
+}
+
+.sgpa-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+  gap: 10px;
+}
+
+.sgpa-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 10px 12px;
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  gap: 4px;
+}
+
+.sgpa-sem {
+  font-size: 0.78rem;
+  color: #64748b;
+  font-weight: 500;
+}
+
+.sgpa-value {
+  font-size: 1rem;
+  font-weight: 700;
+  color: #1e3a8a;
+}
+
 /* Initial Avatar (large, hero) */
 .avatar-initial {
   width: 150px;

@@ -19,11 +19,13 @@ app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 const collegeSettingsRoutes = require("./routes/collegeSettings.routes");
 const authRoutes = require("./routes/auth.routes");
 const studentProfileRoutes = require("./routes/studentProfile.routes");
+const adminRoutes = require("./routes/admin.routes");
 
 
 //routes
 app.use("/college-settings", collegeSettingsRoutes);
 app.use("/", authRoutes);
 app.use("/", studentProfileRoutes);
+app.use("/admin", adminRoutes);
 
 module.exports = app;

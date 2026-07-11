@@ -1,9 +1,10 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { 
-  Bell, ChevronDown, Calendar, FileText, 
+  ChevronDown, Calendar, FileText, 
   User, GraduationCap, Phone, Mail, MapPin,
-  Edit, ChevronUp, X, Save
+  Edit, ChevronUp, X, Save, ExternalLink, CheckCircle,
+  Home, LogOut, Award
 } from 'lucide-react';
 import { 
   getStudentProfile, getSemesterResults, getDocument,
@@ -56,6 +57,10 @@ export default function StudentProfile() {
   const [editForm, setEditForm] = useState({});
   const [saving, setSaving] = useState(false);
   const [saveError, setSaveError] = useState('');
+  const [toast, setToast] = useState(null);
+  const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
+  const [confirmClose, setConfirmClose] = useState(false);
+  const pendingCloseRef = useRef(false);
 
   const storedUser = JSON.parse(localStorage.getItem('user') || '{}');
   const userId = storedUser.id;
@@ -84,6 +89,24 @@ export default function StudentProfile() {
     }
     fetchData();
   }, [userId, navigate, fetchData]);
+
+  useEffect(() => {
+    const handler = (e) => {
+      if (hasUnsavedChanges) {
+        e.preventDefault();
+        e.returnValue = '';
+      }
+    };
+    window.addEventListener('beforeunload', handler);
+    return () => window.removeEventListener('beforeunload', handler);
+  }, [hasUnsavedChanges]);
+
+  useEffect(() => {
+    if (toast) {
+      const timer = setTimeout(() => setToast(null), 3000);
+      return () => clearTimeout(timer);
+    }
+  }, [toast]);
 
   const toggleSection = (section) => {
     setExpanded(prev => ({ ...prev, [section]: !prev[section] }));
@@ -153,16 +176,35 @@ export default function StudentProfile() {
     }
     setEditForm(form);
     setEditingSection(section);
+    setHasUnsavedChanges(false);
   };
 
   const closeEdit = () => {
+    if (hasUnsavedChanges) {
+      pendingCloseRef.current = true;
+      setConfirmClose(true);
+      return;
+    }
     setEditingSection(null);
     setEditForm({});
     setSaveError('');
+    setHasUnsavedChanges(false);
+  };
+
+  const confirmCloseEdit = (discard) => {
+    setConfirmClose(false);
+    if (discard) {
+      setEditingSection(null);
+      setEditForm({});
+      setSaveError('');
+      setHasUnsavedChanges(false);
+    }
+    pendingCloseRef.current = false;
   };
 
   const updateField = (field, value) => {
     setEditForm(prev => ({ ...prev, [field]: value }));
+    setHasUnsavedChanges(true);
   };
 
   const handleSave = async () => {
@@ -239,9 +281,13 @@ export default function StudentProfile() {
           break;
         }
       }
-      closeEdit();
+      setHasUnsavedChanges(false);
+      setEditingSection(null);
+      setEditForm({});
+      setSaveError('');
       setLoading(true);
       await fetchData();
+      setToast('Profile updated successfully!');
     } catch (err) {
       setSaveError(err.response?.data?.message || err.message || 'Failed to save');
     } finally {
@@ -254,8 +300,8 @@ export default function StudentProfile() {
   if (loading && !profile) {
     return (
       <div className="profile-page">
-        <div className="profile-main" style={{ marginLeft: '280px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-          <p style={{ color: '#64748b', fontSize: '1.1rem' }}>Loading profile...</p>
+        <div className="profile-main" style={{ marginLeft: '240px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+          <p style={{ color: '#64748b', fontSize: '1rem' }}>Loading profile...</p>
         </div>
       </div>
     );
@@ -264,8 +310,8 @@ export default function StudentProfile() {
   if (error && !profile) {
     return (
       <div className="profile-page">
-        <div className="profile-main" style={{ marginLeft: '280px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-          <p style={{ color: '#ef4444', fontSize: '1.1rem' }}>{error}</p>
+        <div className="profile-main" style={{ marginLeft: '240px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+          <p style={{ color: '#ef4444', fontSize: '1rem' }}>{error}</p>
         </div>
       </div>
     );
@@ -274,9 +320,9 @@ export default function StudentProfile() {
   if (!profile) {
     return (
       <div className="profile-page">
-        <div className="profile-main" style={{ marginLeft: '280px', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: '16px' }}>
-          <p style={{ color: '#64748b', fontSize: '1.1rem' }}>No profile found. Please complete your registration first.</p>
-          <button className="edit-profile-btn" onClick={() => navigate('/student-registration')} style={{ width: 'auto', padding: '12px 32px' }}>
+        <div className="profile-main" style={{ marginLeft: '240px', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: '12px' }}>
+          <p style={{ color: '#64748b', fontSize: '1rem' }}>No profile found. Please complete your registration first.</p>
+          <button className="edit-profile-btn" onClick={() => navigate('/student-registration')} style={{ width: 'auto', padding: '10px 28px' }}>
             Complete Registration
           </button>
         </div>
@@ -301,10 +347,19 @@ export default function StudentProfile() {
 
   return (
     <div className="profile-page">
+      {toast && (
+        <div className="toast">
+          <CheckCircle size={18} />
+          <span>{toast}</span>
+        </div>
+      )}
+
       <aside className="profile-sidebar">
         <div className="sidebar-header">
           <div className="sidebar-logo">
-            <div className="logo-icon">&#x1F393;</div>
+            <div className="logo-icon-wrapper">
+              <Award size={22} />
+            </div>
             <div className="logo-text">
               <div className="logo-title">Training &</div>
               <div className="logo-title">Placement Cell</div>
@@ -318,11 +373,11 @@ export default function StudentProfile() {
             className={`nav-item ${activeTab === 'dashboard' ? 'active' : ''}`}
             onClick={() => navigate('/')}
           >
-            <span className="nav-icon">&#x1F3E0;</span>
+            <Home size={18} />
             Dashboard
           </button>
           <button className="nav-item" onClick={handleLogout}>
-            <span className="nav-icon">&#x1F6AA;</span>
+            <LogOut size={18} />
             Logout
           </button>
         </nav>
@@ -337,9 +392,6 @@ export default function StudentProfile() {
         <header className="profile-header">
           <h1>Dashboard</h1>
           <div className="header-actions">
-            <button className="notification-btn">
-              <Bell size={20} />
-            </button>
             <div className="user-menu">
               <div className="avatar-initial-small">{initial}</div>
               <span>{fullName}</span>
@@ -684,21 +736,29 @@ export default function StudentProfile() {
             <div className="info-card-body">
               <div className="info-row">
                 <span className="info-label">Resume</span>
-                <span className="info-value">{resumeDoc ? 'Uploaded' : 'Not Provided'}</span>
-              </div>
-              {resumeDoc && resumeUrl && (
-                <div className="info-row">
-                  <span className="info-label">Resume Link</span>
-                  <span className="info-value">
-                    <a href={resumeUrl} target="_blank" rel="noopener noreferrer" style={{ color: '#1e3a8a', textDecoration: 'underline' }}>
+                <span className="info-value">
+                  {resumeDoc && resumeUrl ? (
+                    <a href={resumeUrl} target="_blank" rel="noopener noreferrer" className="resume-link-btn">
+                      <ExternalLink size={14} />
                       View Resume
                     </a>
-                  </span>
-                </div>
-              )}
+                  ) : (
+                    '—'
+                  )}
+                </span>
+              </div>
               <div className="info-row">
                 <span className="info-label">LinkedIn URL</span>
-                <span className="info-value">{profile.linkedinUrl || 'Not Provided'}</span>
+                <span className="info-value">
+                  {profile.linkedinUrl ? (
+                    <a href={profile.linkedinUrl} target="_blank" rel="noopener noreferrer" className="linkedin-link-btn">
+                      <ExternalLink size={14} />
+                      LinkedIn Profile
+                    </a>
+                  ) : (
+                    '—'
+                  )}
+                </span>
               </div>
             </div>
           </div>
@@ -969,6 +1029,23 @@ export default function StudentProfile() {
               <button className="modal-save-btn" onClick={handleSave} disabled={saving}>
                 <Save size={16} />
                 {saving ? 'Saving...' : 'Save Changes'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {confirmClose && (
+        <div className="modal-overlay" onClick={() => confirmCloseEdit(false)}>
+          <div className="confirm-dialog" onClick={e => e.stopPropagation()}>
+            <h3>Unsaved Changes</h3>
+            <p>You have unsaved changes. Are you sure you want to discard them?</p>
+            <div className="confirm-actions">
+              <button className="confirm-cancel-btn" onClick={() => confirmCloseEdit(false)}>
+                Keep Editing
+              </button>
+              <button className="confirm-discard-btn" onClick={() => confirmCloseEdit(true)}>
+                Discard
               </button>
             </div>
           </div>

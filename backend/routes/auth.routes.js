@@ -8,6 +8,6 @@ const { signup, login, getMe, updateUser } = require("../controllers/auth.contro
 router.post("/signup", signup);
 router.post("/login", login);
 router.get("/me", verifyToken, getMe);
-router.put("/user/:userId", updateUser);
+router.put("/user/:userId",verifyToken, updateUser);
 
 module.exports = router;

@@ -18,16 +18,16 @@ const {
 
 
 
-router.get("/student-profile/:userId", getStudentProfile);
-router.post("/student-profile",verifyToken, createStudentProfile);
-router.put("/student-profile/:userId", updateStudentProfile);
-router.post("/semester-results", createSemesterResult);
-router.get("/semester-results/:userId", getSemesterResults);
-router.put(
-  "/semester-results/:userId/:semester",
-  updateSemesterResult
-);
+router.get("/student-profile/:userId", verifyToken, getStudentProfile);
+router.post("/student-profile", verifyToken, createStudentProfile);
+router.put("/student-profile/:userId", verifyToken, updateStudentProfile);
+
+router.post("/semester-results", verifyToken, createSemesterResult);
+router.get("/semester-results/:userId", verifyToken, getSemesterResults);
+router.put("/semester-results/:userId/:semester",verifyToken,updateSemesterResult);
+
 router.get("/documents/:userId", verifyToken, getDocument);
 router.post("/documents", verifyToken, uploadDocument);
 router.put("/documents/:userId", verifyToken, updateDocument);
+
 module.exports = router;

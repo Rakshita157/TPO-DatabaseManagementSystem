@@ -1,5 +1,4 @@
 const {
-  getDashboardStats,
   getStudents,
   getStudentById,
   updateStudentProfile,
@@ -8,15 +7,6 @@ const {
   exportStudents,
   getFilterOptions,
 } = require("../services/admin.service");
-
-const getStats = async (req, res) => {
-  try {
-    const stats = await getDashboardStats();
-    res.json(stats);
-  } catch (error) {
-    res.status(500).json({ message: error.message });
-  }
-};
 
 const listStudents = async (req, res) => {
   try {
@@ -122,7 +112,6 @@ const filters = async (req, res) => {
 };
 
 module.exports = {
-  getStats,
   listStudents,
   getStudent,
   editStudentProfile,

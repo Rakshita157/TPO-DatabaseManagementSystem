@@ -2,11 +2,10 @@ import { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
   Search, Filter, Download, ChevronDown, ChevronUp,
-  Edit, Trash2, Eye, Users, GraduationCap, TrendingUp,
-  CheckCircle, X, LogOut, ArrowUpDown
+  Trash2, Eye, X, LogOut, ArrowUpDown
 } from 'lucide-react';
 import {
-  getDashboardStats, getStudents, deleteStudent, exportStudents, getFilterOptions
+  getStudents, deleteStudent, exportStudents, getFilterOptions
 } from '../../services/admin.service';
 import './Dashboard.css';
 
@@ -16,7 +15,6 @@ export default function AdminDashboard() {
   const navigate = useNavigate();
   const storedUser = JSON.parse(localStorage.getItem('user') || '{}');
 
-  const [stats, setStats] = useState({ totalStudents: 0, placedStudents: 0, verifiedStudents: 0, placementRate: '0' });
   const [students, setStudents] = useState([]);
   const [total, setTotal] = useState(0);
   const [totalPages, setTotalPages] = useState(0);
@@ -49,12 +47,10 @@ export default function AdminDashboard() {
       if (searchField) params.search = searchField;
       Object.entries(filters).forEach(([k, v]) => { if (v) params[k] = v; });
 
-      const [statsRes, studentsRes, filtersRes] = await Promise.all([
-        getDashboardStats(),
+      const [studentsRes, filtersRes] = await Promise.all([
         getStudents(params),
         getFilterOptions(),
       ]);
-      setStats(statsRes.data);
       setStudents(studentsRes.data.students);
       setTotal(studentsRes.data.total);
       setTotalPages(studentsRes.data.totalPages);
@@ -180,27 +176,6 @@ export default function AdminDashboard() {
           </div>
         </div>
       </header>
-
-      <section className="admin-stats">
-        {[
-          { title: 'Total Students', value: stats.totalStudents, subtitle: 'Registered students', icon: Users, color: 'blue' },
-          { title: 'Verified Students', value: stats.verifiedStudents, subtitle: 'Profile verified', icon: CheckCircle, color: 'green' },
-          { title: 'Placed Students', value: stats.placedStudents, subtitle: `${stats.placementRate}% placement rate`, icon: TrendingUp, color: 'purple' },
-          { title: 'Active Profiles', value: stats.totalProfiles, subtitle: 'Completed profiles', icon: GraduationCap, color: 'orange' },
-        ].map((stat, index) => {
-          const Icon = stat.icon;
-          return (
-            <div key={index} className={`admin-stat-card ${stat.color}`}>
-              <div className="stat-card-icon"><Icon size={24} /></div>
-              <div className="stat-card-content">
-                <h3>{stat.title}</h3>
-                <div className="stat-card-value">{stat.value}</div>
-                <p>{stat.subtitle}</p>
-              </div>
-            </div>
-          );
-        })}
-      </section>
 
       <section className="students-section">
         <div className="section-header">

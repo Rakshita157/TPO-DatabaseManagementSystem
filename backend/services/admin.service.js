@@ -1,31 +1,5 @@
 const prisma = require("../config/prisma");
 
-const getDashboardStats = async () => {
-  const totalStudents = await prisma.user.count({
-    where: { role: "STUDENT" },
-  });
-
-  const placedStudents = await prisma.studentProfile.count({
-    where: { placementStatus: "PLACED" },
-  });
-
-  const verifiedStudents = await prisma.studentProfile.count({
-    where: { isVerified: true },
-  });
-
-  const totalWithProfiles = await prisma.studentProfile.count();
-
-  return {
-    totalStudents,
-    placedStudents,
-    verifiedStudents,
-    totalProfiles: totalWithProfiles,
-    placementRate: totalWithProfiles > 0
-      ? ((placedStudents / totalWithProfiles) * 100).toFixed(1)
-      : "0",
-  };
-};
-
 const getStudents = async ({ search, department, course, currentYear, currentSemester, admissionYear, graduationYear, gender, cgpaMin, cgpaMax, resumeUploaded, linkedinAdded, placementEligible, sortBy, sortOrder, page, limit }) => {
   const where = {
     user: { role: "STUDENT" },
@@ -178,7 +152,6 @@ const getFilterOptions = async () => {
 };
 
 module.exports = {
-  getDashboardStats,
   getStudents,
   getStudentById,
   updateStudentProfile,

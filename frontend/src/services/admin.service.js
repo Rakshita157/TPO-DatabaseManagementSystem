@@ -1,7 +1,5 @@
 import api from './api';
 
-export const getDashboardStats = () => api.get('/admin/stats');
-
 export const getStudents = (params) => api.get('/admin/students', { params });
 
 export const getStudentById = (userId) => api.get(`/admin/students/${userId}`);

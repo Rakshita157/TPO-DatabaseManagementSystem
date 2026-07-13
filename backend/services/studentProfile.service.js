@@ -64,6 +64,17 @@ const updateSemesterResult = async (userId, semester, data) => {
   return semesterResult;
 };
 
+const deleteSemesterResult = async (userId, semester) => {
+  await prisma.semesterResult.delete({
+    where: {
+      userId_semester: {
+        userId,
+        semester,
+      },
+    },
+  });
+};
+
 const getDocument = async (userId) => {
   const document = await prisma.document.findUnique({
     where: {
@@ -102,6 +113,7 @@ module.exports = {
   getSemesterResults,
   createSemesterResult,
   updateSemesterResult,
+  deleteSemesterResult,
 
   getDocument,
   uploadDocument,

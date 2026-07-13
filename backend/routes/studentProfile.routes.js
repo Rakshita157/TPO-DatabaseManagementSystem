@@ -10,6 +10,7 @@ const {
   createSemesterResult,
   getSemesterResults,
   updateSemesterResult,
+  deleteSemesterResult,
 
   getDocument,
   uploadDocument,
@@ -25,6 +26,7 @@ router.put("/student-profile/:userId", verifyToken, updateStudentProfile);
 router.post("/semester-results", verifyToken, createSemesterResult);
 router.get("/semester-results/:userId", verifyToken, getSemesterResults);
 router.put("/semester-results/:userId/:semester",verifyToken,updateSemesterResult);
+router.delete("/semester-results/:userId/:semester", verifyToken, deleteSemesterResult);
 
 router.get("/documents/:userId", verifyToken, getDocument);
 router.post("/documents", verifyToken, uploadDocument);

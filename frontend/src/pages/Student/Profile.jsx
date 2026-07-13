@@ -4,11 +4,12 @@ import {
   ChevronDown, Calendar, FileText, 
   User, GraduationCap, Phone, Mail, MapPin,
   Edit, ChevronUp, X, Save, ExternalLink, CheckCircle,
-  Home, LogOut, Award
+  Home, LogOut, Award, Plus
 } from 'lucide-react';
 import { 
   getStudentProfile, getSemesterResults, getDocument,
-  updateStudentProfile, updateUser, uploadDocument
+  updateStudentProfile, updateUser, uploadDocument,
+  createSemesterResult, updateSemesterResult
 } from '../../services/student.service';
 import './Profile.css';
 
@@ -148,6 +149,9 @@ export default function StudentProfile() {
           cgpa: profile?.cgpa?.toString() || '',
           activeBacklogs: profile?.activeBacklogs || '',
           passiveBacklogs: profile?.passiveBacklogs || '',
+          sgpa: semesterResults.length > 0
+            ? semesterResults.map(sr => ({ semester: sr.semester, sgpa: sr.sgpa?.toString() || '' }))
+            : [],
         };
         break;
       case 'contact':
@@ -207,6 +211,26 @@ export default function StudentProfile() {
     setHasUnsavedChanges(true);
   };
 
+  const addSgpaField = () => {
+    const current = editForm.sgpa || [];
+    const nextSem = current.length > 0 ? Math.max(...current.map(s => s.semester)) + 1 : 1;
+    setEditForm(prev => ({ ...prev, sgpa: [...prev.sgpa, { semester: nextSem, sgpa: '' }] }));
+    setHasUnsavedChanges(true);
+  };
+
+  const updateSgpaEntry = (index, value) => {
+    const updated = [...editForm.sgpa];
+    updated[index] = { ...updated[index], sgpa: value };
+    setEditForm(prev => ({ ...prev, sgpa: updated }));
+    setHasUnsavedChanges(true);
+  };
+
+  const removeSgpaEntry = (index) => {
+    const updated = editForm.sgpa.filter((_, i) => i !== index);
+    setEditForm(prev => ({ ...prev, sgpa: updated }));
+    setHasUnsavedChanges(true);
+  };
+
   const handleSave = async () => {
     setSaving(true);
     setSaveError('');
@@ -249,6 +273,17 @@ export default function StudentProfile() {
             passiveBacklogs: parseInt(editForm.passiveBacklogs || '0'),
           };
           await updateStudentProfile(userId, payload);
+
+          const existingSemesters = new Set(semesterResults.map(sr => sr.semester));
+          const sgpaEntries = (editForm.sgpa || []).filter(s => s.sgpa !== '');
+          await Promise.all(
+            sgpaEntries.map(entry => {
+              if (existingSemesters.has(entry.semester)) {
+                return updateSemesterResult(userId, entry.semester, { sgpa: parseFloat(entry.sgpa) });
+              }
+              return createSemesterResult({ userId, semester: entry.semester, sgpa: parseFloat(entry.sgpa) });
+            })
+          );
           break;
         }
         case 'contact': {
@@ -320,11 +355,19 @@ export default function StudentProfile() {
   if (!profile) {
     return (
       <div className="profile-page">
-        <div className="profile-main" style={{ marginLeft: '240px', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: '12px' }}>
-          <p style={{ color: '#64748b', fontSize: '1rem' }}>No profile found. Please complete your registration first.</p>
-          <button className="edit-profile-btn" onClick={() => navigate('/student-registration')} style={{ width: 'auto', padding: '10px 28px' }}>
-            Complete Registration
-          </button>
+        <div className="no-profile-empty">
+          <div className="no-profile-card">
+            <div className="no-profile-icon-wrapper">
+              <User size={48} strokeWidth={1.5} />
+            </div>
+            <h2 className="no-profile-title">No Profile Found</h2>
+            <p className="no-profile-text">
+              You haven't completed your student profile yet. Please complete your registration to access your dashboard.
+            </p>
+            <button className="no-profile-btn" onClick={() => navigate('/student-registration')}>
+              Complete Registration
+            </button>
+          </div>
         </div>
       </div>
     );
@@ -947,6 +990,34 @@ export default function StudentProfile() {
                     <label>Passive Backlogs</label>
                     <input type="text" value={editForm.passiveBacklogs || ''} onChange={e => updateField('passiveBacklogs', e.target.value.replace(/\D/g, ''))} placeholder="0" />
                   </div>
+                  <h4 className="modal-section-label">Semester SGPA</h4>
+                  {(editForm.sgpa || []).length > 0 ? (
+                    <div className="modal-sgpa-grid">
+                      {(editForm.sgpa || []).map((entry, index) => (
+                        <div key={entry.semester} className="modal-sgpa-card">
+                          <div className="modal-sgpa-card-header">
+                            <span className="modal-sgpa-badge">Sem {entry.semester}</span>
+                            <button type="button" className="modal-sgpa-remove-btn" onClick={() => removeSgpaEntry(index)}>
+                              <X size={12} />
+                            </button>
+                          </div>
+                          <input
+                            type="text"
+                            className="modal-sgpa-input"
+                            value={entry.sgpa}
+                            onChange={e => updateSgpaEntry(index, e.target.value.replace(/[^0-9.]/g, ''))}
+                            placeholder="e.g. 8.5"
+                          />
+                        </div>
+                      ))}
+                    </div>
+                  ) : (
+                    <p className="modal-sgpa-empty">No SGPA entries yet. Add your semester-wise SGPA below.</p>
+                  )}
+                  <button type="button" className="modal-sgpa-add-btn" onClick={addSgpaField}>
+                    <Plus size={14} />
+                    Add Semester
+                  </button>
                 </div>
               )}
 

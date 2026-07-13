@@ -222,3 +222,67 @@
     font-size: 0.7rem;
   }
 }
+
+.no-profile-modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 2000;
+}
+
+.no-profile-modal {
+  background: white;
+  border-radius: 12px;
+  padding: 32px;
+  max-width: 400px;
+  width: 90%;
+  position: relative;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.2);
+}
+
+.no-profile-modal-close {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  background: none;
+  border: none;
+  color: #64748b;
+  cursor: pointer;
+  padding: 4px;
+  border-radius: 4px;
+  transition: color 0.2s;
+}
+
+.no-profile-modal-close:hover {
+  color: #1e293b;
+}
+
+.no-profile-modal-body {
+  text-align: center;
+}
+
+.no-profile-modal-body p {
+  font-size: 1rem;
+  color: #475569;
+  margin: 0 0 24px;
+  line-height: 1.6;
+}
+
+.no-profile-modal-btn {
+  background: #1e3a8a;
+  color: white;
+  border: none;
+  padding: 12px 28px;
+  border-radius: 8px;
+  font-size: 0.95rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.no-profile-modal-btn:hover {
+  background: #1e40af;
+}

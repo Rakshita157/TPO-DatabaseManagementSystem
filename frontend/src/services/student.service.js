@@ -14,5 +14,7 @@ export const updateUser = (userId, data) => api.put(`/user/${userId}`, data);
 
 export const createSemesterResult = (data) => api.post('/semester-results', data);
 
+export const updateSemesterResult = (userId, semester, data) => api.put(`/semester-results/${userId}/${semester}`, data);
+
 export const uploadDocument = (data) =>
   api.post('/documents', data);

@@ -6,6 +6,7 @@ const {
   getSemesterResults: getSemesterResultsService,
   createSemesterResult: createSemesterResultService,
   updateSemesterResult: updateSemesterResultService,
+  deleteSemesterResult: deleteSemesterResultService,
 
   getDocument: getDocumentService,
   uploadDocument: uploadDocumentService,
@@ -125,6 +126,25 @@ const updateSemesterResult = async (req, res) => {
 
 };
 
+const deleteSemesterResult = async (req, res) => {
+  try {
+    const { userId, semester } = req.params;
+
+    await deleteSemesterResultService(
+      Number(userId),
+      Number(semester)
+    );
+
+    res.json({
+      message: "Semester result deleted successfully",
+    });
+  } catch (error) {
+    res.status(400).json({
+      message: error.message,
+    });
+  }
+};
+
 const getDocument = async (req, res) => {
   try {
     const { userId } = req.params;
@@ -189,6 +209,7 @@ module.exports = {
   createSemesterResult,
   getSemesterResults,
   updateSemesterResult,
+  deleteSemesterResult,
 
   getDocument,
   uploadDocument,

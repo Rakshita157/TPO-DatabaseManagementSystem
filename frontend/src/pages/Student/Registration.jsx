@@ -23,7 +23,7 @@ const INITIAL_DATA = {
   course: '', department: '',
   mbaSpecialization1: '', mbaSpecialization2: '',
   admissionYear: '', graduationYear: '', currentYear: '', currentSemester: '',
-  btuRollNumber: '', enrollmentNumber: '',
+  collegeId: '', btuRollNumber: '', enrollmentNumber: '',
   cgpa: '', activeBacklogs: '', passiveBacklogs: '',
   tenthPercentage: '', tenthYear: '', tenthBoard: '',
   twelfthPercentage: '', twelfthYear: '', twelfthBoard: '',
@@ -156,6 +156,7 @@ export default function Registration() {
       if (!d.admissionYear) newErrors.admissionYear = 'Please select admission year'
       if (!d.currentYear) newErrors.currentYear = 'Please select current year'
       if (!d.currentSemester) newErrors.currentSemester = 'Please select semester'
+      if (!d.collegeId.trim()) newErrors.collegeId = 'College ID is required'
       if (!d.btuRollNumber.trim()) newErrors.btuRollNumber = 'BTU roll number is required'
       if (!d.enrollmentNumber.trim()) newErrors.enrollmentNumber = 'Enrollment number is required'
       if (!d.tenthPercentage.trim()) newErrors.tenthPercentage = '10th percentage is required'
@@ -224,7 +225,7 @@ export default function Registration() {
         graduationYear: parseInt(formData.graduationYear),
         currentYear: parseInt(formData.currentYear || '1'),
         currentSemester: parseInt(formData.currentSemester),
-        collegeId: `GWECA_${userId}`,
+        collegeId: formData.collegeId,
         btuRollNumber: formData.btuRollNumber,
         enrollmentNumber: formData.enrollmentNumber,
         dob: new Date(formData.dateOfBirth).toISOString(),
@@ -610,6 +611,14 @@ function AcademicInfoStep({ data, errors, onChange, onSgpaChange, getSemesterOpt
             <option value="">Select semester</option>
             {getSemesterOptions().map(s => <option key={s} value={s}>{s}</option>)}
           </select>
+        </Field>
+        <Field label="College ID" error={errors.collegeId} required>
+          <input
+            type="text"
+            value={data.collegeId}
+            onChange={e => onChange('collegeId', e.target.value)}
+            placeholder="e.g. 23CAC091"
+          />
         </Field>
         <Field label="BTU Roll Number" error={errors.btuRollNumber} required>
           <input

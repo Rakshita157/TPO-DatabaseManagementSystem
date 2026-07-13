@@ -143,7 +143,7 @@ const allowedSortFields = [
     "department",
     "cgpa",
     "activeBacklogs",
-    "currentYear",
+
     "currentSemester",
   ];
 
@@ -198,7 +198,16 @@ const allowedSortFields = [
             uploadedAt: true,
           },
         },
-      },
+         semesterResults: {
+    select: {
+      semester: true,
+      sgpa: true,
+    },
+    orderBy: {
+      semester: "asc",
+    },
+  },
+},
       orderBy,
       skip,
       take: pageSize,
@@ -336,6 +345,7 @@ const exportStudents = async (filters) => {
 const getFilterOptions = async () => {
   const [
     departments,
+     courses,
     admissionYears,
     graduationYears,
   ] = await Promise.all([
@@ -348,6 +358,15 @@ const getFilterOptions = async () => {
         department: "asc",
       },
     }),
+prisma.studentProfile.findMany({
+  distinct: ["course"],
+  select: {
+    course: true,
+  },
+  orderBy: {
+        course: "asc",
+      },
+}),
 
     prisma.studentProfile.findMany({
       distinct: ["admissionYear"],
@@ -374,6 +393,10 @@ const getFilterOptions = async () => {
     departments: departments
       .map((item) => item.department)
       .filter(Boolean),
+
+      courses: courses
+    .map((item) => item.course)
+    .filter(Boolean),
 
     admissionYears: admissionYears.map(
       (item) => item.admissionYear

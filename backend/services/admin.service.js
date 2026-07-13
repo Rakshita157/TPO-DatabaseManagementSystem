@@ -1,87 +1,218 @@
 const prisma = require("../config/prisma");
 
-const getStudents = async ({ search, department, course, currentYear, currentSemester, admissionYear, graduationYear, gender, cgpaMin, cgpaMax, resumeUploaded, linkedinAdded, placementEligible, sortBy, sortOrder, page, limit }) => {
+const getStudents = async ({
+  search,
+  course,
+  department,
+  admissionYear,
+  graduationYear,
+  currentYear,
+  currentSemester,
+  gender,
+  cgpaMin,
+  cgpaMax,
+  resumeUploaded,
+  linkedinAdded,
+  profileStatus,
+  placementStatus,
+  isVerified,
+  sortBy,
+  sortOrder,
+  page = 1,
+  limit = 15,
+}) => {
+  if (!course || !graduationYear) {
+    return {
+      students: [],
+      total: 0,
+      page: Number(page) || 1,
+      limit: Number(limit) || 15,
+      totalPages: 0,
+    };
+  }
+
   const where = {
-    user: { role: "STUDENT" },
+    course,
+    graduationYear: Number(graduationYear),
+    user: {
+      role: "STUDENT",
+    },
   };
 
-  if (search) {
+  if (search?.trim()) {
+    const keyword = search.trim();
+
     where.OR = [
-      { user: { fullName: { contains: search } } },
-      { user: { collegeEmail: { contains: search } } },
-      { collegeId: { contains: search } },
-      { btuRollNumber: { contains: search } },
-      { enrollmentNumber: { contains: search } },
+      {
+        user: {
+          fullName: {
+            contains: keyword,
+            mode: "insensitive",
+          },
+        },
+      },
+      {
+        user: {
+          collegeEmail: {
+            contains: keyword,
+            mode: "insensitive",
+          },
+        },
+      },
+      {
+        collegeId: {
+          contains: keyword,
+          mode: "insensitive",
+        },
+      },
+      {
+        btuRollNumber: {
+          contains: keyword,
+          mode: "insensitive",
+        },
+      },
     ];
   }
 
-  if (department) where.department = department;
-  if (course) where.course = course;
-  if (currentYear) where.currentYear = parseInt(currentYear);
-  if (currentSemester) where.currentSemester = parseInt(currentSemester);
-  if (admissionYear) where.admissionYear = parseInt(admissionYear);
-  if (graduationYear) where.graduationYear = parseInt(graduationYear);
-  if (gender) where.gender = gender;
+  if (department) {
+    where.department = department;
+  }
+
+  if (admissionYear) {
+    where.admissionYear = Number(admissionYear);
+  }
+
+  if (currentYear) {
+    where.currentYear = Number(currentYear);
+  }
+
+  if (currentSemester) {
+    where.currentSemester = Number(currentSemester);
+  }
+
+  if (gender) {
+    where.gender = gender;
+  }
 
   if (cgpaMin || cgpaMax) {
     where.cgpa = {};
-    if (cgpaMin) where.cgpa.gte = parseFloat(cgpaMin);
-    if (cgpaMax) where.cgpa.lte = parseFloat(cgpaMax);
+
+    if (cgpaMin) {
+      where.cgpa.gte = Number(cgpaMin);
+    }
+
+    if (cgpaMax) {
+      where.cgpa.lte = Number(cgpaMax);
+    }
   }
 
   if (resumeUploaded === "yes") {
-    where.document = { isNot: null };
-  } else if (resumeUploaded === "no") {
-    where.document = { is: null };
+    where.document = {
+      isNot: null,
+    };
+  }
+
+  if (resumeUploaded === "no") {
+    where.document = {
+      is: null,
+    };
   }
 
   if (linkedinAdded === "yes") {
-    where.linkedinUrl = { not: null };
-  } else if (linkedinAdded === "no") {
+    where.linkedinUrl = {
+      not: null,
+    };
+  }
+
+  if (linkedinAdded === "no") {
     where.linkedinUrl = null;
   }
 
-  if (placementEligible === "yes") {
-    where.activeBacklogs = 0;
-  } else if (placementEligible === "no") {
-    where.activeBacklogs = { gt: 0 };
+  if (profileStatus) {
+    where.profileStatus = profileStatus;
   }
 
-  const orderBy = {};
-  if (sortBy === "name") {
-    orderBy.user = { fullName: sortOrder || "asc" };
-  } else if (sortBy === "cgpa") {
-    orderBy.cgpa = sortOrder || "desc";
-  } else if (sortBy === "year") {
-    orderBy.currentYear = sortOrder || "desc";
-  } else if (sortBy === "admissionYear") {
-    orderBy.admissionYear = sortOrder || "desc";
-  } else {
-    orderBy.user = { fullName: "asc" };
+  if (placementStatus) {
+    where.placementStatus = placementStatus;
   }
 
-  const pageNum = parseInt(page) || 1;
-  const pageSize = parseInt(limit) || 10;
-  const skip = (pageNum - 1) * pageSize;
+  if (typeof isVerified !== "undefined") {
+    where.isVerified = isVerified === "true";
+  }
+const allowedSortFields = [
+    "department",
+    "cgpa",
+    "activeBacklogs",
+    "currentYear",
+    "currentSemester",
+  ];
+
+  let orderBy = [
+    {
+      department: "asc",
+    },
+    {
+      user: {
+        fullName: "asc",
+      },
+    },
+  ];
+
+  if (sortBy && allowedSortFields.includes(sortBy)) {
+    orderBy = [
+      {
+        [sortBy]: sortOrder === "desc" ? "desc" : "asc",
+      },
+    ];
+  }
+
+  if (sortBy === "fullName") {
+    orderBy = [
+      {
+        user: {
+          fullName: sortOrder === "desc" ? "desc" : "asc",
+        },
+      },
+    ];
+  }
+
+  const pageNumber = Number(page) || 1;
+  const pageSize = Number(limit) || 15;
+  const skip = (pageNumber - 1) * pageSize;
 
   const [students, total] = await Promise.all([
     prisma.studentProfile.findMany({
       where,
       include: {
-        user: { select: { id: true, fullName: true, collegeEmail: true, role: true } },
-        document: { select: { resumeUrl: true } },
+        user: {
+          select: {
+            id: true,
+            fullName: true,
+            collegeEmail: true,
+            role: true,
+          },
+        },
+        document: {
+          select: {
+            resumeUrl: true,
+            uploadedAt: true,
+          },
+        },
       },
       orderBy,
       skip,
       take: pageSize,
     }),
-    prisma.studentProfile.count({ where }),
+
+    prisma.studentProfile.count({
+      where,
+    }),
   ]);
 
   return {
     students,
     total,
-    page: pageNum,
+    page: pageNumber,
     limit: pageSize,
     totalPages: Math.ceil(total / pageSize),
   };
@@ -89,37 +220,112 @@ const getStudents = async ({ search, department, course, currentYear, currentSem
 
 const getStudentById = async (userId) => {
   const student = await prisma.studentProfile.findUnique({
-    where: { userId: parseInt(userId) },
+    where: {
+      userId: Number(userId),
+    },
+
     include: {
-      user: { select: { id: true, fullName: true, collegeEmail: true, role: true, createdAt: true } },
-      semesterResults: { orderBy: { semester: "asc" } },
-      document: true,
+      user: {
+        select: {
+          id: true,
+          fullName: true,
+          collegeEmail: true,
+          role: true,
+        },
+      },
+
+      document: {
+        select: {
+          resumeUrl: true,
+          uploadedAt: true,
+        },
+      },
+
+      semesterResults: {
+        orderBy: {
+          semester: "asc",
+        },
+      },
     },
   });
+
   return student;
 };
 
 const updateStudentProfile = async (userId, data) => {
-  const profile = await prisma.studentProfile.update({
-    where: { userId: parseInt(userId) },
+  const student = await prisma.studentProfile.findUnique({
+    where: {
+      userId: Number(userId),
+    },
+  });
+
+  if (!student) {
+    throw new Error("Student not found");
+  }
+
+  return await prisma.studentProfile.update({
+    where: {
+      userId: Number(userId),
+    },
     data,
   });
-  return profile;
+
 };
 
 const updateUser = async (userId, data) => {
-  const user = await prisma.user.update({
-    where: { id: parseInt(userId) },
-    data,
-    select: { id: true, fullName: true, collegeEmail: true, role: true },
+  const user = await prisma.user.findUnique({
+    where: {
+      id: Number(userId),
+    },
   });
-  return user;
+
+  if (!user) {
+    throw new Error("User not found");
+  }
+
+  return await prisma.user.update({
+    where: {
+      id: Number(userId),
+    },
+    data: {
+      fullName: data.fullName,
+      collegeEmail: data.collegeEmail,
+    },
+    select: {
+      id: true,
+      fullName: true,
+      collegeEmail: true,
+      role: true,
+      createdAt: true,
+      updatedAt: true,
+    },
+  });
 };
 
 const deleteStudent = async (userId) => {
-  await prisma.user.delete({
-    where: { id: parseInt(userId) },
+  const student = await prisma.user.findUnique({
+    where: {
+      id: Number(userId),
+    },
+    select: {
+      id: true,
+      role: true,
+    },
   });
+
+  if (!student || student.role !== "STUDENT") {
+    throw new Error("Student not found");
+  }
+
+  await prisma.user.delete({
+    where: {
+      id: Number(userId),
+    },
+  });
+
+  return {
+    message: "Student deleted successfully",
+  };
 };
 
 const exportStudents = async (filters) => {
@@ -128,26 +334,54 @@ const exportStudents = async (filters) => {
 };
 
 const getFilterOptions = async () => {
-  const departments = await prisma.studentProfile.findMany({
-    where: { department: { not: null } },
-    select: { department: true },
-    distinct: ["department"],
-    orderBy: { department: "asc" },
-  });
+  const [
+    departments,
+    admissionYears,
+    graduationYears,
+  ] = await Promise.all([
+    prisma.studentProfile.findMany({
+      distinct: ["department"],
+      select: {
+        department: true,
+      },
+      orderBy: {
+        department: "asc",
+      },
+    }),
 
-  const admissionYears = await prisma.studentProfile.findMany({
-    select: { admissionYear: true },
-    distinct: ["admissionYear"],
-    orderBy: { admissionYear: "desc" },
-  });
+    prisma.studentProfile.findMany({
+      distinct: ["admissionYear"],
+      select: {
+        admissionYear: true,
+      },
+      orderBy: {
+        admissionYear: "desc",
+      },
+    }),
+
+    prisma.studentProfile.findMany({
+      distinct: ["graduationYear"],
+      select: {
+        graduationYear: true,
+      },
+      orderBy: {
+        graduationYear: "desc",
+      },
+    }),
+  ]);
 
   return {
-    departments: departments.map((d) => d.department).filter(Boolean),
-    courses: ["BTECH", "MTECH", "MBA", "MCA"],
-    years: [1, 2, 3, 4],
-    semesters: [1, 2, 3, 4, 5, 6, 7, 8],
-    admissionYears: admissionYears.map((y) => y.admissionYear).sort((a, b) => b - a),
-    genders: ["Male", "Female", "Other"],
+    departments: departments
+      .map((item) => item.department)
+      .filter(Boolean),
+
+    admissionYears: admissionYears.map(
+      (item) => item.admissionYear
+    ),
+
+    graduationYears: graduationYears.map(
+      (item) => item.graduationYear
+    ),
   };
 };
 

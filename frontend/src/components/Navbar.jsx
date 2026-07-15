@@ -10,6 +10,7 @@ export default function Navbar() {
   const navigate = useNavigate();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const [isAdmin, setIsAdmin] = useState(false);
   const [showNoProfileModal, setShowNoProfileModal] = useState(false);
 
   useEffect(() => {
@@ -18,6 +19,8 @@ export default function Navbar() {
       setIsLoggedIn(false);
       return;
     }
+    const storedUser = JSON.parse(localStorage.getItem('user') || '{}');
+    setIsAdmin(storedUser.role === 'ADMIN');
     getMe()
       .then(() => setIsLoggedIn(true))
       .catch(() => {
@@ -64,7 +67,11 @@ export default function Navbar() {
           <li><a href="/" className="navbar-link active">Home</a></li>
           <li><a href="#about" className="navbar-link">About TPO</a></li>
           <li><a href="#contact" className="navbar-link">Contact</a></li>
-          <li><a href="/student/profile" className="navbar-link" onClick={handleMyProfileClick}>My Profile</a></li>
+          {isAdmin ? (
+            <li><a href="/admin/dashboard" className="navbar-link">Admin Dashboard</a></li>
+          ) : (
+            <li><a href="/student/profile" className="navbar-link" onClick={handleMyProfileClick}>My Profile</a></li>
+          )}
         </ul>
 
         {!isLoggedIn && (
@@ -88,7 +95,11 @@ export default function Navbar() {
           <li><a href="/" className="navbar-link active">Home</a></li>
           <li><a href="#about" className="navbar-link">About TPO</a></li>
           <li><a href="#contact" className="navbar-link">Contact</a></li>
-          <li><a href="/student/profile" className="navbar-link" onClick={handleMyProfileClick}>My Profile</a></li>
+          {isAdmin ? (
+            <li><a href="/admin/dashboard" className="navbar-link">Admin Dashboard</a></li>
+          ) : (
+            <li><a href="/student/profile" className="navbar-link" onClick={handleMyProfileClick}>My Profile</a></li>
+          )}
         </ul>
         {!isLoggedIn && (
           <div className="navbar-actions">

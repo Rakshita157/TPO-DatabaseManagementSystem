@@ -2,7 +2,8 @@ import { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
   Search, Filter, Download, ChevronDown, ChevronUp,
-  Trash2, Eye, X, LogOut, ArrowUpDown, Users, Home, Edit
+  Trash2, Eye, X, LogOut, ArrowUpDown, Users, Home, Edit, Loader2,
+  Save, CheckCircle, AlertCircle, FileText
 } from 'lucide-react';
 import {
   getStudents, deleteStudent, exportStudents, getFilterOptions, updatePlacementStatus
@@ -24,21 +25,27 @@ export default function AdminDashboard() {
   const [page, setPage] = useState(1);
   const [limit] = useState(15);
   const [loading, setLoading] = useState(true);
+  const [searching, setSearching] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [searchField, setSearchField] = useState('');
-  const [sortBy, setSortBy] = useState('name');
+  const [sortBy, setSortBy] = useState('fullName');
   const [sortOrder, setSortOrder] = useState('asc');
   const [selectedIds, setSelectedIds] = useState([]);
   const [showFilters, setShowFilters] = useState(false);
+  const [hasSearched, setHasSearched] = useState(false);
+  const [hasResults, setHasResults] = useState(false);
   const [confirmDelete, setConfirmDelete] = useState(null);
   const [filterOptions, setFilterOptions] = useState({
-    departments: [], courses: [], years: [], semesters: [], admissionYears: [], genders: [],
+    departments: [], courses: [], years: [], semesters: [], admissionYears: [], graduationYears: [], genders: [],
   });
   const [filters, setFilters] = useState({
     department: '', course: '', currentYear: '', currentSemester: '',
     admissionYear: '', graduationYear: '', gender: '',
     cgpaMin: '', cgpaMax: '', resumeUploaded: '', linkedinAdded: '', placementEligible: '',
   });
+  const [pendingChanges, setPendingChanges] = useState({});
+  const [toasts, setToasts] = useState([]);
+  const [confirmDiscard, setConfirmDiscard] = useState(null);
 
   const fetchData = useCallback(async () => {
     setLoading(true);
@@ -61,19 +68,30 @@ export default function AdminDashboard() {
       setTotalPages(studentsRes.data.totalPages);
       setPlacedCount(placedRes.data.total);
       setUnplacedCount(unplacedRes.data.total);
-      setFilterOptions(filtersRes.data);
+      setFilterOptions(prev => ({ ...prev, ...filtersRes.data }));
+      setHasResults(true);
     } catch {
     } finally {
       setLoading(false);
+      setSearching(false);
     }
   }, [page, limit, sortBy, sortOrder, searchField, filters]);
 
-  useEffect(() => { fetchData(); }, [fetchData]);
+  useEffect(() => { if (hasSearched) fetchData(); }, [fetchData, hasSearched]);
+
+  useEffect(() => {
+    const loadFilters = async () => {
+      try {
+        const res = await getFilterOptions();
+        setFilterOptions(prev => ({ ...prev, ...res.data }));
+      } catch {}
+    };
+    loadFilters();
+  }, []);
 
   useEffect(() => {
     const timer = setTimeout(() => {
       setSearchField(searchQuery);
-      setPage(1);
     }, 400);
     return () => clearTimeout(timer);
   }, [searchQuery]);
@@ -94,19 +112,22 @@ export default function AdminDashboard() {
     setSelectedIds([]);
   };
 
-  const clearFilters = () => {
-    setFilters({
-      department: '', course: '', currentYear: '', currentSemester: '',
-      admissionYear: '', graduationYear: '', gender: '',
-      cgpaMin: '', cgpaMax: '', resumeUploaded: '', linkedinAdded: '', placementEligible: '',
-    });
-    setSearchQuery('');
-    setSearchField('');
-    setPage(1);
-    setSelectedIds([]);
+  const handleSearchKeyDown = (e) => {
+    if (e.key === 'Enter') handleSearch();
   };
 
   const hasActiveFilters = Object.values(filters).some(v => v) || searchQuery;
+  const canSearch = filters.course && filters.graduationYear;
+  const hasUnsavedPlacement = Object.keys(pendingChanges).length > 0;
+
+  const handleSearch = () => {
+    if (!canSearch) return;
+    if (hasUnsavedPlacement) {
+      setConfirmDiscard(() => handleSearchInner);
+      return;
+    }
+    handleSearchInner();
+  };
 
   const toggleSelectAll = () => {
     if (selectedIds.length === students.length) {
@@ -154,8 +175,30 @@ export default function AdminDashboard() {
     navigate('/auth');
   };
 
-  const handlePlacementToggle = async (userId, currentStatus) => {
-    const newStatus = currentStatus === 'PLACED' ? 'NOT_PLACED' : 'PLACED';
+  const addToast = (message, type = 'success') => {
+    const id = Date.now();
+    setToasts(prev => [...prev, { id, message, type }]);
+    setTimeout(() => setToasts(prev => prev.filter(t => t.id !== id)), 4000);
+  };
+
+  const handlePlacementToggle = (userId) => {
+    const student = students.find(s => s.userId === userId);
+    if (!student) return;
+    const originalStatus = student.placementStatus;
+    const currentDisplay = pendingChanges[userId] ?? originalStatus;
+    const newStatus = currentDisplay === 'PLACED' ? 'NOT_PLACED' : 'PLACED';
+    setPendingChanges(prev => {
+      if (newStatus === originalStatus) {
+        const { [userId]: _, ...rest } = prev;
+        return rest;
+      }
+      return { ...prev, [userId]: newStatus };
+    });
+  };
+
+  const handleSavePlacement = async (userId) => {
+    const newStatus = pendingChanges[userId];
+    if (!newStatus) return;
     try {
       await updatePlacementStatus(userId, newStatus);
       setStudents(prev =>
@@ -168,8 +211,58 @@ export default function AdminDashboard() {
         setPlacedCount(p => p - 1);
         setUnplacedCount(u => u + 1);
       }
+      setPendingChanges(prev => {
+        const { [userId]: _, ...rest } = prev;
+        return rest;
+      });
+      addToast('Placement status updated successfully', 'success');
     } catch {
+      setPendingChanges(prev => {
+        const { [userId]: _, ...rest } = prev;
+        return rest;
+      });
+      addToast('Failed to update placement status', 'error');
     }
+  };
+
+  const clearFiltersInner = () => {
+    setFilters({
+      department: '', course: '', currentYear: '', currentSemester: '',
+      admissionYear: '', graduationYear: '', gender: '',
+      cgpaMin: '', cgpaMax: '', resumeUploaded: '', linkedinAdded: '', placementEligible: '',
+    });
+    setSearchQuery('');
+    setSearchField('');
+    setPage(1);
+    setSelectedIds([]);
+    setSortBy('fullName');
+    setSortOrder('asc');
+    setHasSearched(false);
+    setHasResults(false);
+    setSearching(false);
+  };
+
+  const handleSearchInner = () => {
+    if (!canSearch) return;
+    setSearching(true);
+    setSearchField(searchQuery);
+    setPage(1);
+    setHasSearched(true);
+  };
+
+  const handleDiscardConfirm = () => {
+    const action = confirmDiscard;
+    setPendingChanges({});
+    setConfirmDiscard(null);
+    if (action) action();
+  };
+
+  const clearFilters = () => {
+    if (hasUnsavedPlacement) {
+      setConfirmDiscard(() => clearFiltersInner);
+      return;
+    }
+    clearFiltersInner();
   };
 
   const SortIcon = ({ field }) => {
@@ -225,8 +318,7 @@ export default function AdminDashboard() {
           </div>
         </header>
 
-      <section className="students-section">
-        <div className="section-header">
+      <div className="section-header">
           <div className="section-header-left">
             <h2>Students</h2>
             <p>Manage and track student records</p>
@@ -242,37 +334,41 @@ export default function AdminDashboard() {
           </div>
         </div>
 
-        <div className="summary-strip">
-          <div className="summary-item">
-            <span className="summary-label">Total Students</span>
-            <strong>{total}</strong>
-          </div>
-          <div className="summary-item">
-            <span className="summary-label">Placed</span>
-            <strong>{placedCount}</strong>
-          </div>
-          <div className="summary-item">
-            <span className="summary-label">Not Placed</span>
-            <strong>{unplacedCount}</strong>
-          </div>
-        </div>
-
         <div className="search-filter-bar">
           <div className="search-box">
             <Search size={20} className="search-icon" />
             <input
               type="text"
-              placeholder="Search by name, email, roll no, college ID, enrollment..."
+              placeholder="Search by Name, College ID, BTU Roll No. or Email"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
+              onKeyDown={handleSearchKeyDown}
             />
           </div>
-          <div className="filter-actions-row">
-            <button className={`filter-btn ${showFilters ? 'active' : ''}`} onClick={() => setShowFilters(!showFilters)}>
-              <Filter size={18} />
-              More Filters {hasActiveFilters && <span className="filter-badge">{Object.values(filters).filter(v => v).length + (searchQuery ? 1 : 0)}</span>}
-            </button>
-          </div>
+          <select className="filter-select" value={filters.admissionYear} onChange={(e) => handleFilterChange('admissionYear', e.target.value)}>
+            <option value="">Admission Year</option>
+            {filterOptions.admissionYears.map(y => <option key={y} value={y}>{y}</option>)}
+          </select>
+          <select className="filter-select required" value={filters.course} onChange={(e) => handleFilterChange('course', e.target.value)}>
+            <option value="">Course *</option>
+            {filterOptions.courses.map(c => <option key={c} value={c}>{COURSE_LABELS[c] || c}</option>)}
+          </select>
+          <select className="filter-select required" value={filters.graduationYear} onChange={(e) => handleFilterChange('graduationYear', e.target.value)}>
+            <option value="">Graduation Year *</option>
+            {filterOptions.graduationYears.map(y => <option key={y} value={y}>{y}</option>)}
+          </select>
+          <select className="filter-select" value={filters.department} onChange={(e) => handleFilterChange('department', e.target.value)}>
+            <option value="">Department</option>
+            {filterOptions.departments.map(d => <option key={d} value={d}>{d}</option>)}
+          </select>
+          <button className={`filter-btn ${showFilters ? 'active' : ''}`} onClick={() => setShowFilters(!showFilters)}>
+            <Filter size={18} />
+            More Filters {hasActiveFilters && <span className="filter-badge">{Object.values(filters).filter(v => v).length + (searchQuery ? 1 : 0)}</span>}
+          </button>
+          <button className="search-btn" onClick={handleSearch} disabled={!canSearch || searching}>
+            {searching ? <Loader2 size={18} className="spin" /> : <Search size={18} />}
+            {searching ? 'Searching...' : 'Search'}
+          </button>
         </div>
 
         {showFilters && (
@@ -355,6 +451,38 @@ export default function AdminDashboard() {
           </div>
         )}
 
+      {hasResults && (
+      <section className="students-section">
+        {students.length === 0 && !loading ? (
+          <div className="empty-state">
+            <div className="empty-state-icon">
+              <Search size={48} strokeWidth={1.5} />
+            </div>
+            <h3>No students found</h3>
+            <p>No students match your search criteria. Try changing your search or filters.</p>
+            <button className="reset-filters-btn" onClick={clearFilters}>
+              <X size={16} /> Reset Filters
+            </button>
+          </div>
+        ) : (
+          <>
+        <div className="stats-strip">
+          <div className="stats-strip-item">
+            <span className="stats-strip-label">Total Students</span>
+            <strong className="stats-strip-value">{total}</strong>
+          </div>
+          <div className="stats-strip-divider"></div>
+          <div className="stats-strip-item">
+            <span className="stats-strip-label">Placed</span>
+            <strong className="stats-strip-value stats-value-placed">{placedCount}</strong>
+          </div>
+          <div className="stats-strip-divider"></div>
+          <div className="stats-strip-item">
+            <span className="stats-strip-label">Not Placed</span>
+            <strong className="stats-strip-value stats-value-unplaced">{unplacedCount}</strong>
+          </div>
+        </div>
+
         {selectedIds.length > 0 && (
           <div className="bulk-actions-bar">
             <span>{selectedIds.length} student(s) selected</span>
@@ -375,28 +503,30 @@ export default function AdminDashboard() {
             <thead>
               <tr>
                 <th><input type="checkbox" className="table-checkbox" checked={selectedIds.length === students.length && students.length > 0} onChange={toggleSelectAll} /></th>
-                <th className="sortable" onClick={() => handleSort('name')}>Name <SortIcon field="name" /></th>
+                <th className="sortable" onClick={() => handleSort('fullName')}>Name <SortIcon field="fullName" /></th>
                 <th>Roll No</th>
                 <th>College ID</th>
                 <th>Email</th>
                 <th>Phone</th>
                 <th>Course</th>
-                <th>Department</th>
+                <th className="sortable" onClick={() => handleSort('department')}>Department <SortIcon field="department" /></th>
                 <th>Year/Sem</th>
                 <th className="sortable" onClick={() => handleSort('cgpa')}>CGPA <SortIcon field="cgpa" /></th>
                 <th>SGPA</th>
                 <th>Resume</th>
+                <th className="sortable" onClick={() => handleSort('activeBacklogs')}>Active Backlogs <SortIcon field="activeBacklogs" /></th>
                 <th>Placement</th>
                 <th>Actions</th>
               </tr>
             </thead>
             <tbody>
               {loading ? (
-                <tr><td colSpan="14" className="table-empty">Loading...</td></tr>
-              ) : students.length === 0 ? (
-                <tr><td colSpan="14" className="table-empty">No students found</td></tr>
-              ) : students.map((s) => (
-                <tr key={s.userId}>
+                <tr><td colSpan="15" className="table-empty">Loading...</td></tr>
+              ) : students.map((s) => {
+                const displayStatus = pendingChanges[s.userId] ?? s.placementStatus;
+                const isDirty = pendingChanges[s.userId] !== undefined;
+                return (
+                <tr key={s.userId} className={isDirty ? 'has-unsaved' : ''}>
                   <td><input type="checkbox" className="table-checkbox" checked={selectedIds.includes(s.userId)} onChange={() => toggleSelect(s.userId)} /></td>
                   <td className="student-name">{s.user?.fullName}</td>
                   <td className="roll-no">{s.btuRollNumber}</td>
@@ -404,7 +534,7 @@ export default function AdminDashboard() {
                   <td className="student-email">{s.user?.collegeEmail}</td>
                   <td>{s.phoneNumber}</td>
                   <td>{COURSE_LABELS[s.course]}</td>
-                  <td>{s.department || 'N/A'}</td>
+                  <td className="dept-cell" title={s.department || 'N/A'}>{s.department || 'N/A'}</td>
                   <td>{s.currentYear}Y / S{s.currentSemester}</td>
                   <td className="cgpa">{Number(s.cgpa).toFixed(2)}</td>
                   <td>
@@ -416,24 +546,31 @@ export default function AdminDashboard() {
                   </td>
                   <td>
                     {s.document
-                      ? <span className="status-badge placed">Uploaded</span>
-                      : <span className="status-badge not-placed">None</span>}
+                      ? <span className="status-badge badge-uploaded"><FileText size={13} /> Uploaded</span>
+                      : <span className="status-badge badge-none"><FileText size={13} /> None</span>}
                   </td>
+                  <td className="cgpa">{s.activeBacklogs ?? 0}</td>
                   <td>
                     <label className="toggle-switch">
                       <input
                         type="checkbox"
-                        checked={s.placementStatus === 'PLACED'}
-                        onChange={() => handlePlacementToggle(s.userId, s.placementStatus)}
+                        checked={displayStatus === 'PLACED'}
+                        onChange={() => handlePlacementToggle(s.userId)}
                       />
                       <span className="toggle-slider"></span>
                     </label>
-                    <span className={`toggle-label ${s.placementStatus === 'PLACED' ? 'placed' : ''}`}>
-                      {s.placementStatus === 'PLACED' ? 'Placed' : 'Unplaced'}
+                    <span className={`toggle-label ${displayStatus === 'PLACED' ? 'placed' : ''}`}>
+                      {displayStatus === 'PLACED' ? 'Placed' : 'Unplaced'}
                     </span>
+                    {isDirty && <span className="unsaved-badge">Unsaved</span>}
                   </td>
                   <td>
                     <div className="action-buttons">
+                      {isDirty && (
+                        <button className="action-btn save" title="Save placement change" onClick={() => handleSavePlacement(s.userId)}>
+                          <Save size={16} />
+                        </button>
+                      )}
                       <button className="action-btn view" title="View Profile" onClick={() => navigate(`/admin/student/${s.userId}`)}>
                         <Eye size={16} />
                       </button>
@@ -443,7 +580,8 @@ export default function AdminDashboard() {
                     </div>
                   </td>
                 </tr>
-              ))}
+                );
+              })}
             </tbody>
           </table>
         </div>
@@ -476,7 +614,10 @@ export default function AdminDashboard() {
             </div>
           )}
         </div>
+          </>
+        )}
       </section>
+      )}
 
       {confirmDelete && (
         <div className="modal-overlay" onClick={() => setConfirmDelete(null)}>
@@ -488,6 +629,30 @@ export default function AdminDashboard() {
               <button className="confirm-delete" onClick={() => handleDelete(confirmDelete)}>Delete</button>
             </div>
           </div>
+        </div>
+      )}
+
+      {confirmDiscard && (
+        <div className="modal-overlay" onClick={() => setConfirmDiscard(null)}>
+          <div className="confirm-modal" onClick={e => e.stopPropagation()}>
+            <h3>Unsaved Changes</h3>
+            <p>You have unsaved placement changes. Discard them and proceed?</p>
+            <div className="confirm-actions">
+              <button className="confirm-cancel" onClick={() => setConfirmDiscard(null)}>Cancel</button>
+              <button className="confirm-delete" onClick={handleDiscardConfirm}>Discard</button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {toasts.length > 0 && (
+        <div className="toast-container">
+          {toasts.map(t => (
+            <div key={t.id} className={`toast toast-${t.type}`}>
+              {t.type === 'success' ? <CheckCircle size={16} /> : <AlertCircle size={16} />}
+              <span>{t.message}</span>
+            </div>
+          ))}
         </div>
       )}
       </main>

@@ -2,11 +2,12 @@ import { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
   Search, Filter, Download, ChevronDown, ChevronUp,
-  Trash2, Eye, X, LogOut, ArrowUpDown
+  Trash2, Eye, X, LogOut, ArrowUpDown, Users, Home, Edit
 } from 'lucide-react';
 import {
-  getStudents, deleteStudent, exportStudents, getFilterOptions
+  getStudents, deleteStudent, exportStudents, getFilterOptions, updatePlacementStatus
 } from '../../services/admin.service';
+import tpoLogo from '../../assets/logos/TPO_Cell__LOGO.png';
 import './Dashboard.css';
 
 const COURSE_LABELS = { BTECH: 'B.Tech', MTECH: 'M.Tech', MBA: 'MBA', MCA: 'MCA' };
@@ -18,8 +19,10 @@ export default function AdminDashboard() {
   const [students, setStudents] = useState([]);
   const [total, setTotal] = useState(0);
   const [totalPages, setTotalPages] = useState(0);
+  const [placedCount, setPlacedCount] = useState(0);
+  const [unplacedCount, setUnplacedCount] = useState(0);
   const [page, setPage] = useState(1);
-  const [limit] = useState(10);
+  const [limit] = useState(15);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
   const [searchField, setSearchField] = useState('');
@@ -47,13 +50,17 @@ export default function AdminDashboard() {
       if (searchField) params.search = searchField;
       Object.entries(filters).forEach(([k, v]) => { if (v) params[k] = v; });
 
-      const [studentsRes, filtersRes] = await Promise.all([
+      const [studentsRes, filtersRes, placedRes, unplacedRes] = await Promise.all([
         getStudents(params),
         getFilterOptions(),
+        getStudents({ ...params, placementStatus: 'PLACED', page: 1, limit: 1 }),
+        getStudents({ ...params, placementStatus: 'NOT_PLACED', page: 1, limit: 1 }),
       ]);
       setStudents(studentsRes.data.students);
       setTotal(studentsRes.data.total);
       setTotalPages(studentsRes.data.totalPages);
+      setPlacedCount(placedRes.data.total);
+      setUnplacedCount(unplacedRes.data.total);
       setFilterOptions(filtersRes.data);
     } catch {
     } finally {
@@ -147,6 +154,24 @@ export default function AdminDashboard() {
     navigate('/auth');
   };
 
+  const handlePlacementToggle = async (userId, currentStatus) => {
+    const newStatus = currentStatus === 'PLACED' ? 'NOT_PLACED' : 'PLACED';
+    try {
+      await updatePlacementStatus(userId, newStatus);
+      setStudents(prev =>
+        prev.map(s => s.userId === userId ? { ...s, placementStatus: newStatus } : s)
+      );
+      if (newStatus === 'PLACED') {
+        setPlacedCount(p => p + 1);
+        setUnplacedCount(u => u - 1);
+      } else {
+        setPlacedCount(p => p - 1);
+        setUnplacedCount(u => u + 1);
+      }
+    } catch {
+    }
+  };
+
   const SortIcon = ({ field }) => {
     if (sortBy !== field) return <ArrowUpDown size={14} style={{ opacity: 0.4 }} />;
     return sortOrder === 'asc' ? <ChevronUp size={14} /> : <ChevronDown size={14} />;
@@ -154,28 +179,51 @@ export default function AdminDashboard() {
 
   return (
     <div className="admin-dashboard">
-      <header className="admin-header">
-        <div className="admin-header-left">
-          <div className="admin-logo">
-            <div className="admin-logo-icon">&#x1F393;</div>
-            <div className="admin-logo-text">
-              <h1>Admin Dashboard</h1>
-              <p>Training & Placement Office</p>
+      <aside className="admin-sidebar">
+        <div className="admin-sidebar-header">
+          <img src={tpoLogo} alt="T&P Cell Logo" className="admin-sidebar-logo-img" />
+          <div className="admin-sidebar-logo-text">
+            <div className="admin-sidebar-title">Training and<br />Placement Cell</div>
+            <div className="admin-sidebar-subtitle">GWEC, Ajmer</div>
+          </div>
+        </div>
+
+        <nav className="admin-sidebar-nav">
+          <button className="admin-nav-item active">
+            <Users size={18} />
+            Students
+          </button>
+          <button className="admin-nav-item" onClick={() => navigate('/')}>
+            <Home size={18} />
+            Landing Page
+          </button>
+          <button className="admin-nav-item admin-nav-logout" onClick={handleLogout}>
+            <LogOut size={18} />
+            Logout
+          </button>
+        </nav>
+
+        <div className="admin-sidebar-footer">
+          <img src={tpoLogo} alt="T&P Cell Logo" className="admin-sidebar-footer-logo" />
+          <div className="admin-sidebar-footer-text">
+            <div className="admin-sidebar-title">Training and<br />Placement Cell</div>
+            <div className="admin-sidebar-subtitle">GWEC, Ajmer</div>
+          </div>
+        </div>
+      </aside>
+
+      <main className="admin-main">
+        <header className="admin-topbar">
+          <div className="admin-admin-info">
+            <div className="admin-avatar">
+              {(storedUser.fullName || 'Admin').split(' ').map(w => w[0]).join('').slice(0, 2).toUpperCase()}
+            </div>
+            <div className="admin-info-text">
+              <span className="admin-name">{storedUser.fullName || 'Admin'}</span>
+              <span className="admin-role">Training & Placement Officer</span>
             </div>
           </div>
-        </div>
-        <div className="admin-header-right">
-          <button className="header-icon-btn export-header-btn" onClick={handleExport} title="Export CSV">
-            <Download size={20} />
-          </button>
-          <button className="header-icon-btn logout-btn" onClick={handleLogout} title="Logout">
-            <LogOut size={20} />
-          </button>
-          <div className="admin-user-badge">
-            <span className="admin-user-name">{storedUser.fullName || 'Admin'}</span>
-          </div>
-        </div>
-      </header>
+        </header>
 
       <section className="students-section">
         <div className="section-header">
@@ -184,10 +232,28 @@ export default function AdminDashboard() {
             <p>Manage and track student records</p>
           </div>
           <div className="section-header-right">
+            <button className="reset-filters-btn" onClick={clearFilters}>
+              <X size={16} /> Reset Filters
+            </button>
             <button className="export-btn" onClick={handleExport}>
               <Download size={18} />
-              Export CSV
+              Download Excel
             </button>
+          </div>
+        </div>
+
+        <div className="summary-strip">
+          <div className="summary-item">
+            <span className="summary-label">Total Students</span>
+            <strong>{total}</strong>
+          </div>
+          <div className="summary-item">
+            <span className="summary-label">Placed</span>
+            <strong>{placedCount}</strong>
+          </div>
+          <div className="summary-item">
+            <span className="summary-label">Not Placed</span>
+            <strong>{unplacedCount}</strong>
           </div>
         </div>
 
@@ -201,24 +267,25 @@ export default function AdminDashboard() {
               onChange={(e) => setSearchQuery(e.target.value)}
             />
           </div>
-          <div className="filter-group">
-            <select className="filter-select" value={filters.course} onChange={(e) => handleFilterChange('course', e.target.value)}>
-              <option value="">All Courses</option>
-              {filterOptions.courses.map(c => <option key={c} value={c}>{COURSE_LABELS[c]}</option>)}
-            </select>
-            <select className="filter-select" value={filters.department} onChange={(e) => handleFilterChange('department', e.target.value)}>
-              <option value="">All Departments</option>
-              {filterOptions.departments.map(d => <option key={d} value={d}>{d}</option>)}
-            </select>
+          <div className="filter-actions-row">
             <button className={`filter-btn ${showFilters ? 'active' : ''}`} onClick={() => setShowFilters(!showFilters)}>
               <Filter size={18} />
-              Filters {hasActiveFilters && <span className="filter-badge">{Object.values(filters).filter(v => v).length}</span>}
+              More Filters {hasActiveFilters && <span className="filter-badge">{Object.values(filters).filter(v => v).length + (searchQuery ? 1 : 0)}</span>}
             </button>
           </div>
         </div>
 
         {showFilters && (
-          <div className="advanced-filters">
+          <div className="advanced-filters more-filters-panel">
+            <div className="filters-panel-header">
+              <div>
+                <h3>More Filters</h3>
+                <p>Refine results with additional student filters.</p>
+              </div>
+              <button className="reset-filters-btn" onClick={clearFilters}>
+                <X size={16} /> Reset Filters
+              </button>
+            </div>
             <div className="filters-grid">
               <div className="filter-field">
                 <label>Gender</label>
@@ -280,14 +347,11 @@ export default function AdminDashboard() {
                   <option value="no">Not Eligible (active backlogs)</option>
                 </select>
               </div>
-            </div>
-            {hasActiveFilters && (
-              <div className="filters-actions">
-                <button className="clear-filters-btn" onClick={clearFilters}>
-                  <X size={16} /> Clear All Filters
-                </button>
+              <div className="filter-field placeholder-filter">
+                <label>Company</label>
+                <input type="text" placeholder="Coming soon" disabled />
               </div>
-            )}
+            </div>
           </div>
         )}
 
@@ -315,21 +379,22 @@ export default function AdminDashboard() {
                 <th>Roll No</th>
                 <th>College ID</th>
                 <th>Email</th>
+                <th>Phone</th>
                 <th>Course</th>
                 <th>Department</th>
                 <th>Year/Sem</th>
                 <th className="sortable" onClick={() => handleSort('cgpa')}>CGPA <SortIcon field="cgpa" /></th>
+                <th>SGPA</th>
                 <th>Resume</th>
-                <th>LinkedIn</th>
-                <th>Status</th>
+                <th>Placement</th>
                 <th>Actions</th>
               </tr>
             </thead>
             <tbody>
               {loading ? (
-                <tr><td colSpan="13" className="table-empty">Loading...</td></tr>
+                <tr><td colSpan="14" className="table-empty">Loading...</td></tr>
               ) : students.length === 0 ? (
-                <tr><td colSpan="13" className="table-empty">No students found</td></tr>
+                <tr><td colSpan="14" className="table-empty">No students found</td></tr>
               ) : students.map((s) => (
                 <tr key={s.userId}>
                   <td><input type="checkbox" className="table-checkbox" checked={selectedIds.includes(s.userId)} onChange={() => toggleSelect(s.userId)} /></td>
@@ -337,15 +402,34 @@ export default function AdminDashboard() {
                   <td className="roll-no">{s.btuRollNumber}</td>
                   <td>{s.collegeId}</td>
                   <td className="student-email">{s.user?.collegeEmail}</td>
+                  <td>{s.phoneNumber}</td>
                   <td>{COURSE_LABELS[s.course]}</td>
                   <td>{s.department || 'N/A'}</td>
                   <td>{s.currentYear}Y / S{s.currentSemester}</td>
                   <td className="cgpa">{Number(s.cgpa).toFixed(2)}</td>
-                  <td>{s.document ? <span className="status-badge placed">Yes</span> : <span className="status-badge not-placed">No</span>}</td>
-                  <td>{s.linkedinUrl ? <a href={s.linkedinUrl} target="_blank" rel="noopener noreferrer" className="linkedin-link">View</a> : <span className="status-badge not-placed">No</span>}</td>
                   <td>
-                    <span className={`status-badge ${s.placementStatus === 'PLACED' ? 'placed' : 'not-placed'}`}>
-                      {s.placementStatus === 'PLACED' ? 'Placed' : 'Not Placed'}
+                    {s.semesterResults?.length > 0
+                      ? s.semesterResults[s.semesterResults.length - 1].sgpa
+                        ? Number(s.semesterResults[s.semesterResults.length - 1].sgpa).toFixed(2)
+                        : '-'
+                      : '-'}
+                  </td>
+                  <td>
+                    {s.document
+                      ? <span className="status-badge placed">Uploaded</span>
+                      : <span className="status-badge not-placed">None</span>}
+                  </td>
+                  <td>
+                    <label className="toggle-switch">
+                      <input
+                        type="checkbox"
+                        checked={s.placementStatus === 'PLACED'}
+                        onChange={() => handlePlacementToggle(s.userId, s.placementStatus)}
+                      />
+                      <span className="toggle-slider"></span>
+                    </label>
+                    <span className={`toggle-label ${s.placementStatus === 'PLACED' ? 'placed' : ''}`}>
+                      {s.placementStatus === 'PLACED' ? 'Placed' : 'Unplaced'}
                     </span>
                   </td>
                   <td>
@@ -353,8 +437,8 @@ export default function AdminDashboard() {
                       <button className="action-btn view" title="View Profile" onClick={() => navigate(`/admin/student/${s.userId}`)}>
                         <Eye size={16} />
                       </button>
-                      <button className="action-btn delete" title="Delete" onClick={() => setConfirmDelete(s.userId)}>
-                        <Trash2 size={16} />
+                      <button className="action-btn edit" title="Edit Student" onClick={() => navigate(`/admin/student/${s.userId}`)}>
+                        <Edit size={16} />
                       </button>
                     </div>
                   </td>
@@ -406,6 +490,7 @@ export default function AdminDashboard() {
           </div>
         </div>
       )}
+      </main>
     </div>
   );
 }

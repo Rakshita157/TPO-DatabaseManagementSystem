@@ -29,6 +29,7 @@ model CollegeSettings {
 enum Role {
   STUDENT
   ADMIN
+  CO_ADMIN
 }
 
 enum Course {
@@ -152,4 +153,12 @@ model Document {
   uploadedAt  DateTime @default(now())
 
 profile StudentProfile @relation(fields: [userId], references: [userId], onDelete: Cascade)
+}
+
+model EmailVerification {
+  collegeEmail String   @id
+  otp          String?
+  expiresAt    DateTime
+  isVerified   Boolean  @default(false)
+  createdAt    DateTime @default(now())
 }

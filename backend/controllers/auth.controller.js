@@ -1,6 +1,8 @@
 const {
   signup: signupService,
   login: loginService,
+  sendOTP: sendOTPService,
+  verifyOTP: verifyOTPService,
   getMe: getMeService,
   updateUser: updateUserService,
 } = require("../services/auth.service");
@@ -39,6 +41,27 @@ const login = async (req, res) => {
   }
 };
 
+const sendOTP = async (req, res) => {
+  try {
+    const result = await sendOTPService(req.body);
+    res.status(200).json(result);
+  } catch (error) {
+    res.status(400).json({
+      message: error.message,
+    });
+  }
+};
+
+const verifyOTP = async (req, res) => {
+  try {
+    const result = await verifyOTPService(req.body);
+    res.status(200).json(result);
+  } catch (error) {
+    res.status(400).json({
+      message: error.message,
+    });
+  }
+}; 
 
 const getMe = async (req, res) => {
   try {
@@ -62,6 +85,8 @@ const updateUser = async (req, res) => {
 module.exports = {
   signup,
   login,
+  sendOTP,
+verifyOTP,
   getMe,
   updateUser,
 };

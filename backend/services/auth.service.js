@@ -1,13 +1,91 @@
 const prisma = require("../config/prisma");
+const { sendOTPEmail } = require("./email.service");
+const { generateOTP } = require("../utils/otp");
+
 const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
+
+
+const sendOTP = async ({ collegeEmail }) => {
+  if (!collegeEmail.endsWith("@gweca.ac.in")) {
+    throw new Error("Only @gweca.ac.in email addresses are allowed");
+  }
+
+  const existingUser = await prisma.user.findUnique({
+    where: {
+      collegeEmail,
+    },
+  });
+
+  if (existingUser) {
+    throw new Error("User already exists");
+  }
+
+    const otp = generateOTP(); 
+
+  const expiresAt = new Date(Date.now() + 5 * 60 * 1000);
+
+  await prisma.emailVerification.upsert({
+    where: {
+      collegeEmail,
+    },
+    update: {
+      otp,
+      expiresAt,
+      isVerified: false,
+    },
+    create: {
+      collegeEmail,
+      otp,
+      expiresAt,
+    },
+  });
+
+  await sendOTPEmail(collegeEmail, otp);
+
+  return {
+    message: "OTP sent successfully",
+  };
+};
+
+const verifyOTP = async ({ collegeEmail, otp }) => {
+  const verification = await prisma.emailVerification.findUnique({
+    where: {
+      collegeEmail,
+    },
+  });
+
+  if (!verification) {
+    throw new Error("Please request a new OTP");
+  }
+
+  if (verification.expiresAt < new Date()) {
+    throw new Error("OTP has expired");
+  }
+
+  if (verification.otp !== otp) {
+    throw new Error("Invalid OTP");
+  }
+
+await prisma.emailVerification.update({
+  where: {
+    collegeEmail,
+  },
+  data: {
+    isVerified: true,
+    otp: null,
+  },
+});
+
+  return {
+    message: "Email verified successfully",
+  };
+};
+
+
 //signup
 const signup = async (data) => {
   const { fullName, collegeEmail, password } = data;
-
-  if (!collegeEmail.endsWith('@gweca.ac.in')) {
-    throw new Error('Only @gweca.ac.in email addresses are allowed');
-  }
 
   // Check if user already exists
   const existingUser = await prisma.user.findUnique({
@@ -19,7 +97,18 @@ const signup = async (data) => {
   if (existingUser) {
     throw new Error("User already exists");
   }
+const verification = await prisma.emailVerification.findUnique({
+  where: {
+    collegeEmail,
+  },
+});
 
+if (!verification || !verification.isVerified) {
+  throw new Error("Please verify your college email first");
+}
+if (verification.expiresAt < new Date()) {
+  throw new Error("Verification expired. Please verify again.");
+}
   // Hash password
   const hashedPassword = await bcrypt.hash(password, 10);
 
@@ -31,6 +120,11 @@ const signup = async (data) => {
       password: hashedPassword,
     },
   });
+await prisma.emailVerification.delete({
+  where: {
+    collegeEmail,
+  },
+});
 
 // Remove password before returning
 const { password: _, ...userWithoutPassword } = user;
@@ -110,4 +204,6 @@ module.exports = {
   login,
   getMe,
   updateUser,
+   sendOTP,
+  verifyOTP,
 };

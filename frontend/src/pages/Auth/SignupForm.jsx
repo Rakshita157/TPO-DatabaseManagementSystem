@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { signup } from '../../services/auth.service';
+import { signup, sendOTP, verifyOTP } from '../../services/auth.service';
 
 export default function SignupForm({ onSwitchToLogin }) {
   const [fullName, setFullName] = useState('');
@@ -12,6 +12,64 @@ export default function SignupForm({ onSwitchToLogin }) {
   const [apiError, setApiError] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [isSuccess, setIsSuccess] = useState(false);
+
+  const [otp, setOtp] = useState('');
+  const [otpSent, setOtpSent] = useState(false);
+  const [otpVerified, setOtpVerified] = useState(false);
+  const [otpLoading, setOtpLoading] = useState(false);
+  const [verifyLoading, setVerifyLoading] = useState(false);
+  const [otpError, setOtpError] = useState('');
+  const [otpSuccess, setOtpSuccess] = useState('');
+  const [lastVerifiedEmail, setLastVerifiedEmail] = useState('');
+
+  const isValidEmail = email && /^[^\s@]+@gweca\.ac\.in$/.test(email);
+
+  const handleEmailChange = (e) => {
+    const newEmail = e.target.value;
+    setEmail(newEmail);
+    if (newEmail !== lastVerifiedEmail) {
+      setOtpVerified(false);
+      setOtpSent(false);
+      setOtp('');
+      setOtpError('');
+      setOtpSuccess('');
+    }
+  };
+
+  const handleSendOTP = async () => {
+    setOtpError('');
+    setOtpSuccess('');
+    setOtpLoading(true);
+    try {
+      await sendOTP({ collegeEmail: email });
+      setOtpSent(true);
+      setOtpSuccess('OTP sent to your email');
+    } catch (error) {
+      const message =
+        error.response?.data?.message || 'Failed to send OTP. Please try again.';
+      setOtpError(message);
+    } finally {
+      setOtpLoading(false);
+    }
+  };
+
+  const handleVerifyOTP = async () => {
+    setOtpError('');
+    setOtpSuccess('');
+    setVerifyLoading(true);
+    try {
+      await verifyOTP({ collegeEmail: email, otp });
+      setOtpVerified(true);
+      setOtpSuccess('Email verified successfully');
+      setLastVerifiedEmail(email);
+    } catch (error) {
+      const message =
+        error.response?.data?.message || 'Verification failed. Please try again.';
+      setOtpError(message);
+    } finally {
+      setVerifyLoading(false);
+    }
+  };
 
   const validateForm = () => {
     const newErrors = {};
@@ -121,7 +179,7 @@ export default function SignupForm({ onSwitchToLogin }) {
 
       <div className="form-group">
         <label htmlFor="signup-email" className="form-label">
-          Email Address
+          College Email
         </label>
         <div className="input-wrapper">
           <span className="input-icon">
@@ -133,14 +191,69 @@ export default function SignupForm({ onSwitchToLogin }) {
           <input
             id="signup-email"
             type="email"
-            className={`form-input ${errors.email ? 'error' : ''}`}
+            className={`form-input ${errors.email || otpError ? 'error' : ''} ${otpVerified ? 'verified' : ''}`}
             placeholder="@gweca.ac.in"
             value={email}
-            onChange={(e) => setEmail(e.target.value)}
+            onChange={handleEmailChange}
+            disabled={otpVerified}
           />
+          {isValidEmail && !otpVerified && (
+            <button
+              type="button"
+              className="btn btn-verify"
+              onClick={handleSendOTP}
+              disabled={otpLoading}
+            >
+              {otpLoading ? 'Sending...' : 'Verify'}
+            </button>
+          )}
+          {otpVerified && (
+            <span className="verified-badge">✓</span>
+          )}
         </div>
         {errors.email && <span className="error-message">{errors.email}</span>}
+        {otpError && !errors.email && <span className="error-message">{otpError}</span>}
+        {otpSuccess && <span className="success-text">{otpSuccess}</span>}
       </div>
+
+      {otpSent && !otpVerified && (
+        <div className="form-group">
+          <label htmlFor="signup-otp" className="form-label">
+            Enter OTP
+          </label>
+          <div className="input-wrapper">
+            <span className="input-icon">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/>
+                <path d="M7 11V7a5 5 0 0 1 10 0v4"/>
+              </svg>
+            </span>
+            <input
+              id="signup-otp"
+              type="text"
+              className="form-input"
+              placeholder="Enter 6-digit OTP"
+              value={otp}
+              onChange={(e) => setOtp(e.target.value.replace(/\D/g, '').slice(0, 6))}
+              maxLength={6}
+            />
+            <button
+              type="button"
+              className="btn btn-verify"
+              onClick={handleVerifyOTP}
+              disabled={verifyLoading || otp.length !== 6}
+            >
+              {verifyLoading ? 'Verifying...' : 'Verify OTP'}
+            </button>
+          </div>
+          <span className="form-hint">
+            OTP expires in 5 minutes.{' '}
+            <button type="button" className="forgot-password-btn" onClick={handleSendOTP} disabled={otpLoading}>
+              Resend OTP
+            </button>
+          </span>
+        </div>
+      )}
 
       <div className="form-group">
         <label htmlFor="signup-password" className="form-label">
@@ -229,7 +342,7 @@ export default function SignupForm({ onSwitchToLogin }) {
         )}
       </div>
 
-      <button type="submit" className="btn btn-primary btn-large" disabled={isLoading}>
+      <button type="submit" className="btn btn-primary btn-large" disabled={isLoading || !otpVerified}>
         {isLoading ? 'Creating Account...' : 'Create Account'}
       </button>
 

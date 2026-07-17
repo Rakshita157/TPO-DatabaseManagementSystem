@@ -1,9 +1,11 @@
 import { useState } from 'react';
+import { forgotPassword } from '../../services/auth.service';
 
-export default function ForgotPasswordForm({ onBackToLogin }) {
+export default function ForgotPasswordForm({ onBackToLogin, onEmailSubmitted }) {
   const [email, setEmail] = useState('');
   const [errors, setErrors] = useState({});
-  const [isSubmitted, setIsSubmitted] = useState(false);
+  const [apiError, setApiError] = useState('');
+  const [isLoading, setIsLoading] = useState(false);
 
   const validateForm = () => {
     const newErrors = {};
@@ -16,47 +18,33 @@ export default function ForgotPasswordForm({ onBackToLogin }) {
     return Object.keys(newErrors).length === 0;
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    if (validateForm()) {
-      // Form is valid - no backend call for now
-      console.log('Forgot password submitted:', { email });
-      setIsSubmitted(true);
-      setTimeout(() => {
-        onBackToLogin();
-        setIsSubmitted(false);
-        setEmail('');
-      }, 3000);
+    setApiError('');
+
+    if (!validateForm()) return;
+
+    setIsLoading(true);
+    try {
+      await forgotPassword({ collegeEmail: email });
+      onEmailSubmitted(email);
+    } catch (error) {
+      const message =
+        error.response?.data?.message || 'Failed to send OTP. Please try again.';
+      setApiError(message);
+    } finally {
+      setIsLoading(false);
     }
   };
-
-  if (isSubmitted) {
-    return (
-      <div className="auth-form">
-        <div className="form-header">
-          <h2>Check Your Email</h2>
-        </div>
-        <div className="success-message">
-          <div className="success-icon">✓</div>
-          <p>
-            We've sent a password reset link to <strong>{email}</strong>
-          </p>
-          <p className="success-hint">
-            Please check your email and follow the link to reset your password.
-            If you don't see the email, check your spam folder.
-          </p>
-        </div>
-        <p className="form-hint">Redirecting to login in a moment...</p>
-      </div>
-    );
-  }
 
   return (
     <form className="auth-form" onSubmit={handleSubmit}>
       <div className="form-header">
         <h2>Reset Your Password</h2>
-        <p>Enter your email address and we'll send you a link to reset your password</p>
+        <p>Enter your college email and we'll send you a verification code</p>
       </div>
+
+      {apiError && <div className="error-message" style={{ marginBottom: 0 }}>{apiError}</div>}
 
       <div className="form-group">
         <label htmlFor="forgot-email" className="form-label">
@@ -81,8 +69,8 @@ export default function ForgotPasswordForm({ onBackToLogin }) {
         {errors.email && <span className="error-message">{errors.email}</span>}
       </div>
 
-      <button type="submit" className="btn btn-primary btn-large">
-        Send Reset Link
+      <button type="submit" className="btn btn-primary btn-large" disabled={isLoading}>
+        {isLoading ? 'Sending OTP...' : 'Send OTP'}
       </button>
 
       <button

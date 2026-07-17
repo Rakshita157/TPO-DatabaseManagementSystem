@@ -1,5 +1,5 @@
 const prisma = require("../config/prisma");
-const { sendOTPEmail } = require("./email.service");
+const { sendOTPEmail, sendPasswordResetOTPEmail, } = require("./email.service");
 const { generateOTP } = require("../utils/otp");
 
 const bcrypt = require("bcryptjs");
@@ -174,8 +174,6 @@ return {
 };
 
 
-
-
 const getMe = async (userId) => {
   const user = await prisma.user.findUnique({
     where: { id: userId },
@@ -199,6 +197,125 @@ const updateUser = async (userId, data) => {
   return userWithoutPassword;
 };
 
+
+const forgotPasswordService = async ({ collegeEmail }) => {
+  // 1. Check college email
+  if (!collegeEmail.endsWith("@gweca.ac.in")) {
+    throw new Error("Only @gweca.ac.in email addresses are allowed");
+  }
+
+  // 2. Check user exists
+  const user = await prisma.user.findUnique({
+    where: {
+      collegeEmail,
+    },
+  });
+
+  if (!user) {
+    throw new Error("User not found");
+  }
+
+  // 3. Generate OTP
+  const otp = generateOTP();
+
+  // 4. Set expiry (5 minutes)
+  const expiresAt = new Date(Date.now() + 5 * 60 * 1000);
+
+  // 5. Save OTP
+  await prisma.emailVerification.upsert({
+    where: {
+      collegeEmail,
+    },
+    update: {
+      otp,
+      expiresAt,
+      isVerified: false,
+    },
+    create: {
+      collegeEmail,
+      otp,
+      expiresAt,
+    },
+  });
+
+  // 6. Send email
+  await sendPasswordResetOTPEmail(collegeEmail, otp);
+
+  return {
+    message: "Password reset OTP sent successfully",
+  };
+};
+
+const verifyResetOTPService = async ({ collegeEmail, otp }) => {
+  const verification = await prisma.emailVerification.findUnique({
+    where: {
+      collegeEmail,
+    },
+  });
+
+  if (!verification) {
+    throw new Error("Please request a new OTP");
+  }
+
+  if (verification.expiresAt < new Date()) {
+    throw new Error("OTP has expired");
+  }
+
+  if (verification.otp !== otp) {
+    throw new Error("Invalid OTP");
+  }
+
+  await prisma.emailVerification.update({
+    where: {
+      collegeEmail,
+    },
+    data: {
+      isVerified: true,
+      otp: null,
+    },
+  });
+
+  return {
+    message: "OTP verified successfully",
+  };
+};
+const resetPasswordService = async ({ collegeEmail, newPassword }) => {
+  // Check verification
+  const verification = await prisma.emailVerification.findUnique({
+    where: {
+      collegeEmail,
+    },
+  });
+
+  if (!verification || !verification.isVerified) {
+    throw new Error("Please verify OTP first");
+  }
+
+  // Hash new password
+  const hashedPassword = await bcrypt.hash(newPassword, 10);
+
+  // Update password
+  await prisma.user.update({
+    where: {
+      collegeEmail,
+    },
+    data: {
+      password: hashedPassword,
+    },
+  });
+
+  // Delete verification record
+  await prisma.emailVerification.delete({
+    where: {
+      collegeEmail,
+    },
+  });
+
+  return {
+    message: "Password reset successfully",
+  };
+};
+
 module.exports = {
   signup,
   login,
@@ -206,4 +323,7 @@ module.exports = {
   updateUser,
    sendOTP,
   verifyOTP,
+  forgotPasswordService,
+  verifyResetOTPService,
+  resetPasswordService,
 };

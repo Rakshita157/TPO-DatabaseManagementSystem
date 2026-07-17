@@ -2,14 +2,34 @@ import { useState } from 'react';
 import LoginForm from './LoginForm';
 import SignupForm from './SignupForm';
 import ForgotPasswordForm from './ForgotPasswordForm';
+import VerifyResetOTPForm from './VerifyResetOTPForm';
+import ResetPasswordForm from './ResetPasswordForm';
 import './Auth.css';
 
 export default function AuthContainer() {
-  const [activeForm, setActiveForm] = useState('login'); // 'login', 'signup', 'forgot'
+  const [activeForm, setActiveForm] = useState('login');
+  const [resetEmail, setResetEmail] = useState('');
 
   const handleSwitchToSignup = () => setActiveForm('signup');
-  const handleSwitchToLogin = () => setActiveForm('login');
+  const handleSwitchToLogin = () => {
+    setActiveForm('login');
+    setResetEmail('');
+  };
   const handleSwitchToForgotPassword = () => setActiveForm('forgot');
+
+  const handleEmailSubmitted = (email) => {
+    setResetEmail(email);
+    setActiveForm('verify-otp');
+  };
+
+  const handleOTPVerified = () => setActiveForm('reset-password');
+
+  const handlePasswordReset = () => {
+    setActiveForm('login');
+    setResetEmail('');
+  };
+
+  const handleBackToForgot = () => setActiveForm('forgot');
 
   return (
     <div className="auth-container">
@@ -55,7 +75,29 @@ export default function AuthContainer() {
 
           <div className={`form-wrapper ${activeForm === 'forgot' ? 'active' : ''}`}>
             {activeForm === 'forgot' && (
-              <ForgotPasswordForm onBackToLogin={handleSwitchToLogin} />
+              <ForgotPasswordForm
+                onBackToLogin={handleSwitchToLogin}
+                onEmailSubmitted={handleEmailSubmitted}
+              />
+            )}
+          </div>
+
+          <div className={`form-wrapper ${activeForm === 'verify-otp' ? 'active' : ''}`}>
+            {activeForm === 'verify-otp' && (
+              <VerifyResetOTPForm
+                collegeEmail={resetEmail}
+                onVerified={handleOTPVerified}
+                onBack={handleBackToForgot}
+              />
+            )}
+          </div>
+
+          <div className={`form-wrapper ${activeForm === 'reset-password' ? 'active' : ''}`}>
+            {activeForm === 'reset-password' && (
+              <ResetPasswordForm
+                collegeEmail={resetEmail}
+                onSuccess={handlePasswordReset}
+              />
             )}
           </div>
         </div>

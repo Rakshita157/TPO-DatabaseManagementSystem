@@ -325,6 +325,21 @@
   transform: translateY(0);
 }
 
+.btn-link {
+  background: none;
+  border: none;
+  color: #5b7388;
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  padding: 8px 0;
+  transition: color 0.2s ease;
+}
+
+.btn-link:hover {
+  color: #1e3a8a;
+}
+
 .btn-verify {
   position: absolute;
   right: 8px;

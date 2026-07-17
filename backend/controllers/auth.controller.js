@@ -5,6 +5,9 @@ const {
   verifyOTP: verifyOTPService,
   getMe: getMeService,
   updateUser: updateUserService,
+  forgotPasswordService,
+  verifyResetOTPService,
+  resetPasswordService,
 } = require("../services/auth.service");
 
 //Signup 
@@ -82,11 +85,53 @@ const updateUser = async (req, res) => {
   }
 };
 
+const forgotPassword = async (req, res) => {
+  try {
+    const result = await forgotPasswordService(req.body);
+
+    res.status(200).json(result);
+  } catch (error) {
+    res.status(400).json({
+      message: error.message,
+    });
+  }
+};
+
+const verifyResetOTP = async (req, res) => {
+  try {
+    const result = await verifyResetOTPService(req.body);
+
+    res.status(200).json(result);
+  } catch (error) {
+    res.status(400).json({
+      message: error.message,
+    });
+  }
+};
+
+const resetPassword = async (req, res) => {
+  try {
+    const result = await resetPasswordService(req.body);
+
+    res.status(200).json(result);
+  } catch (error) {
+    res.status(400).json({
+      message: error.message,
+    });
+  }
+};
+
 module.exports = {
   signup,
   login,
+
   sendOTP,
-verifyOTP,
+  verifyOTP,
+
   getMe,
   updateUser,
+
+  forgotPassword,
+  verifyResetOTP,
+  resetPassword,
 };

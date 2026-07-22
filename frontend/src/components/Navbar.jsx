@@ -19,13 +19,17 @@ export default function Navbar() {
       setIsLoggedIn(false);
       return;
     }
-    const storedUser = JSON.parse(localStorage.getItem('user') || '{}');
-    setIsAdmin(storedUser.role === 'ADMIN');
     getMe()
-      .then(() => setIsLoggedIn(true))
+      .then((response) => {
+        const user = response.data.user;
+        localStorage.setItem('user', JSON.stringify(user));
+        setIsAdmin(user.role === 'ADMIN');
+        setIsLoggedIn(true);
+      })
       .catch(() => {
         localStorage.removeItem('token');
         localStorage.removeItem('user');
+        setIsAdmin(false);
         setIsLoggedIn(false);
       });
   }, []);

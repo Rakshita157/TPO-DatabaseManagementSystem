@@ -12,6 +12,12 @@ import tpoLogo from '../../assets/logos/TPO_Cell__LOGO.png';
 import './Dashboard.css';
 
 const COURSE_LABELS = { BTECH: 'B.Tech', MTECH: 'M.Tech', MBA: 'MBA', MCA: 'MCA' };
+const COURSE_SEMESTERS = { BTECH: 8, MTECH: 4, MBA: 4, MCA: 4 };
+
+const getSemesterOptions = (course) => {
+  const count = COURSE_SEMESTERS[course] || 8;
+  return Array.from({ length: count }, (_, i) => i + 1);
+};
 
 export default function AdminDashboard() {
   const navigate = useNavigate();
@@ -36,7 +42,7 @@ export default function AdminDashboard() {
   const [hasResults, setHasResults] = useState(false);
   const [confirmDelete, setConfirmDelete] = useState(null);
   const [filterOptions, setFilterOptions] = useState({
-    departments: [], courses: [], years: [], semesters: [], admissionYears: [], graduationYears: [], genders: [],
+    departments: [], courses: [], years: [], admissionYears: [], graduationYears: [], genders: [],
   });
   const [filters, setFilters] = useState({
     department: '', course: '', currentYear: '', currentSemester: '',
@@ -70,7 +76,8 @@ export default function AdminDashboard() {
       setUnplacedCount(unplacedRes.data.total);
       setFilterOptions(prev => ({ ...prev, ...filtersRes.data }));
       setHasResults(true);
-    } catch {
+    } catch (err) {
+      console.error('Failed to fetch data:', err);
     } finally {
       setLoading(false);
       setSearching(false);
@@ -84,7 +91,9 @@ export default function AdminDashboard() {
       try {
         const res = await getFilterOptions();
         setFilterOptions(prev => ({ ...prev, ...res.data }));
-      } catch {}
+      } catch (err) {
+        console.error('Failed to load filter options:', err);
+      }
     };
     loadFilters();
   }, []);
@@ -107,7 +116,16 @@ export default function AdminDashboard() {
   };
 
   const handleFilterChange = (key, value) => {
-    setFilters(prev => ({ ...prev, [key]: value }));
+    setFilters(prev => {
+      const next = { ...prev, [key]: value };
+      if (key === 'course' && value) {
+        const maxSem = COURSE_SEMESTERS[value] || 8;
+        if (next.currentSemester && Number(next.currentSemester) > maxSem) {
+          next.currentSemester = '';
+        }
+      }
+      return next;
+    });
     setPage(1);
     setSelectedIds([]);
   };
@@ -347,19 +365,19 @@ export default function AdminDashboard() {
           </div>
           <select className="filter-select" value={filters.admissionYear} onChange={(e) => handleFilterChange('admissionYear', e.target.value)}>
             <option value="">Admission Year</option>
-            {filterOptions.admissionYears.map(y => <option key={y} value={y}>{y}</option>)}
+            {(filterOptions.admissionYears || []).map(y => <option key={y} value={y}>{y}</option>)}
           </select>
           <select className="filter-select required" value={filters.course} onChange={(e) => handleFilterChange('course', e.target.value)}>
             <option value="">Course *</option>
-            {filterOptions.courses.map(c => <option key={c} value={c}>{COURSE_LABELS[c] || c}</option>)}
+            {(filterOptions.courses || []).map(c => <option key={c} value={c}>{COURSE_LABELS[c] || c}</option>)}
           </select>
           <select className="filter-select required" value={filters.graduationYear} onChange={(e) => handleFilterChange('graduationYear', e.target.value)}>
             <option value="">Graduation Year *</option>
-            {filterOptions.graduationYears.map(y => <option key={y} value={y}>{y}</option>)}
+            {(filterOptions.graduationYears || []).map(y => <option key={y} value={y}>{y}</option>)}
           </select>
           <select className="filter-select" value={filters.department} onChange={(e) => handleFilterChange('department', e.target.value)}>
             <option value="">Department</option>
-            {filterOptions.departments.map(d => <option key={d} value={d}>{d}</option>)}
+            {(filterOptions.departments || []).map(d => <option key={d} value={d}>{d}</option>)}
           </select>
           <button className={`filter-btn ${showFilters ? 'active' : ''}`} onClick={() => setShowFilters(!showFilters)}>
             <Filter size={18} />
@@ -387,28 +405,30 @@ export default function AdminDashboard() {
                 <label>Gender</label>
                 <select value={filters.gender} onChange={(e) => handleFilterChange('gender', e.target.value)}>
                   <option value="">All</option>
-                  {filterOptions.genders.map(g => <option key={g} value={g}>{g}</option>)}
+                  {(filterOptions.genders || []).map(g => <option key={g} value={g}>{g}</option>)}
                 </select>
               </div>
               <div className="filter-field">
                 <label>Current Year</label>
                 <select value={filters.currentYear} onChange={(e) => handleFilterChange('currentYear', e.target.value)}>
                   <option value="">All</option>
-                  {filterOptions.years.map(y => <option key={y} value={y}>{y}{y===1?'st':y===2?'nd':y===3?'rd':'th'} Year</option>)}
+                  {(filterOptions.years || []).map(y => <option key={y} value={y}>{y}{y===1?'st':y===2?'nd':y===3?'rd':'th'} Year</option>)}
                 </select>
               </div>
               <div className="filter-field">
                 <label>Current Semester</label>
                 <select value={filters.currentSemester} onChange={(e) => handleFilterChange('currentSemester', e.target.value)}>
                   <option value="">All</option>
-                  {filterOptions.semesters.map(s => <option key={s} value={s}>Semester {s}</option>)}
+                  {getSemesterOptions(filters.course).map(s => (
+                    <option key={s} value={s}>Semester {s}</option>
+                  ))}
                 </select>
               </div>
               <div className="filter-field">
                 <label>Admission Year</label>
                 <select value={filters.admissionYear} onChange={(e) => handleFilterChange('admissionYear', e.target.value)}>
                   <option value="">All</option>
-                  {filterOptions.admissionYears.map(y => <option key={y} value={y}>{y}</option>)}
+                  {(filterOptions.admissionYears || []).map(y => <option key={y} value={y}>{y}</option>)}
                 </select>
               </div>
               <div className="filter-field">

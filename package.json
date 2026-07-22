@@ -3,5 +3,8 @@
     "@prisma/client": "^6.19.3",
     "nodemailer": "^9.0.3",
     "prisma": "^6.19.3"
+  },
+  "prisma": {
+    "schema": "backend/prisma/schema.prisma"
   }
 }

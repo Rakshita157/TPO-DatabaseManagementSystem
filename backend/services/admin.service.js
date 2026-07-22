@@ -343,68 +343,67 @@ const exportStudents = async (filters) => {
 };
 
 const getFilterOptions = async () => {
+  const safeQuery = (promise) => promise.catch(() => []);
+
   const [
     departments,
-     courses,
+    courses,
     admissionYears,
     graduationYears,
+    genders,
+    currentYears,
   ] = await Promise.all([
-    prisma.studentProfile.findMany({
-      distinct: ["department"],
-      select: {
-        department: true,
-      },
-      orderBy: {
-        department: "asc",
-      },
-    }),
-prisma.studentProfile.findMany({
-  distinct: ["course"],
-  select: {
-    course: true,
-  },
-  orderBy: {
-        course: "asc",
-      },
-}),
-
-    prisma.studentProfile.findMany({
-      distinct: ["admissionYear"],
-      select: {
-        admissionYear: true,
-      },
-      orderBy: {
-        admissionYear: "desc",
-      },
-    }),
-
-    prisma.studentProfile.findMany({
-      distinct: ["graduationYear"],
-      select: {
-        graduationYear: true,
-      },
-      orderBy: {
-        graduationYear: "desc",
-      },
-    }),
+    safeQuery(
+      prisma.studentProfile.findMany({
+        distinct: ["department"],
+        select: { department: true },
+        orderBy: { department: "asc" },
+      })
+    ),
+    safeQuery(
+      prisma.studentProfile.findMany({
+        distinct: ["course"],
+        select: { course: true },
+        orderBy: { course: "asc" },
+      })
+    ),
+    safeQuery(
+      prisma.studentProfile.findMany({
+        distinct: ["admissionYear"],
+        select: { admissionYear: true },
+        orderBy: { admissionYear: "desc" },
+      })
+    ),
+    safeQuery(
+      prisma.studentProfile.findMany({
+        distinct: ["graduationYear"],
+        select: { graduationYear: true },
+        orderBy: { graduationYear: "desc" },
+      })
+    ),
+    safeQuery(
+      prisma.studentProfile.findMany({
+        distinct: ["gender"],
+        select: { gender: true },
+        orderBy: { gender: "asc" },
+      })
+    ),
+    safeQuery(
+      prisma.studentProfile.findMany({
+        distinct: ["currentYear"],
+        select: { currentYear: true },
+        orderBy: { currentYear: "asc" },
+      })
+    ),
   ]);
 
   return {
-    departments: departments
-      .map((item) => item.department)
-      .filter(Boolean),
-
-      courses: courses
-    .map((item) => item.course)
-    .filter(Boolean),
-
-    admissionYears: admissionYears.map(
-      (item) => item.admissionYear
-    ),
-
-    graduationYears: graduationYears.map(
-      (item) => item.graduationYear
-    ),
+    departments: departments.map((item) => item.department).filter(Boolean),
+    courses: courses.map((item) => item.course).filter(Boolean),
+    admissionYears: admissionYears.map((item) => item.admissionYear).filter(Boolean),
+    graduationYears: graduationYears.map((item) => item.graduationYear).filter(Boolean),
+    genders: genders.map((item) => item.gender).filter(Boolean),
+    years: currentYears.map((item) => item.currentYear).filter(Boolean),
   };
 };
 

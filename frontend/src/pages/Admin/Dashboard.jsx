@@ -1,9 +1,9 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
   Search, Filter, Download, ChevronDown, ChevronUp,
-  Trash2, Eye, X, LogOut, ArrowUpDown, Users, Home, Edit, Loader2,
-  Save, CheckCircle, AlertCircle, FileText
+  Trash2, Eye, X, LogOut, ArrowUpDown, Users, Home, Loader2,
+  Save, CheckCircle, AlertCircle, FileText, PanelLeftClose, PanelLeftOpen
 } from 'lucide-react';
 import {
   getStudents, deleteStudent, exportStudents, getFilterOptions, updatePlacementStatus
@@ -47,16 +47,44 @@ export default function AdminDashboard() {
   const [hasResults, setHasResults] = useState(false);
   const [confirmDelete, setConfirmDelete] = useState(null);
   const [filterOptions, setFilterOptions] = useState({
-    departments: [], courses: [], years: [], admissionYears: [], graduationYears: [], genders: [],
+    departments: [], courses: [], years: [], admissionYears: [], graduationYears: [],
   });
   const [filters, setFilters] = useState({
     department: '', course: '', currentYear: '', currentSemester: '',
-    admissionYear: '', graduationYear: '', gender: '',
+    admissionYear: '', graduationYear: '',
     cgpaMin: '', cgpaMax: '', resumeUploaded: '', linkedinAdded: '', placementEligible: '',
   });
   const [pendingChanges, setPendingChanges] = useState({});
   const [toasts, setToasts] = useState([]);
   const [confirmDiscard, setConfirmDiscard] = useState(null);
+  const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
+  const [sidebarWidth, setSidebarWidth] = useState(240);
+  const isResizing = useRef(false);
+
+  const startResize = useCallback((e) => {
+    e.preventDefault();
+    isResizing.current = true;
+    document.body.style.cursor = 'col-resize';
+    document.body.style.userSelect = 'none';
+
+    const onMouseMove = (e) => {
+      if (isResizing.current) {
+        const newWidth = Math.min(Math.max(e.clientX, 180), 400);
+        setSidebarWidth(newWidth);
+      }
+    };
+
+    const onMouseUp = () => {
+      isResizing.current = false;
+      document.body.style.cursor = '';
+      document.body.style.userSelect = '';
+      document.removeEventListener('mousemove', onMouseMove);
+      document.removeEventListener('mouseup', onMouseUp);
+    };
+
+    document.addEventListener('mousemove', onMouseMove);
+    document.addEventListener('mouseup', onMouseUp);
+  }, []);
 
   const fetchData = useCallback(async () => {
     setLoading(true);
@@ -248,16 +276,48 @@ export default function AdminDashboard() {
     }
   };
 
+  const handleSaveAll = async () => {
+    const entries = Object.entries(pendingChanges);
+    if (entries.length === 0) return;
+    let successCount = 0;
+    let failCount = 0;
+    const originalCounts = { placed: placedCount, unplaced: unplacedCount };
+    for (const [userId, newStatus] of entries) {
+      try {
+        await updatePlacementStatus(userId, newStatus);
+        setStudents(prev =>
+          prev.map(s => s.userId === userId ? { ...s, placementStatus: newStatus } : s)
+        );
+        if (newStatus === 'PLACED') {
+          successCount++;
+        } else {
+          successCount--;
+        }
+        failCount = failCount;
+      } catch {
+        failCount++;
+      }
+    }
+    setPlacedCount(originalCounts.placed + successCount);
+    setUnplacedCount(originalCounts.unplaced - successCount);
+    setPendingChanges({});
+    if (failCount === 0) {
+      addToast(`All ${entries.length} placement status(es) updated successfully`, 'success');
+    } else {
+      addToast(`${entries.length - failCount} updated, ${failCount} failed`, 'error');
+    }
+  };
+
   const clearFiltersInner = () => {
     setFilters({
-      department: '', course: '', currentYear: '', currentSemester: '',
-      admissionYear: '', graduationYear: '', gender: '',
+    department: '', course: '', currentYear: '', currentSemester: '',
+      admissionYear: '', graduationYear: '',
       cgpaMin: '', cgpaMax: '', resumeUploaded: '', linkedinAdded: '', placementEligible: '',
-    });
-    setSearchQuery('');
-    setSearchField('');
-    setPage(1);
-    setSelectedIds([]);
+  });
+  setSearchQuery('');
+  setSearchField('');
+  setPage(1);
+  setSelectedIds([]);
     setSortBy('fullName');
     setSortOrder('asc');
     setHasSearched(false);
@@ -295,40 +355,73 @@ export default function AdminDashboard() {
 
   return (
     <div className="admin-dashboard">
-      <aside className="admin-sidebar">
+      {sidebarCollapsed && (
+        <button
+          className="sidebar-expand-btn"
+          onClick={() => setSidebarCollapsed(false)}
+          title="Expand sidebar"
+        >
+          <PanelLeftOpen size={18} />
+        </button>
+      )}
+
+      <aside
+        className={`admin-sidebar ${sidebarCollapsed ? 'collapsed' : ''}`}
+        style={!sidebarCollapsed ? { width: sidebarWidth } : undefined}
+      >
         <div className="admin-sidebar-header">
-          <img src={tpoLogo} alt="T&P Cell Logo" className="admin-sidebar-logo-img" />
-          <div className="admin-sidebar-logo-text">
-            <div className="admin-sidebar-title">Training and<br />Placement Cell</div>
-            <div className="admin-sidebar-subtitle">GWEC, Ajmer</div>
+          <div className="admin-sidebar-logo">
+            <img src={tpoLogo} alt="T&P Cell Logo" className="admin-sidebar-logo-img" />
+            {!sidebarCollapsed && (
+              <div className="admin-sidebar-logo-text">
+                <div className="admin-sidebar-title">Training and<br />Placement Cell</div>
+                <div className="admin-sidebar-subtitle">GWEC, Ajmer</div>
+              </div>
+            )}
           </div>
+          <button
+            className="sidebar-collapse-btn"
+            onClick={() => setSidebarCollapsed(!sidebarCollapsed)}
+            title={sidebarCollapsed ? 'Expand sidebar' : 'Collapse sidebar'}
+          >
+            {sidebarCollapsed ? <PanelLeftOpen size={18} /> : <PanelLeftClose size={18} />}
+          </button>
         </div>
 
         <nav className="admin-sidebar-nav">
-          <button className="admin-nav-item active">
+          <button className="admin-nav-item active" title="Students">
             <Users size={18} />
-            Students
+            {!sidebarCollapsed && 'Students'}
           </button>
-          <button className="admin-nav-item" onClick={() => navigate('/')}>
+          <button className="admin-nav-item" onClick={() => navigate('/')} title="Landing Page">
             <Home size={18} />
-            Landing Page
+            {!sidebarCollapsed && 'Landing Page'}
           </button>
-          <button className="admin-nav-item admin-nav-logout" onClick={handleLogout}>
+          <button className="admin-nav-item admin-nav-logout" onClick={handleLogout} title="Logout">
             <LogOut size={18} />
-            Logout
+            {!sidebarCollapsed && 'Logout'}
           </button>
         </nav>
 
-        <div className="admin-sidebar-footer">
-          <img src={tpoLogo} alt="T&P Cell Logo" className="admin-sidebar-footer-logo" />
-          <div className="admin-sidebar-footer-text">
-            <div className="admin-sidebar-title">Training and<br />Placement Cell</div>
-            <div className="admin-sidebar-subtitle">GWEC, Ajmer</div>
+        {!sidebarCollapsed && (
+          <div className="admin-sidebar-footer">
+            <img src={tpoLogo} alt="T&P Cell Logo" className="admin-sidebar-footer-logo" />
+            <div className="admin-sidebar-footer-text">
+              <div className="admin-sidebar-title">Training and<br />Placement Cell</div>
+              <div className="admin-sidebar-subtitle">GWEC, Ajmer</div>
+            </div>
           </div>
-        </div>
+        )}
+
+        {!sidebarCollapsed && (
+          <div
+            className="sidebar-resize-handle"
+            onMouseDown={startResize}
+          />
+        )}
       </aside>
 
-      <main className="admin-main">
+      <main className="admin-main" style={{ marginLeft: sidebarCollapsed ? 0 : sidebarWidth }}>
         <header className="admin-topbar">
           <div className="admin-admin-info">
             <div className="admin-avatar">
@@ -406,13 +499,7 @@ export default function AdminDashboard() {
               </button>
             </div>
             <div className="filters-grid">
-              <div className="filter-field">
-                <label>Gender</label>
-                <select value={filters.gender} onChange={(e) => handleFilterChange('gender', e.target.value)}>
-                  <option value="">All</option>
-                  {(filterOptions.genders || []).map(g => <option key={g} value={g}>{g}</option>)}
-                </select>
-              </div>
+
               <div className="filter-field">
                 <label>Current Year</label>
                 <select value={filters.currentYear} onChange={(e) => handleFilterChange('currentYear', e.target.value)}>
@@ -468,10 +555,7 @@ export default function AdminDashboard() {
                   <option value="no">Not Eligible (active backlogs)</option>
                 </select>
               </div>
-              <div className="filter-field placeholder-filter">
-                <label>Company</label>
-                <input type="text" placeholder="Coming soon" disabled />
-              </div>
+
             </div>
           </div>
         )}
@@ -506,6 +590,13 @@ export default function AdminDashboard() {
             <span className="stats-strip-label">Not Placed</span>
             <strong className="stats-strip-value stats-value-unplaced">{unplacedCount}</strong>
           </div>
+          {hasUnsavedPlacement && (
+            <div className="stats-strip-item stats-strip-action">
+              <button className="save-all-btn" onClick={handleSaveAll}>
+                <Save size={14} /> Save All ({Object.keys(pendingChanges).length})
+              </button>
+            </div>
+          )}
         </div>
 
         {selectedIds.length > 0 && (
@@ -650,9 +741,6 @@ export default function AdminDashboard() {
                       )}
                       <button className="action-btn view" title="View Profile" onClick={() => navigate(`/admin/student/${s.userId}`)}>
                         <Eye size={16} />
-                      </button>
-                      <button className="action-btn edit" title="Edit Student" onClick={() => navigate(`/admin/student/${s.userId}`)}>
-                        <Edit size={16} />
                       </button>
                     </div>
                   </td>

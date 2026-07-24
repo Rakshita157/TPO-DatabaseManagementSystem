@@ -4,7 +4,7 @@ import {
   ChevronDown, ChevronLeft, ChevronRight, Calendar, FileText, 
   User, GraduationCap, Phone, Mail, MapPin,
   Edit, ChevronUp, X, Save, ExternalLink, CheckCircle,
-  Home, LogOut, Award, Plus, PanelLeftClose, PanelLeftOpen
+  Home, LogOut, Plus, PanelLeftClose, PanelLeftOpen
 } from 'lucide-react';
 import { 
   getStudentProfile, getSemesterResults, getDocument,
@@ -15,6 +15,7 @@ import {
   FIELD_SECTIONS, COURSE_LABELS,
   formatFieldValue, getFieldValue, getVisibleFields, getExtraFields
 } from '../../config/studentFields';
+import tpoLogo from '../../assets/logos/TPO_Cell__LOGO.png';
 import './Profile.css';
 
 const COURSE_OPTIONS = ['BTECH', 'MTECH', 'MBA', 'MCA'];
@@ -490,14 +491,12 @@ export default function StudentProfile() {
     <>
       <div className="sidebar-header">
         <div className="sidebar-logo">
-          <div className="logo-icon-wrapper">
-            <Award size={22} />
-          </div>
+          <img src={tpoLogo} alt="T&P Cell Logo" className="sidebar-logo-img" />
           {!sidebarCollapsed && (
             <div className="logo-text">
-              <div className="logo-title">Training &</div>
+              <div className="logo-title">Training and</div>
               <div className="logo-title">Placement Cell</div>
-              <div className="logo-subtitle">GWECA, Ajmer</div>
+              <div className="logo-subtitle">GWEC, Ajmer</div>
             </div>
           )}
         </div>

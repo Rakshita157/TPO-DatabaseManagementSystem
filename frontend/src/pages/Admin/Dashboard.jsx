@@ -184,7 +184,7 @@ export default function AdminDashboard() {
       const url = window.URL.createObjectURL(new Blob([res.data]));
       const link = document.createElement('a');
       link.href = url;
-      link.setAttribute('download', 'students_export.csv');
+      link.setAttribute('download', 'students_export.xlsx');
       document.body.appendChild(link);
       link.click();
       link.remove();
@@ -541,8 +541,6 @@ export default function AdminDashboard() {
                 <th>Alt Email</th>
                 <th>Course</th>
                 <th className="sortable" onClick={() => handleSort('department')}>Department <SortIcon field="department" /></th>
-                <th>MBA Spec 1</th>
-                <th>MBA Spec 2</th>
                 <th>Batch</th>
                 <th>Year/Sem</th>
                 <th className="sortable" onClick={() => handleSort('cgpa')}>CGPA <SortIcon field="cgpa" /></th>
@@ -569,14 +567,12 @@ export default function AdminDashboard() {
                 <th>Verified</th>
                 <th>Profile Status</th>
                 <th>Placement</th>
-                <th>Created</th>
-                <th>Updated</th>
                 <th>Actions</th>
               </tr>
             </thead>
             <tbody>
               {loading ? (
-                <tr><td colSpan="46" className="table-empty">Loading...</td></tr>
+                <tr><td colSpan="42" className="table-empty">Loading...</td></tr>
               ) : students.map((s) => {
                 const displayStatus = pendingChanges[s.userId] ?? s.placementStatus;
                 const isDirty = pendingChanges[s.userId] !== undefined;
@@ -596,8 +592,6 @@ export default function AdminDashboard() {
                   <td>{s.alternateEmail || '-'}</td>
                   <td>{COURSE_LABELS[s.course]}</td>
                   <td className="dept-cell" title={s.department || 'N/A'}>{s.department || 'N/A'}</td>
-                  <td>{s.mbaSpecialization1 || '-'}</td>
-                  <td>{s.mbaSpecialization2 || '-'}</td>
                   <td>{s.admissionYear}-{s.graduationYear}</td>
                   <td>{s.currentYear}Y / S{s.currentSemester}</td>
                   <td className="cgpa">{Number(s.cgpa).toFixed(2)}</td>
@@ -647,8 +641,6 @@ export default function AdminDashboard() {
                     </span>
                     {isDirty && <span className="unsaved-badge">Unsaved</span>}
                   </td>
-                  <td style={{whiteSpace:'nowrap'}}>{formatDate(s.createdAt)}</td>
-                  <td style={{whiteSpace:'nowrap'}}>{formatDate(s.updatedAt)}</td>
                   <td>
                     <div className="action-buttons">
                       {isDirty && (

@@ -5,14 +5,18 @@ import {
   MapPin, Calendar, FileText, Trash2, ExternalLink, CheckCircle
 } from 'lucide-react';
 import { getStudentById, updateStudentProfile, updateUser, deleteStudent } from '../../services/admin.service';
+import {
+  FIELD_SECTIONS, COURSE_LABELS,
+  getVisibleFields, getExtraFields
+} from '../../config/studentFields';
 import './Dashboard.css';
-
-const COURSE_LABELS = { BTECH: 'B.Tech', MTECH: 'M.Tech', MBA: 'MBA', MCA: 'MCA' };
 
 function formatDate(dateStr) {
   if (!dateStr) return 'N/A';
   return new Date(dateStr).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' });
 }
+
+const ICON_MAP = { User, GraduationCap, Phone, MapPin, FileText };
 
 export default function StudentDetails() {
   const { userId } = useParams();
@@ -97,6 +101,9 @@ export default function StudentDetails() {
   const u = s.user;
   const batch = `${s.admissionYear} - ${s.graduationYear}`;
 
+  const userObj = u || {};
+  const displaySections = ['personal', 'academic', 'school', 'contact', 'address'];
+
   return (
     <div className="admin-dashboard">
       <header className="admin-header">
@@ -149,151 +156,112 @@ export default function StudentDetails() {
         </div>
 
         <div className="detail-sections">
-          <div className="detail-card">
-            <div className="detail-card-header">
-              <User className="detail-icon" />
-              <h3>Personal Information</h3>
-            </div>
-            <div className="detail-card-body">
-              {editing ? (
-                <div className="edit-fields">
-                  <div className="edit-field"><label>Full Name</label><input type="text" value={editForm.fullName} onChange={e => setEditForm({...editForm, fullName: e.target.value})} /></div>
-                  <div className="edit-field"><label>Placement Status</label>
-                    <select value={editForm.placementStatus} onChange={e => setEditForm({...editForm, placementStatus: e.target.value})}>
-                      <option value="NOT_PLACED">Not Placed</option>
-                      <option value="PLACED">Placed</option>
-                    </select>
-                  </div>
-                  <div className="edit-field"><label>Verified</label>
-                    <select value={editForm.isVerified ? 'yes' : 'no'} onChange={e => setEditForm({...editForm, isVerified: e.target.value === 'yes'})}>
-                      <option value="no">No</option>
-                      <option value="yes">Yes</option>
-                    </select>
-                  </div>
-                </div>
-              ) : (
-                <>
-                  <div className="detail-row"><span className="detail-label">Full Name</span><span className="detail-value">{u?.fullName}</span></div>
-                  <div className="detail-row"><span className="detail-label">Date of Birth</span><span className="detail-value">{formatDate(s.dob)}</span></div>
-                  <div className="detail-row"><span className="detail-label">Gender</span><span className="detail-value">{s.gender}</span></div>
-                  <div className="detail-row"><span className="detail-label">Aadhar Number</span><span className="detail-value">{s.aadharNumber}</span></div>
-                  <div className="detail-row"><span className="detail-label">PAN Number</span><span className="detail-value">{s.panNumber || 'N/A'}</span></div>
-                  <div className="detail-row"><span className="detail-label">Profile Status</span><span className="detail-value">{s.profileStatus === 'COMPLETE' ? 'Complete' : 'Incomplete'}</span></div>
-                </>
-              )}
-            </div>
-          </div>
+          {FIELD_SECTIONS.filter(sec => displaySections.includes(sec.id)).map(section => {
+            const IconComponent = ICON_MAP[section.icon] || User;
+            const allFields = getVisibleFields(section, s, userObj, s.document);
 
-          <div className="detail-card">
-            <div className="detail-card-header">
-              <GraduationCap className="detail-icon green" />
-              <h3>Academic Information</h3>
-            </div>
-            <div className="detail-card-body">
-              {editing ? (
-                <div className="edit-fields">
-                  <div className="edit-field"><label>Course</label>
-                    <select value={editForm.course} onChange={e => setEditForm({...editForm, course: e.target.value})}>
-                      {Object.entries(COURSE_LABELS).map(([k, v]) => <option key={k} value={k}>{v}</option>)}
-                    </select>
-                  </div>
-                  <div className="edit-field"><label>Department</label><input type="text" value={editForm.department} onChange={e => setEditForm({...editForm, department: e.target.value})} /></div>
-                  <div className="edit-field"><label>Current Year</label><input type="number" min="1" max="4" value={editForm.currentYear} onChange={e => setEditForm({...editForm, currentYear: e.target.value})} /></div>
-                  <div className="edit-field"><label>Current Semester</label><input type="number" min="1" max="8" value={editForm.currentSemester} onChange={e => setEditForm({...editForm, currentSemester: e.target.value})} /></div>
-                  <div className="edit-field"><label>CGPA</label><input type="number" min="0" max="10" step="0.01" value={editForm.cgpa} onChange={e => setEditForm({...editForm, cgpa: e.target.value})} /></div>
-                  <div className="edit-field"><label>Active Backlogs</label><input type="number" min="0" value={editForm.activeBacklogs} onChange={e => setEditForm({...editForm, activeBacklogs: e.target.value})} /></div>
-                  <div className="edit-field"><label>Passive Backlogs</label><input type="number" min="0" value={editForm.passiveBacklogs} onChange={e => setEditForm({...editForm, passiveBacklogs: e.target.value})} /></div>
-                  <div className="edit-field"><label>LinkedIn URL</label><input type="url" value={editForm.linkedinUrl} onChange={e => setEditForm({...editForm, linkedinUrl: e.target.value})} /></div>
+            return (
+              <div className="detail-card" key={section.id}>
+                <div className="detail-card-header">
+                  <IconComponent className={`detail-icon ${section.iconClass}`} />
+                  <h3>{section.title}</h3>
                 </div>
-              ) : (
-                <>
-                  <div className="detail-row"><span className="detail-label">University Roll No.</span><span className="detail-value">{s.btuRollNumber}</span></div>
-                  <div className="detail-row"><span className="detail-label">Enrollment No.</span><span className="detail-value">{s.enrollmentNumber}</span></div>
-                  <div className="detail-row"><span className="detail-label">College ID</span><span className="detail-value">{s.collegeId}</span></div>
-                  <div className="detail-row"><span className="detail-label">Course</span><span className="detail-value">{COURSE_LABELS[s.course]}</span></div>
-                  <div className="detail-row"><span className="detail-label">Department</span><span className="detail-value">{s.department || 'N/A'}</span></div>
-                  <div className="detail-row"><span className="detail-label">MBA Specialization 1</span><span className="detail-value">{s.mbaSpecialization1 || 'N/A'}</span></div>
-                  <div className="detail-row"><span className="detail-label">MBA Specialization 2</span><span className="detail-value">{s.mbaSpecialization2 || 'N/A'}</span></div>
-                  <div className="detail-row"><span className="detail-label">Batch</span><span className="detail-value">{batch}</span></div>
-                  <div className="detail-row"><span className="detail-label">Current Year</span><span className="detail-value">{s.currentYear}</span></div>
-                  <div className="detail-row"><span className="detail-label">Current Semester</span><span className="detail-value">{s.currentSemester}</span></div>
-                  <div className="detail-row"><span className="detail-label">CGPA</span><span className="detail-value">{Number(s.cgpa).toFixed(2)}</span></div>
-                  <div className="detail-row"><span className="detail-label">Active Backlogs</span><span className="detail-value">{s.activeBacklogs}</span></div>
-                  <div className="detail-row"><span className="detail-label">Passive Backlogs</span><span className="detail-value">{s.passiveBacklogs}</span></div>
-                  <div className="detail-row"><span className="detail-label">LinkedIn</span><span className="detail-value">{s.linkedinUrl ? <a href={s.linkedinUrl} target="_blank" rel="noopener noreferrer" style={{color:'#1e3a8a'}}>{s.linkedinUrl}</a> : 'N/A'}</span></div>
-                  {s.semesterResults?.length > 0 && (
-                    <div className="sgpa-section">
-                      <span className="detail-label sgpa-title">Semester-wise SGPA</span>
-                      <div className="sgpa-grid">
-                        {s.semesterResults.map(sr => (
-                          <div key={sr.semester} className="sgpa-item">
-                            <span className="sgpa-sem">Sem {sr.semester}</span>
-                            <span className="sgpa-value">{Number(sr.sgpa).toFixed(2)}</span>
-                          </div>
-                        ))}
+                <div className="detail-card-body">
+                  {editing && section.id === 'personal' ? (
+                    <div className="edit-fields">
+                      <div className="edit-field"><label>Full Name</label><input type="text" value={editForm.fullName} onChange={e => setEditForm({...editForm, fullName: e.target.value})} /></div>
+                      <div className="edit-field"><label>Placement Status</label>
+                        <select value={editForm.placementStatus} onChange={e => setEditForm({...editForm, placementStatus: e.target.value})}>
+                          <option value="NOT_PLACED">Not Placed</option>
+                          <option value="PLACED">Placed</option>
+                        </select>
+                      </div>
+                      <div className="edit-field"><label>Verified</label>
+                        <select value={editForm.isVerified ? 'yes' : 'no'} onChange={e => setEditForm({...editForm, isVerified: e.target.value === 'yes'})}>
+                          <option value="no">No</option>
+                          <option value="yes">Yes</option>
+                        </select>
                       </div>
                     </div>
+                  ) : editing && section.id === 'academic' ? (
+                    <div className="edit-fields">
+                      <div className="edit-field"><label>Course</label>
+                        <select value={editForm.course} onChange={e => setEditForm({...editForm, course: e.target.value})}>
+                          {Object.entries(COURSE_LABELS).map(([k, v]) => <option key={k} value={k}>{v}</option>)}
+                        </select>
+                      </div>
+                      <div className="edit-field"><label>Department</label><input type="text" value={editForm.department} onChange={e => setEditForm({...editForm, department: e.target.value})} /></div>
+                      <div className="edit-field"><label>Current Year</label><input type="number" min="1" max="4" value={editForm.currentYear} onChange={e => setEditForm({...editForm, currentYear: e.target.value})} /></div>
+                      <div className="edit-field"><label>Current Semester</label><input type="number" min="1" max="8" value={editForm.currentSemester} onChange={e => setEditForm({...editForm, currentSemester: e.target.value})} /></div>
+                      <div className="edit-field"><label>CGPA</label><input type="number" min="0" max="10" step="0.01" value={editForm.cgpa} onChange={e => setEditForm({...editForm, cgpa: e.target.value})} /></div>
+                      <div className="edit-field"><label>Active Backlogs</label><input type="number" min="0" value={editForm.activeBacklogs} onChange={e => setEditForm({...editForm, activeBacklogs: e.target.value})} /></div>
+                      <div className="edit-field"><label>Passive Backlogs</label><input type="number" min="0" value={editForm.passiveBacklogs} onChange={e => setEditForm({...editForm, passiveBacklogs: e.target.value})} /></div>
+                      <div className="edit-field"><label>LinkedIn URL</label><input type="url" value={editForm.linkedinUrl} onChange={e => setEditForm({...editForm, linkedinUrl: e.target.value})} /></div>
+                    </div>
+                  ) : (
+                    <>
+                      {allFields.map(f => (
+                        <div className="detail-row" key={f.key}>
+                          <span className="detail-label">{f.label}</span>
+                          <span className="detail-value">
+                            {f.renderer === 'link' && f.value ? (
+                              <a href={f.value} target="_blank" rel="noopener noreferrer" style={{color:'#1e3a8a'}}>{f.value}</a>
+                            ) : f.formatter === 'date' ? (
+                              formatDate(f.value)
+                            ) : f.formatter === 'decimal2' ? (
+                              Number(f.value).toFixed(2)
+                            ) : f.formatter === 'percent' ? (
+                              `${Number(f.value).toFixed(2)}%`
+                            ) : f.formatter === 'course' ? (
+                              COURSE_LABELS[f.value] || f.value
+                            ) : f.fallback ? (
+                              f.value || f.fallback
+                            ) : (
+                              String(f.value ?? 'N/A')
+                            )}
+                          </span>
+                        </div>
+                      ))}
+                      {section.id === 'academic' && s.semesterResults?.length > 0 && (
+                        <div className="sgpa-section">
+                          <span className="detail-label sgpa-title">Semester-wise SGPA</span>
+                          <div className="sgpa-grid">
+                            {s.semesterResults.map(sr => (
+                              <div key={sr.semester} className="sgpa-item">
+                                <span className="sgpa-sem">Sem {sr.semester}</span>
+                                <span className="sgpa-value">{Number(sr.sgpa).toFixed(2)}</span>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+                    </>
                   )}
-                </>
-              )}
-            </div>
-          </div>
+                </div>
+              </div>
+            );
+          })}
 
-          <div className="detail-card">
-            <div className="detail-card-header">
-              <Phone className="detail-icon orange" />
-              <h3>Contact Information</h3>
-            </div>
-            <div className="detail-card-body">
-              <div className="detail-row"><span className="detail-label">College Email</span><span className="detail-value">{u?.collegeEmail}</span></div>
-              <div className="detail-row"><span className="detail-label">Mobile Number</span><span className="detail-value">{s.phoneNumber}</span></div>
-              <div className="detail-row"><span className="detail-label">WhatsApp Number</span><span className="detail-value">{s.whatsappNumber}</span></div>
-              <div className="detail-row"><span className="detail-label">Alternate Phone</span><span className="detail-value">{s.alternatePhone || 'N/A'}</span></div>
-              <div className="detail-row"><span className="detail-label">Personal Email</span><span className="detail-value">{s.alternateEmail || 'N/A'}</span></div>
-            </div>
-          </div>
-
-          <div className="detail-card">
-            <div className="detail-card-header">
-              <MapPin className="detail-icon" />
-              <h3>Address</h3>
-            </div>
-            <div className="detail-card-body">
-              <div className="detail-row"><span className="detail-label">Current Address</span><span className="detail-value">{s.currentAddress}</span></div>
-              <div className="detail-row"><span className="detail-label">Permanent Address</span><span className="detail-value">{s.permanentAddress}</span></div>
-              <div className="detail-row"><span className="detail-label">City</span><span className="detail-value">{s.nativeCity}</span></div>
-              <div className="detail-row"><span className="detail-label">District</span><span className="detail-value">{s.nativeDistrict}</span></div>
-              <div className="detail-row"><span className="detail-label">State</span><span className="detail-value">{s.nativeState}</span></div>
-            </div>
-          </div>
-
-          <div className="detail-card">
-            <div className="detail-card-header">
-              <GraduationCap className="detail-icon orange" />
-              <h3>School Information</h3>
-            </div>
-            <div className="detail-card-body">
-              <div className="detail-row"><span className="detail-label">10th Board</span><span className="detail-value">{s.tenthBoard}</span></div>
-              <div className="detail-row"><span className="detail-label">10th Percentage</span><span className="detail-value">{Number(s.tenthPercentage).toFixed(2)}%</span></div>
-              <div className="detail-row"><span className="detail-label">10th Passing Year</span><span className="detail-value">{s.tenthYear}</span></div>
-              <div className="detail-row"><span className="detail-label">12th Board</span><span className="detail-value">{s.twelfthBoard}</span></div>
-              <div className="detail-row"><span className="detail-label">12th Percentage</span><span className="detail-value">{Number(s.twelfthPercentage).toFixed(2)}%</span></div>
-              <div className="detail-row"><span className="detail-label">12th Passing Year</span><span className="detail-value">{s.twelfthYear}</span></div>
-              <div className="detail-row"><span className="detail-label">Diploma Percentage</span><span className="detail-value">{s.diplomaPercentage != null ? `${Number(s.diplomaPercentage).toFixed(2)}%` : 'N/A'}</span></div>
-              <div className="detail-row"><span className="detail-label">Diploma Year</span><span className="detail-value">{s.diplomaYear || 'N/A'}</span></div>
-            </div>
-          </div>
-
-          <div className="detail-card">
-            <div className="detail-card-header">
-              <Calendar className="detail-icon" />
-              <h3>Profile Metadata</h3>
-            </div>
-            <div className="detail-card-body">
-              <div className="detail-row"><span className="detail-label">Profile Created</span><span className="detail-value">{formatDate(s.createdAt)}</span></div>
-              <div className="detail-row"><span className="detail-label">Last Updated</span><span className="detail-value">{formatDate(s.updatedAt)}</span></div>
-            </div>
-          </div>
+          {(() => {
+            const extras = getExtraFields(s, userObj, s.document);
+            if (extras.length === 0) return null;
+            return (
+              <div className="detail-card">
+                <div className="detail-card-header">
+                  <User className="detail-icon" />
+                  <h3>Additional Information</h3>
+                </div>
+                <div className="detail-card-body">
+                  {extras.map(f => (
+                    <div className="detail-row" key={f.key}>
+                      <span className="detail-label">{f.label}</span>
+                      <span className="detail-value">{String(f.value)}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            );
+          })()}
         </div>
       </div>
 

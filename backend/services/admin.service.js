@@ -338,7 +338,7 @@ const deleteStudent = async (userId) => {
 };
 
 const exportStudents = async (filters) => {
-  const result = await getStudents({ ...filters, page: 1, limit: 10000, sortBy: "name", sortOrder: "asc" });
+  const result = await getStudents({ ...filters, page: 1, limit: 10000, sortBy: "fullName", sortOrder: "asc" });
   return result.students;
 };
 

@@ -1,26 +1,29 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { 
-  ChevronDown, Calendar, FileText, 
+  ChevronDown, ChevronLeft, ChevronRight, Calendar, FileText, 
   User, GraduationCap, Phone, Mail, MapPin,
   Edit, ChevronUp, X, Save, ExternalLink, CheckCircle,
-  Home, LogOut, Award, Plus
+  Home, LogOut, Award, Plus, PanelLeftClose, PanelLeftOpen
 } from 'lucide-react';
 import { 
   getStudentProfile, getSemesterResults, getDocument,
   updateStudentProfile, updateUser, uploadDocument,
   createSemesterResult, updateSemesterResult
 } from '../../services/student.service';
+import {
+  FIELD_SECTIONS, COURSE_LABELS,
+  formatFieldValue, getFieldValue, getVisibleFields, getExtraFields
+} from '../../config/studentFields';
 import './Profile.css';
 
-const COURSE_LABELS = { BTECH: 'B.Tech', MTECH: 'M.Tech', MBA: 'MBA', MCA: 'MCA' };
 const COURSE_OPTIONS = ['BTECH', 'MTECH', 'MBA', 'MCA'];
 const DEPARTMENTS_BY_COURSE = {
   BTECH: ['Computer Science', 'Information Technology', 'Mechanical Engineering', 'Civil Engineering', 'Electrical Engineering', 'Electronics & Communication', 'Artificial Intelligence & Machine Learning'],
   MTECH: ['Computer Science', 'VLSI Design', 'Power Systems', 'Structural Engineering'],
+  MBA: ['Marketing', 'Finance', 'Human Resources'],
   MCA: ['Computer Applications'],
 };
-const MBA_SPECIALIZATIONS = ['Marketing', 'Finance', 'Human Resources'];
 const INDIAN_STATES = [
   'Andhra Pradesh', 'Arunachal Pradesh', 'Assam', 'Bihar', 'Chhattisgarh',
   'Goa', 'Gujarat', 'Haryana', 'Himachal Pradesh', 'Jharkhand',
@@ -33,16 +36,33 @@ const INDIAN_STATES = [
 ];
 const CURRENT_YEAR = new Date().getFullYear();
 
-function formatDate(dateStr) {
-  if (!dateStr) return '';
-  const d = new Date(dateStr);
-  return d.toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' });
-}
-
 function toDateInputValue(dateStr) {
   if (!dateStr) return '';
   const d = new Date(dateStr);
   return d.toISOString().split('T')[0];
+}
+
+const ICON_MAP = { User, GraduationCap, Phone, MapPin, FileText };
+
+function renderFieldValue(fieldDef, value) {
+  if (fieldDef.renderer === 'resumeLink') {
+    return value ? (
+      <a href={value} target="_blank" rel="noopener noreferrer" className="resume-link-btn">
+        <ExternalLink size={14} />
+        View Resume
+      </a>
+    ) : '\u2014';
+  }
+  if (fieldDef.renderer === 'link') {
+    return value ? (
+      <a href={value} target="_blank" rel="noopener noreferrer" className="linkedin-link-btn">
+        <ExternalLink size={14} />
+        {fieldDef.linkLabel || 'Link'}
+      </a>
+    ) : '\u2014';
+  }
+  const formatted = formatFieldValue(value, fieldDef.formatter);
+  return formatted || fieldDef.fallback || '\u2014';
 }
 
 export default function StudentProfile() {
@@ -62,6 +82,10 @@ export default function StudentProfile() {
   const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
   const [confirmClose, setConfirmClose] = useState(false);
   const pendingCloseRef = useRef(false);
+
+  const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
+  const [sidebarWidth, setSidebarWidth] = useState(240);
+  const isResizing = useRef(false);
 
   const storedUser = JSON.parse(localStorage.getItem('user') || '{}');
   const userId = storedUser.id;
@@ -113,6 +137,31 @@ export default function StudentProfile() {
     setExpanded(prev => ({ ...prev, [section]: !prev[section] }));
   };
 
+  const startResize = useCallback((e) => {
+    e.preventDefault();
+    isResizing.current = true;
+    document.body.style.cursor = 'col-resize';
+    document.body.style.userSelect = 'none';
+
+    const onMouseMove = (e) => {
+      if (isResizing.current) {
+        const newWidth = Math.min(Math.max(e.clientX, 180), 400);
+        setSidebarWidth(newWidth);
+      }
+    };
+
+    const onMouseUp = () => {
+      isResizing.current = false;
+      document.body.style.cursor = '';
+      document.body.style.userSelect = '';
+      document.removeEventListener('mousemove', onMouseMove);
+      document.removeEventListener('mouseup', onMouseUp);
+    };
+
+    document.addEventListener('mousemove', onMouseMove);
+    document.addEventListener('mouseup', onMouseUp);
+  }, []);
+
   const openEdit = (section) => {
     setSaveError('');
     let form = {};
@@ -132,8 +181,6 @@ export default function StudentProfile() {
           enrollmentNumber: profile?.enrollmentNumber || '',
           course: profile?.course || '',
           department: profile?.department || '',
-          mbaSpecialization1: profile?.mbaSpecialization1 || '',
-          mbaSpecialization2: profile?.mbaSpecialization2 || '',
           admissionYear: profile?.admissionYear || '',
           graduationYear: profile?.graduationYear || '',
           currentYear: profile?.currentYear || '',
@@ -253,9 +300,7 @@ export default function StudentProfile() {
             btuRollNumber: editForm.btuRollNumber,
             enrollmentNumber: editForm.enrollmentNumber,
             course: editForm.course,
-            department: editForm.course === 'MBA' ? null : editForm.department || null,
-            mbaSpecialization1: editForm.course === 'MBA' ? editForm.mbaSpecialization1 || null : null,
-            mbaSpecialization2: editForm.course === 'MBA' ? editForm.mbaSpecialization2 || null : null,
+            department: editForm.department || null,
             admissionYear: parseInt(editForm.admissionYear),
             graduationYear: parseInt(editForm.graduationYear),
             currentYear: parseInt(editForm.currentYear || '1'),
@@ -335,7 +380,7 @@ export default function StudentProfile() {
   if (loading && !profile) {
     return (
       <div className="profile-page">
-        <div className="profile-main" style={{ marginLeft: '240px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+        <div className="profile-main" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
           <p style={{ color: '#64748b', fontSize: '1rem' }}>Loading profile...</p>
         </div>
       </div>
@@ -345,7 +390,7 @@ export default function StudentProfile() {
   if (error && !profile) {
     return (
       <div className="profile-page">
-        <div className="profile-main" style={{ marginLeft: '240px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+        <div className="profile-main" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
           <p style={{ color: '#ef4444', fontSize: '1rem' }}>{error}</p>
         </div>
       </div>
@@ -378,15 +423,116 @@ export default function StudentProfile() {
   const collegeEmail = storedUser.collegeEmail || '';
   const batch = `${profile.admissionYear} - ${profile.graduationYear}`;
   const courseDisplay = COURSE_LABELS[profile.course] || profile.course;
-  const department = profile.department || profile.mbaSpecialization1 || '';
+  const department = profile.department || '';
   const isVerified = profile.isVerified;
-  const resumeUrl = resumeDoc?.resumeUrl || '';
 
   const handleLogout = () => {
     localStorage.removeItem('token');
     localStorage.removeItem('user');
     navigate('/auth');
   };
+
+  const userObj = { fullName, collegeEmail };
+
+  const renderDynamicFields = (section, isExpanded) => {
+    const allFields = getVisibleFields(section, profile, userObj, resumeDoc);
+    const primaryCount = section.primaryCount || 4;
+    const primaryFields = allFields.slice(0, primaryCount);
+    const expandedFields = allFields.slice(primaryCount);
+
+    return (
+      <>
+        {primaryFields.map(f => (
+          <div className="info-row" key={f.key}>
+            <span className="info-label">{f.label}</span>
+            <span className="info-value">{renderFieldValue(f, f.value)}</span>
+          </div>
+        ))}
+        {expandedFields.length > 0 && (
+          <div className={`expanded-content ${isExpanded ? 'show' : ''}`}>
+            {expandedFields.map(f => (
+              <div className="info-row" key={f.key}>
+                <span className="info-label">{f.label}</span>
+                <span className="info-value">{renderFieldValue(f, f.value)}</span>
+              </div>
+            ))}
+          </div>
+        )}
+      </>
+    );
+  };
+
+  const renderSGPA = () => {
+    if (!semesterResults || semesterResults.length === 0) return null;
+    const currentSem = parseInt(profile.currentSemester) || 0;
+    const filteredResults = semesterResults.filter(sr => sr.semester < currentSem);
+    if (filteredResults.length === 0 && currentSem <= 1) return null;
+    return (
+      <div className="sgpa-list">
+        <span className="info-label sgpa-title">Semester-wise SGPA</span>
+        {filteredResults.length > 0 ? (
+          <div className="sgpa-grid">
+            {filteredResults.map(sr => (
+              <div key={sr.semester} className="sgpa-item">
+                <span className="sgpa-sem">Sem {sr.semester}</span>
+                <span className="sgpa-value">{Number(sr.sgpa).toFixed(2)}</span>
+              </div>
+            ))}
+          </div>
+        ) : (
+          <p style={{ fontSize: '0.85rem', color: '#94a3b8', margin: '8px 0 0' }}>No SGPA data available yet.</p>
+        )}
+      </div>
+    );
+  };
+
+  const sidebarContent = (
+    <>
+      <div className="sidebar-header">
+        <div className="sidebar-logo">
+          <div className="logo-icon-wrapper">
+            <Award size={22} />
+          </div>
+          {!sidebarCollapsed && (
+            <div className="logo-text">
+              <div className="logo-title">Training &</div>
+              <div className="logo-title">Placement Cell</div>
+              <div className="logo-subtitle">GWECA, Ajmer</div>
+            </div>
+          )}
+        </div>
+        <button
+          className="sidebar-collapse-btn"
+          onClick={() => setSidebarCollapsed(!sidebarCollapsed)}
+          title={sidebarCollapsed ? 'Expand sidebar' : 'Collapse sidebar'}
+        >
+          {sidebarCollapsed ? <PanelLeftOpen size={18} /> : <PanelLeftClose size={18} />}
+        </button>
+      </div>
+
+      <nav className="sidebar-nav">
+        <button 
+          className={`nav-item ${activeTab === 'dashboard' ? 'active' : ''}`}
+          onClick={() => navigate('/')}
+          title="Dashboard"
+        >
+          <Home size={18} />
+          {!sidebarCollapsed && 'Dashboard'}
+        </button>
+        <button className="nav-item" onClick={handleLogout} title="Logout">
+          <LogOut size={18} />
+          {!sidebarCollapsed && 'Logout'}
+        </button>
+      </nav>
+
+      {!sidebarCollapsed && (
+        <div className="sidebar-footer">
+          <p>&copy; 2025 T&P Cell</p>
+          <p>All rights reserved.</p>
+        </div>
+      )}
+    </>
+  );
 
   return (
     <div className="profile-page">
@@ -397,41 +543,30 @@ export default function StudentProfile() {
         </div>
       )}
 
-      <aside className="profile-sidebar">
-        <div className="sidebar-header">
-          <div className="sidebar-logo">
-            <div className="logo-icon-wrapper">
-              <Award size={22} />
-            </div>
-            <div className="logo-text">
-              <div className="logo-title">Training &</div>
-              <div className="logo-title">Placement Cell</div>
-              <div className="logo-subtitle">GWECA, Ajmer</div>
-            </div>
-          </div>
-        </div>
+      {sidebarCollapsed && (
+        <button
+          className="sidebar-expand-btn"
+          onClick={() => setSidebarCollapsed(false)}
+          title="Expand sidebar"
+        >
+          <PanelLeftOpen size={18} />
+        </button>
+      )}
 
-        <nav className="sidebar-nav">
-          <button 
-            className={`nav-item ${activeTab === 'dashboard' ? 'active' : ''}`}
-            onClick={() => navigate('/')}
-          >
-            <Home size={18} />
-            Dashboard
-          </button>
-          <button className="nav-item" onClick={handleLogout}>
-            <LogOut size={18} />
-            Logout
-          </button>
-        </nav>
-
-        <div className="sidebar-footer">
-          <p>&copy; 2025 T&P Cell</p>
-          <p>All rights reserved.</p>
-        </div>
+      <aside
+        className={`profile-sidebar ${sidebarCollapsed ? 'collapsed' : ''}`}
+        style={!sidebarCollapsed ? { width: sidebarWidth } : undefined}
+      >
+        {sidebarContent}
+        {!sidebarCollapsed && (
+          <div
+            className="sidebar-resize-handle"
+            onMouseDown={startResize}
+          />
+        )}
       </aside>
 
-      <main className="profile-main">
+      <main className="profile-main" style={{ marginLeft: sidebarCollapsed ? 0 : sidebarWidth }}>
         <header className="profile-header">
           <h1>Dashboard</h1>
           <div className="header-actions">
@@ -483,328 +618,60 @@ export default function StudentProfile() {
         </section>
 
         <section className="info-sections">
-          {/* Personal Information */}
-          <div className="info-card">
-            <div className="info-card-header">
-              <div className="info-card-title">
-                <User className="info-icon" />
-                <h3>Personal Information</h3>
-              </div>
-              <button className="edit-icon-btn" onClick={() => openEdit('personal')}>
-                <Edit size={18} />
-              </button>
-            </div>
-            <div className="info-card-body">
-              <div className="info-row">
-                <span className="info-label">Full Name</span>
-                <span className="info-value">{fullName}</span>
-              </div>
-              <div className="info-row">
-                <span className="info-label">Date of Birth</span>
-                <span className="info-value">{formatDate(profile.dob)}</span>
-              </div>
-              <div className="info-row">
-                <span className="info-label">Gender</span>
-                <span className="info-value">{profile.gender}</span>
-              </div>
-              <div className="info-row">
-                <span className="info-label">Aadhar Number</span>
-                <span className="info-value">{profile.aadharNumber}</span>
-              </div>
-              <div className={`expanded-content ${expanded.personal ? 'show' : ''}`}>
-                <div className="info-row">
-                  <span className="info-label">PAN Number</span>
-                  <span className="info-value">{profile.panNumber || 'N/A'}</span>
-                </div>
-              </div>
-            </div>
-            <button className="view-details-btn" onClick={() => toggleSection('personal')}>
-              {expanded.personal ? 'Show Less' : 'View Details'} {expanded.personal ? <ChevronUp size={16} /> : '\u2192'}
-            </button>
-          </div>
+          {FIELD_SECTIONS.map(section => {
+            const IconComponent = ICON_MAP[section.icon] || User;
+            const isExpanded = !!expanded[section.id];
+            const allFields = getVisibleFields(section, profile, userObj, resumeDoc);
+            const hasExpandable = allFields.length > (section.primaryCount || 4);
+            const hasOptional = section.fields.some(f => f.optional);
+            const optionalPresent = section.fields.some(f => f.optional && profile[f.key] != null && profile[f.key] !== '');
 
-          {/* Academic Information */}
-          <div className="info-card">
-            <div className="info-card-header">
-              <div className="info-card-title">
-                <GraduationCap className="info-icon green" />
-                <h3>Academic Information</h3>
+            return (
+              <div className="info-card" key={section.id}>
+                <div className="info-card-header">
+                  <div className="info-card-title">
+                    <IconComponent className={`info-icon ${section.iconClass}`} />
+                    <h3>{section.title}</h3>
+                  </div>
+                  <button className="edit-icon-btn" onClick={() => openEdit(section.editKey)}>
+                    <Edit size={18} />
+                  </button>
+                </div>
+                <div className="info-card-body">
+                  {renderDynamicFields(section, isExpanded)}
+                  {section.hasSGPA && renderSGPA()}
+                </div>
+                {(hasExpandable || (hasOptional && optionalPresent)) && (
+                  <button className="view-details-btn" onClick={() => toggleSection(section.id)}>
+                    {isExpanded ? 'Show Less' : 'View Details'} {isExpanded ? <ChevronUp size={16} /> : '\u2192'}
+                  </button>
+                )}
               </div>
-              <button className="edit-icon-btn" onClick={() => openEdit('academic')}>
-                <Edit size={18} />
-              </button>
-            </div>
-            <div className="info-card-body">
-              <div className="info-row">
-                <span className="info-label">University Roll No.</span>
-                <span className="info-value">{profile.btuRollNumber}</span>
-              </div>
-              <div className="info-row">
-                <span className="info-label">Enrollment No.</span>
-                <span className="info-value">{profile.enrollmentNumber}</span>
-              </div>
-              <div className="info-row">
-                <span className="info-label">Course</span>
-                <span className="info-value">{courseDisplay}</span>
-              </div>
-              <div className="info-row">
-                <span className="info-label">Department</span>
-                <span className="info-value">{department || 'N/A'}</span>
-              </div>
-              <div className={`expanded-content ${expanded.academic ? 'show' : ''}`}>
-                <div className="info-row">
-                  <span className="info-label">College ID</span>
-                  <span className="info-value">{profile.collegeId}</span>
+            );
+          })}
+
+          {(() => {
+            const extras = getExtraFields(profile, userObj, resumeDoc);
+            if (extras.length === 0) return null;
+            return (
+              <div className="info-card">
+                <div className="info-card-header">
+                  <div className="info-card-title">
+                    <User className="info-icon" />
+                    <h3>Additional Information</h3>
+                  </div>
                 </div>
-                <div className="info-row">
-                  <span className="info-label">Batch</span>
-                  <span className="info-value">{batch}</span>
-                </div>
-                <div className="info-row">
-                  <span className="info-label">Admission Year</span>
-                  <span className="info-value">{profile.admissionYear}</span>
-                </div>
-                <div className="info-row">
-                  <span className="info-label">Graduation Year</span>
-                  <span className="info-value">{profile.graduationYear}</span>
-                </div>
-                <div className="info-row">
-                  <span className="info-label">Current Year</span>
-                  <span className="info-value">{profile.currentYear}</span>
-                </div>
-                <div className="info-row">
-                  <span className="info-label">Current Semester</span>
-                  <span className="info-value">{profile.currentSemester}</span>
-                </div>
-                <div className="info-row">
-                  <span className="info-label">CGPA</span>
-                  <span className="info-value">{Number(profile.cgpa).toFixed(2)}</span>
-                </div>
-                <div className="info-row">
-                  <span className="info-label">Active Backlogs</span>
-                  <span className="info-value">{profile.activeBacklogs}</span>
-                </div>
-                <div className="info-row">
-                  <span className="info-label">Passive Backlogs</span>
-                  <span className="info-value">{profile.passiveBacklogs}</span>
-                </div>
-              </div>
-              {(() => {
-                const currentSem = parseInt(profile.currentSemester) || 0;
-                const filteredResults = semesterResults.filter(sr => sr.semester < currentSem);
-                if (filteredResults.length > 0) {
-                  return (
-                    <div className="sgpa-list">
-                      <span className="info-label sgpa-title">Semester-wise SGPA</span>
-                      <div className="sgpa-grid">
-                        {filteredResults.map(sr => (
-                          <div key={sr.semester} className="sgpa-item">
-                            <span className="sgpa-sem">Sem {sr.semester}</span>
-                            <span className="sgpa-value">{Number(sr.sgpa).toFixed(2)}</span>
-                          </div>
-                        ))}
-                      </div>
+                <div className="info-card-body">
+                  {extras.map(f => (
+                    <div className="info-row" key={f.key}>
+                      <span className="info-label">{f.label}</span>
+                      <span className="info-value">{String(f.value)}</span>
                     </div>
-                  );
-                }
-                if (currentSem > 1) {
-                  return (
-                    <div className="sgpa-list">
-                      <span className="info-label sgpa-title">Semester-wise SGPA</span>
-                      <p style={{ fontSize: '0.85rem', color: '#94a3b8', margin: '8px 0 0' }}>No SGPA data available yet.</p>
-                    </div>
-                  );
-                }
-                return null;
-              })()}
-            </div>
-            <button className="view-details-btn" onClick={() => toggleSection('academic')}>
-              {expanded.academic ? 'Show Less' : 'View Details'} {expanded.academic ? <ChevronUp size={16} /> : '\u2192'}
-            </button>
-          </div>
-
-          {/* School Information */}
-          <div className="info-card">
-            <div className="info-card-header">
-              <div className="info-card-title">
-                <GraduationCap className="info-icon orange" />
-                <h3>School Information</h3>
-              </div>
-              <button className="edit-icon-btn" onClick={() => openEdit('academic')}>
-                <Edit size={18} />
-              </button>
-            </div>
-            <div className="info-card-body">
-              <div className="info-row">
-                <span className="info-label">10th Board</span>
-                <span className="info-value">{profile.tenthBoard}</span>
-              </div>
-              <div className="info-row">
-                <span className="info-label">10th Percentage</span>
-                <span className="info-value">{Number(profile.tenthPercentage).toFixed(2)}%</span>
-              </div>
-              <div className="info-row">
-                <span className="info-label">10th Passing Year</span>
-                <span className="info-value">{profile.tenthYear}</span>
-              </div>
-              <div className="info-row">
-                <span className="info-label">12th Board</span>
-                <span className="info-value">{profile.twelfthBoard}</span>
-              </div>
-              <div className="info-row">
-                <span className="info-label">12th Percentage</span>
-                <span className="info-value">{Number(profile.twelfthPercentage).toFixed(2)}%</span>
-              </div>
-              <div className="info-row">
-                <span className="info-label">12th Passing Year</span>
-                <span className="info-value">{profile.twelfthYear}</span>
-              </div>
-              <div className={`expanded-content ${expanded.school ? 'show' : ''}`}>
-                {profile.diplomaPercentage != null && (
-                  <div className="info-row">
-                    <span className="info-label">Diploma Percentage</span>
-                    <span className="info-value">{Number(profile.diplomaPercentage).toFixed(2)}%</span>
-                  </div>
-                )}
-                {profile.diplomaYear != null && (
-                  <div className="info-row">
-                    <span className="info-label">Diploma Year</span>
-                    <span className="info-value">{profile.diplomaYear}</span>
-                  </div>
-                )}
-              </div>
-            </div>
-            {(profile.diplomaPercentage != null || profile.diplomaYear != null) && (
-              <button className="view-details-btn" onClick={() => toggleSection('school')}>
-                {expanded.school ? 'Show Less' : 'View Details'} {expanded.school ? <ChevronUp size={16} /> : '\u2192'}
-              </button>
-            )}
-          </div>
-
-          {/* Contact Information */}
-          <div className="info-card">
-            <div className="info-card-header">
-              <div className="info-card-title">
-                <Phone className="info-icon orange" />
-                <h3>Contact Information</h3>
-              </div>
-              <button className="edit-icon-btn" onClick={() => openEdit('contact')}>
-                <Edit size={18} />
-              </button>
-            </div>
-            <div className="info-card-body">
-              <div className="info-row">
-                <span className="info-label">College Email</span>
-                <span className="info-value">{collegeEmail}</span>
-              </div>
-              <div className="info-row">
-                <span className="info-label">Mobile Number</span>
-                <span className="info-value">{profile.phoneNumber}</span>
-              </div>
-              <div className="info-row">
-                <span className="info-label">WhatsApp Number</span>
-                <span className="info-value">{profile.whatsappNumber}</span>
-              </div>
-              <div className={`expanded-content ${expanded.contact ? 'show' : ''}`}>
-                {profile.alternatePhone && (
-                  <div className="info-row">
-                    <span className="info-label">Alternate Phone</span>
-                    <span className="info-value">{profile.alternatePhone}</span>
-                  </div>
-                )}
-                {profile.alternateEmail && (
-                  <div className="info-row">
-                    <span className="info-label">Personal Email</span>
-                    <span className="info-value">{profile.alternateEmail}</span>
-                  </div>
-                )}
-              </div>
-            </div>
-            <button className="view-details-btn" onClick={() => toggleSection('contact')}>
-              {expanded.contact ? 'Show Less' : 'View Details'} {expanded.contact ? <ChevronUp size={16} /> : '\u2192'}
-            </button>
-          </div>
-
-          {/* Current Address & Location */}
-          <div className="info-card">
-            <div className="info-card-header">
-              <div className="info-card-title">
-                <MapPin className="info-icon" />
-                <h3>Current Address & Location</h3>
-              </div>
-              <button className="edit-icon-btn" onClick={() => openEdit('address')}>
-                <Edit size={18} />
-              </button>
-            </div>
-            <div className="info-card-body">
-              <div className="info-row">
-                <span className="info-label">Current Address</span>
-                <span className="info-value">{profile.currentAddress}</span>
-              </div>
-              <div className="info-row">
-                <span className="info-label">Permanent Address</span>
-                <span className="info-value">{profile.permanentAddress}</span>
-              </div>
-              <div className="info-row">
-                <span className="info-label">City</span>
-                <span className="info-value">{profile.nativeCity}</span>
-              </div>
-              <div className="info-row">
-                <span className="info-label">District</span>
-                <span className="info-value">{profile.nativeDistrict}</span>
-              </div>
-              <div className={`expanded-content ${expanded.address ? 'show' : ''}`}>
-                <div className="info-row">
-                  <span className="info-label">State</span>
-                  <span className="info-value">{profile.nativeState}</span>
+                  ))}
                 </div>
               </div>
-            </div>
-            <button className="view-details-btn" onClick={() => toggleSection('address')}>
-              {expanded.address ? 'Show Less' : 'View Details'} {expanded.address ? <ChevronUp size={16} /> : '\u2192'}
-            </button>
-          </div>
-
-          {/* Resume & LinkedIn */}
-          <div className="info-card">
-            <div className="info-card-header">
-              <div className="info-card-title">
-                <FileText className="info-icon purple" />
-                <h3>Resume & LinkedIn</h3>
-              </div>
-              <button className="edit-icon-btn" onClick={() => openEdit('resume')}>
-                <Edit size={18} />
-              </button>
-            </div>
-            <div className="info-card-body">
-              <div className="info-row">
-                <span className="info-label">Resume</span>
-                <span className="info-value">
-                  {resumeDoc && resumeUrl ? (
-                    <a href={resumeUrl} target="_blank" rel="noopener noreferrer" className="resume-link-btn">
-                      <ExternalLink size={14} />
-                      View Resume
-                    </a>
-                  ) : (
-                    '—'
-                  )}
-                </span>
-              </div>
-              <div className="info-row">
-                <span className="info-label">LinkedIn URL</span>
-                <span className="info-value">
-                  {profile.linkedinUrl ? (
-                    <a href={profile.linkedinUrl} target="_blank" rel="noopener noreferrer" className="linkedin-link-btn">
-                      <ExternalLink size={14} />
-                      LinkedIn Profile
-                    </a>
-                  ) : (
-                    '—'
-                  )}
-                </span>
-              </div>
-            </div>
-          </div>
+            );
+          })()}
         </section>
       </main>
 
@@ -876,37 +743,18 @@ export default function StudentProfile() {
                   </div>
                   <div className="modal-field">
                     <label>Course</label>
-                    <select value={editForm.course || ''} onChange={e => { updateField('course', e.target.value); updateField('department', ''); updateField('mbaSpecialization1', ''); updateField('mbaSpecialization2', ''); }}>
+                    <select value={editForm.course || ''} onChange={e => { updateField('course', e.target.value); updateField('department', ''); }}>
                       <option value="">Select course</option>
                       {COURSE_OPTIONS.map(c => <option key={c} value={c}>{COURSE_LABELS[c]}</option>)}
                     </select>
                   </div>
-                  {editForm.course === 'MBA' ? (
-                    <>
-                      <div className="modal-field">
-                        <label>First Specialization</label>
-                        <select value={editForm.mbaSpecialization1 || ''} onChange={e => updateField('mbaSpecialization1', e.target.value)}>
-                          <option value="">Select specialization</option>
-                          {MBA_SPECIALIZATIONS.map(s => <option key={s} value={s}>{s}</option>)}
-                        </select>
-                      </div>
-                      <div className="modal-field">
-                        <label>Second Specialization</label>
-                        <select value={editForm.mbaSpecialization2 || ''} onChange={e => updateField('mbaSpecialization2', e.target.value)}>
-                          <option value="">Select specialization</option>
-                          {MBA_SPECIALIZATIONS.map(s => <option key={s} value={s} disabled={s === editForm.mbaSpecialization1}>{s}</option>)}
-                        </select>
-                      </div>
-                    </>
-                  ) : (
-                    <div className="modal-field">
-                      <label>Department / Branch</label>
-                      <select value={editForm.department || ''} onChange={e => updateField('department', e.target.value)} disabled={!editForm.course}>
-                        <option value="">{editForm.course ? 'Select department' : 'Select a course first'}</option>
-                        {(DEPARTMENTS_BY_COURSE[editForm.course] || []).map(d => <option key={d} value={d}>{d}</option>)}
-                      </select>
-                    </div>
-                  )}
+                  <div className="modal-field">
+                    <label>Department / Branch</label>
+                    <select value={editForm.department || ''} onChange={e => updateField('department', e.target.value)} disabled={!editForm.course}>
+                      <option value="">{editForm.course ? 'Select department' : 'Select a course first'}</option>
+                      {(DEPARTMENTS_BY_COURSE[editForm.course] || []).map(d => <option key={d} value={d}>{d}</option>)}
+                    </select>
+                  </div>
                   <div className="modal-field">
                     <label>Admission Year</label>
                     <select value={editForm.admissionYear || ''} onChange={e => {

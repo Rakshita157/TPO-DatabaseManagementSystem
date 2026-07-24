@@ -8,7 +8,6 @@
 
 /* Sidebar */
 .profile-sidebar {
-  width: 240px;
   background: white;
   border-right: 1px solid #e2e8f0;
   display: flex;
@@ -17,10 +16,89 @@
   position: fixed;
   height: 100vh;
   overflow-y: auto;
+  overflow-x: hidden;
+  width: 240px;
+  transition: width 0.25s ease, opacity 0.25s ease;
+  z-index: 10;
+}
+
+.profile-sidebar.collapsed {
+  width: 0;
+  padding: 0;
+  opacity: 0;
+  pointer-events: none;
+  border-right: none;
 }
 
 .sidebar-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
   margin-bottom: 20px;
+  gap: 8px;
+}
+
+.sidebar-collapse-btn {
+  width: 30px;
+  height: 30px;
+  border-radius: 6px;
+  border: 1px solid #e2e8f0;
+  background: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  color: #64748b;
+  flex-shrink: 0;
+  transition: all 0.2s ease;
+}
+
+.sidebar-collapse-btn:hover {
+  background: #f1f5f9;
+  color: #1e3a8a;
+  border-color: #1e3a8a;
+}
+
+.sidebar-resize-handle {
+  position: absolute;
+  top: 0;
+  right: 0;
+  width: 5px;
+  height: 100%;
+  cursor: col-resize;
+  z-index: 20;
+  transition: background 0.15s ease;
+}
+
+.sidebar-resize-handle:hover,
+.sidebar-resize-handle:active {
+  background: rgba(30, 58, 138, 0.15);
+}
+
+.sidebar-expand-btn {
+  position: fixed;
+  left: 8px;
+  top: 50%;
+  transform: translateY(-50%);
+  z-index: 20;
+  width: 36px;
+  height: 36px;
+  border-radius: 8px;
+  border: 1px solid #e2e8f0;
+  background: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  color: #1e3a8a;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  transition: all 0.2s ease;
+}
+
+.sidebar-expand-btn:hover {
+  background: #dbeafe;
+  border-color: #1e3a8a;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
 }
 
 .sidebar-logo {
@@ -108,10 +186,10 @@
 
 /* Main Content */
 .profile-main {
-  margin-left: 240px;
   flex: 1;
   padding: 20px 24px;
   min-height: 100vh;
+  transition: margin-left 0.25s ease;
 }
 
 /* Profile Header */
@@ -1003,10 +1081,26 @@
     position: static;
     width: 100%;
     height: auto;
+    border-right: none;
+    border-bottom: 1px solid #e2e8f0;
   }
-  
+
+  .profile-sidebar.collapsed {
+    width: 0;
+    height: 0;
+    overflow: hidden;
+  }
+
   .profile-main {
-    margin-left: 0;
+    margin-left: 0 !important;
+  }
+
+  .sidebar-resize-handle {
+    display: none;
+  }
+
+  .sidebar-expand-btn {
+    display: none;
   }
   
   .profile-hero-left {

@@ -7,6 +7,7 @@ const {
   exportStudents,
   getFilterOptions,
 } = require("../services/admin.service");
+const { generateStudentExcel } = require("../services/excel.service");
 
 const listStudents = async (req, res) => {
   try {
@@ -59,44 +60,16 @@ const removeStudent = async (req, res) => {
 const exportData = async (req, res) => {
   try {
     const students = await exportStudents(req.query);
-    const csvRows = [];
-    const headers = [
-      "Full Name", "College Email", "College ID", "BTU Roll No", "Enrollment No",
-      "Course", "Department", "Batch", "Admission Year", "Graduation Year",
-      "Current Year", "Current Semester", "Gender", "CGPA", "Active Backlogs",
-      "Passive Backlogs", "Placement Status", "Verified", "Resume URL", "LinkedIn URL",
-    ];
-    csvRows.push(headers.join(","));
-
-    for (const s of students) {
-      const row = [
-        `"${s.user?.fullName || ""}"`,
-        s.user?.collegeEmail || "",
-        s.collegeId || "",
-        s.btuRollNumber || "",
-        s.enrollmentNumber || "",
-        s.course || "",
-        `"${s.department || "N/A"}"`,
-        `${s.admissionYear}-${s.graduationYear}`,
-        s.admissionYear,
-        s.graduationYear,
-        s.currentYear,
-        s.currentSemester,
-        s.gender || "",
-        Number(s.cgpa) || "",
-        s.activeBacklogs,
-        s.passiveBacklogs,
-        s.placementStatus,
-        s.isVerified ? "Yes" : "No",
-        s.document?.resumeUrl || "",
-        s.linkedinUrl || "",
-      ];
-      csvRows.push(row.join(","));
-    }
-
-    res.setHeader("Content-Type", "text/csv");
-    res.setHeader("Content-Disposition", "attachment; filename=students_export.csv");
-    res.send(csvRows.join("\n"));
+    const buffer = await generateStudentExcel(students);
+    res.setHeader(
+      "Content-Type",
+      "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+    );
+    res.setHeader(
+      "Content-Disposition",
+      "attachment; filename=students_export.xlsx"
+    );
+    res.send(Buffer.from(buffer));
   } catch (error) {
     res.status(500).json({ message: error.message });
   }

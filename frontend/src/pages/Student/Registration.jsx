@@ -21,7 +21,6 @@ const INITIAL_DATA = {
   mobileNumber: '', whatsappNumber: '', dateOfBirth: '',
   aadharNumber: '', panNumber: '',
   course: '', department: '',
-  mbaSpecialization1: '', mbaSpecialization2: '',
   admissionYear: '', graduationYear: '', currentYear: '', currentSemester: '',
   collegeId: '', btuRollNumber: '', enrollmentNumber: '',
   cgpa: '', activeBacklogs: '', passiveBacklogs: '',
@@ -41,10 +40,9 @@ const COURSES = ['B.Tech', 'M.Tech', 'MBA', 'MCA']
 const COURSE_DEPARTMENTS = {
   'B.Tech': ['Computer Science', 'Information Technology', 'Mechanical Engineering', 'Civil Engineering', 'Electrical Engineering', 'Electronics & Communication', 'Artificial Intelligence & Machine Learning'],
   'M.Tech': ['Computer Science', 'VLSI Design', 'Power Systems', 'Structural Engineering'],
+  'MBA': ['Marketing', 'Finance', 'Human Resources'],
   'MCA': ['Computer Applications'],
 }
-
-const MBA_SPECIALIZATIONS = ['Marketing', 'Finance', 'Human Resources']
 
 const COURSE_DURATION = { 'B.Tech': 4, 'M.Tech': 2, 'MBA': 2, 'MCA': 2 }
 
@@ -147,12 +145,7 @@ export default function Registration() {
 
     if (step === 1) {
       if (!d.course) newErrors.course = 'Please select a course'
-      if (d.course && d.course !== 'MBA') {
-        if (!d.department) newErrors.department = 'Please select a department'
-      }
-      if (d.course === 'MBA') {
-        if (!d.mbaSpecialization1) newErrors.mbaSpecialization1 = 'Please select first specialization'
-      }
+      if (!d.department) newErrors.department = 'Please select a department'
       if (!d.admissionYear) newErrors.admissionYear = 'Please select admission year'
       if (!d.currentYear) newErrors.currentYear = 'Please select current year'
       if (!d.currentSemester) newErrors.currentSemester = 'Please select semester'
@@ -218,9 +211,7 @@ export default function Registration() {
       const profilePayload = {
         userId,
         course: formData.course === 'B.Tech' ? 'BTECH' : formData.course === 'M.Tech' ? 'MTECH' : formData.course.toUpperCase(),
-        department: formData.course === 'MBA' ? null : formData.department,
-        mbaSpecialization1: formData.course === 'MBA' ? formData.mbaSpecialization1 : null,
-        mbaSpecialization2: formData.course === 'MBA' ? formData.mbaSpecialization2 : null,
+        department: formData.department,
         admissionYear: parseInt(formData.admissionYear),
         graduationYear: parseInt(formData.graduationYear),
         currentYear: parseInt(formData.currentYear || '1'),
@@ -535,7 +526,6 @@ function PersonalInfoStep({ data, errors, onChange, onPhotoChange }) {
 
 function AcademicInfoStep({ data, errors, onChange, onSgpaChange, getSemesterOptions }) {
   const departments = COURSE_DEPARTMENTS[data.course] || []
-  const isMba = data.course === 'MBA'
 
   return (
     <div className="step-form">
@@ -545,43 +535,22 @@ function AcademicInfoStep({ data, errors, onChange, onSgpaChange, getSemesterOpt
           <select value={data.course} onChange={e => {
             onChange('course', e.target.value)
             onChange('department', '')
-            onChange('mbaSpecialization1', '')
-            onChange('mbaSpecialization2', '')
           }}>
             <option value="">Select course</option>
             {COURSES.map(c => <option key={c} value={c}>{c}</option>)}
           </select>
         </Field>
 
-        {isMba ? (
-          <>
-            <Field label="First Specialization" error={errors.mbaSpecialization1} required>
-              <select value={data.mbaSpecialization1} onChange={e => onChange('mbaSpecialization1', e.target.value)}>
-                <option value="">Select specialization</option>
-                {MBA_SPECIALIZATIONS.map(s => <option key={s} value={s}>{s}</option>)}
-              </select>
-            </Field>
-            <Field label="Second Specialization (optional)" error={errors.mbaSpecialization2}>
-              <select value={data.mbaSpecialization2} onChange={e => onChange('mbaSpecialization2', e.target.value)}>
-                <option value="">Select specialization</option>
-                {MBA_SPECIALIZATIONS.map(s => (
-                  <option key={s} value={s} disabled={s === data.mbaSpecialization1}>{s}</option>
-                ))}
-              </select>
-            </Field>
-          </>
-        ) : (
-          <Field label="Department / Branch" error={errors.department} required>
-            <select
-              value={data.department}
-              onChange={e => onChange('department', e.target.value)}
-              disabled={!data.course}
-            >
+        <Field label="Department / Branch" error={errors.department} required>
+          <select
+            value={data.department}
+            onChange={e => onChange('department', e.target.value)}
+            disabled={!data.course}
+          >
               <option value="">{data.course ? 'Select department' : 'Select a course first'}</option>
               {departments.map(d => <option key={d} value={d}>{d}</option>)}
             </select>
           </Field>
-        )}
 
         <Field label="Admission Year" error={errors.admissionYear} required>
           <select value={data.admissionYear} onChange={e => onChange('admissionYear', e.target.value)}>

@@ -14,6 +14,11 @@ import './Dashboard.css';
 const COURSE_LABELS = { BTECH: 'B.Tech', MTECH: 'M.Tech', MBA: 'MBA', MCA: 'MCA' };
 const COURSE_SEMESTERS = { BTECH: 8, MTECH: 4, MBA: 4, MCA: 4 };
 
+function formatDate(dateStr) {
+  if (!dateStr) return 'N/A';
+  return new Date(dateStr).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' });
+}
+
 const getSemesterOptions = (course) => {
   const count = COURSE_SEMESTERS[course] || 8;
   return Array.from({ length: count }, (_, i) => i + 1);
@@ -525,23 +530,53 @@ export default function AdminDashboard() {
                 <th><input type="checkbox" className="table-checkbox" checked={selectedIds.length === students.length && students.length > 0} onChange={toggleSelectAll} /></th>
                 <th className="sortable" onClick={() => handleSort('fullName')}>Name <SortIcon field="fullName" /></th>
                 <th>Roll No</th>
+                <th>Enrollment No</th>
                 <th>College ID</th>
                 <th>Email</th>
+                <th>DOB</th>
+                <th>Gender</th>
                 <th>Phone</th>
+                <th>WhatsApp</th>
+                <th>Alt Phone</th>
+                <th>Alt Email</th>
                 <th>Course</th>
                 <th className="sortable" onClick={() => handleSort('department')}>Department <SortIcon field="department" /></th>
+                <th>MBA Spec 1</th>
+                <th>MBA Spec 2</th>
+                <th>Batch</th>
                 <th>Year/Sem</th>
                 <th className="sortable" onClick={() => handleSort('cgpa')}>CGPA <SortIcon field="cgpa" /></th>
                 <th>SGPA</th>
                 <th>Resume</th>
                 <th className="sortable" onClick={() => handleSort('activeBacklogs')}>Active Backlogs <SortIcon field="activeBacklogs" /></th>
+                <th>Passive Backlogs</th>
+                <th>LinkedIn</th>
+                <th>Current Address</th>
+                <th>Permanent Address</th>
+                <th>City</th>
+                <th>District</th>
+                <th>State</th>
+                <th>Aadhar No</th>
+                <th>PAN No</th>
+                <th>10th Board</th>
+                <th>10th %</th>
+                <th>10th Year</th>
+                <th>12th Board</th>
+                <th>12th %</th>
+                <th>12th Year</th>
+                <th>Diploma %</th>
+                <th>Diploma Year</th>
+                <th>Verified</th>
+                <th>Profile Status</th>
                 <th>Placement</th>
+                <th>Created</th>
+                <th>Updated</th>
                 <th>Actions</th>
               </tr>
             </thead>
             <tbody>
               {loading ? (
-                <tr><td colSpan="15" className="table-empty">Loading...</td></tr>
+                <tr><td colSpan="46" className="table-empty">Loading...</td></tr>
               ) : students.map((s) => {
                 const displayStatus = pendingChanges[s.userId] ?? s.placementStatus;
                 const isDirty = pendingChanges[s.userId] !== undefined;
@@ -550,11 +585,20 @@ export default function AdminDashboard() {
                   <td><input type="checkbox" className="table-checkbox" checked={selectedIds.includes(s.userId)} onChange={() => toggleSelect(s.userId)} /></td>
                   <td className="student-name">{s.user?.fullName}</td>
                   <td className="roll-no">{s.btuRollNumber}</td>
+                  <td>{s.enrollmentNumber}</td>
                   <td>{s.collegeId}</td>
                   <td className="student-email">{s.user?.collegeEmail}</td>
+                  <td>{formatDate(s.dob)}</td>
+                  <td>{s.gender}</td>
                   <td>{s.phoneNumber}</td>
+                  <td>{s.whatsappNumber}</td>
+                  <td>{s.alternatePhone || '-'}</td>
+                  <td>{s.alternateEmail || '-'}</td>
                   <td>{COURSE_LABELS[s.course]}</td>
                   <td className="dept-cell" title={s.department || 'N/A'}>{s.department || 'N/A'}</td>
+                  <td>{s.mbaSpecialization1 || '-'}</td>
+                  <td>{s.mbaSpecialization2 || '-'}</td>
+                  <td>{s.admissionYear}-{s.graduationYear}</td>
                   <td>{s.currentYear}Y / S{s.currentSemester}</td>
                   <td className="cgpa">{Number(s.cgpa).toFixed(2)}</td>
                   <td>
@@ -570,6 +614,25 @@ export default function AdminDashboard() {
                       : <span className="status-badge badge-none"><FileText size={13} /> None</span>}
                   </td>
                   <td className="cgpa">{s.activeBacklogs ?? 0}</td>
+                  <td className="cgpa">{s.passiveBacklogs ?? 0}</td>
+                  <td>{s.linkedinUrl ? <a href={s.linkedinUrl} target="_blank" rel="noopener noreferrer" style={{color:'#1e3a8a',fontSize:'0.8rem'}}>Link</a> : '-'}</td>
+                  <td>{s.currentAddress || '-'}</td>
+                  <td>{s.permanentAddress || '-'}</td>
+                  <td>{s.nativeCity || '-'}</td>
+                  <td>{s.nativeDistrict || '-'}</td>
+                  <td>{s.nativeState || '-'}</td>
+                  <td>{s.aadharNumber || '-'}</td>
+                  <td>{s.panNumber || '-'}</td>
+                  <td>{s.tenthBoard || '-'}</td>
+                  <td>{s.tenthPercentage != null ? Number(s.tenthPercentage).toFixed(2) : '-'}</td>
+                  <td>{s.tenthYear || '-'}</td>
+                  <td>{s.twelfthBoard || '-'}</td>
+                  <td>{s.twelfthPercentage != null ? Number(s.twelfthPercentage).toFixed(2) : '-'}</td>
+                  <td>{s.twelfthYear || '-'}</td>
+                  <td>{s.diplomaPercentage != null ? Number(s.diplomaPercentage).toFixed(2) : '-'}</td>
+                  <td>{s.diplomaYear || '-'}</td>
+                  <td>{s.isVerified ? 'Yes' : 'No'}</td>
+                  <td>{s.profileStatus === 'COMPLETE' ? 'Complete' : 'Incomplete'}</td>
                   <td>
                     <label className="toggle-switch">
                       <input
@@ -584,6 +647,8 @@ export default function AdminDashboard() {
                     </span>
                     {isDirty && <span className="unsaved-badge">Unsaved</span>}
                   </td>
+                  <td style={{whiteSpace:'nowrap'}}>{formatDate(s.createdAt)}</td>
+                  <td style={{whiteSpace:'nowrap'}}>{formatDate(s.updatedAt)}</td>
                   <td>
                     <div className="action-buttons">
                       {isDirty && (

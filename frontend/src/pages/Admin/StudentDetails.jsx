@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import {
-  ArrowLeft, Edit, Save, X, User, Mail, GraduationCap, Phone,
+  ArrowLeft, Edit, Save, X, User, GraduationCap, Phone,
   MapPin, Calendar, FileText, Trash2, ExternalLink, CheckCircle
 } from 'lucide-react';
 import { getStudentById, updateStudentProfile, updateUser, deleteStudent } from '../../services/admin.service';
@@ -24,7 +24,6 @@ export default function StudentDetails() {
   const [editForm, setEditForm] = useState({});
   const [saving, setSaving] = useState(false);
   const [confirmDelete, setConfirmDelete] = useState(false);
-  const [expanded, setExpanded] = useState({});
 
   useEffect(() => {
     const fetchStudent = async () => {
@@ -39,10 +38,6 @@ export default function StudentDetails() {
     };
     fetchStudent();
   }, [userId]);
-
-  const toggleSection = (section) => {
-    setExpanded(prev => ({ ...prev, [section]: !prev[section] }));
-  };
 
   const startEdit = () => {
     setEditForm({
@@ -182,13 +177,11 @@ export default function StudentDetails() {
                   <div className="detail-row"><span className="detail-label">Date of Birth</span><span className="detail-value">{formatDate(s.dob)}</span></div>
                   <div className="detail-row"><span className="detail-label">Gender</span><span className="detail-value">{s.gender}</span></div>
                   <div className="detail-row"><span className="detail-label">Aadhar Number</span><span className="detail-value">{s.aadharNumber}</span></div>
-                  <div className={`expanded-content ${expanded.personal ? 'show' : ''}`}>
-                    <div className="detail-row"><span className="detail-label">PAN Number</span><span className="detail-value">{s.panNumber || 'N/A'}</span></div>
-                  </div>
+                  <div className="detail-row"><span className="detail-label">PAN Number</span><span className="detail-value">{s.panNumber || 'N/A'}</span></div>
+                  <div className="detail-row"><span className="detail-label">Profile Status</span><span className="detail-value">{s.profileStatus === 'COMPLETE' ? 'Complete' : 'Incomplete'}</span></div>
                 </>
               )}
             </div>
-            {!editing && <button className="view-details-btn" onClick={() => toggleSection('personal')}>{expanded.personal ? 'Show Less' : 'View Details'}</button>}
           </div>
 
           <div className="detail-card">
@@ -219,32 +212,31 @@ export default function StudentDetails() {
                   <div className="detail-row"><span className="detail-label">College ID</span><span className="detail-value">{s.collegeId}</span></div>
                   <div className="detail-row"><span className="detail-label">Course</span><span className="detail-value">{COURSE_LABELS[s.course]}</span></div>
                   <div className="detail-row"><span className="detail-label">Department</span><span className="detail-value">{s.department || 'N/A'}</span></div>
+                  <div className="detail-row"><span className="detail-label">MBA Specialization 1</span><span className="detail-value">{s.mbaSpecialization1 || 'N/A'}</span></div>
+                  <div className="detail-row"><span className="detail-label">MBA Specialization 2</span><span className="detail-value">{s.mbaSpecialization2 || 'N/A'}</span></div>
                   <div className="detail-row"><span className="detail-label">Batch</span><span className="detail-value">{batch}</span></div>
                   <div className="detail-row"><span className="detail-label">Current Year</span><span className="detail-value">{s.currentYear}</span></div>
                   <div className="detail-row"><span className="detail-label">Current Semester</span><span className="detail-value">{s.currentSemester}</span></div>
-                  <div className={`expanded-content ${expanded.academic ? 'show' : ''}`}>
-                    <div className="detail-row"><span className="detail-label">CGPA</span><span className="detail-value">{Number(s.cgpa).toFixed(2)}</span></div>
-                    <div className="detail-row"><span className="detail-label">Active Backlogs</span><span className="detail-value">{s.activeBacklogs}</span></div>
-                    <div className="detail-row"><span className="detail-label">Passive Backlogs</span><span className="detail-value">{s.passiveBacklogs}</span></div>
-                    <div className="detail-row"><span className="detail-label">LinkedIn</span><span className="detail-value">{s.linkedinUrl ? <a href={s.linkedinUrl} target="_blank" rel="noopener noreferrer" style={{color:'#1e3a8a'}}>{s.linkedinUrl}</a> : 'N/A'}</span></div>
-                    {s.semesterResults?.length > 0 && (
-                      <div className="sgpa-section">
-                        <span className="detail-label sgpa-title">Semester-wise SGPA</span>
-                        <div className="sgpa-grid">
-                          {s.semesterResults.map(sr => (
-                            <div key={sr.semester} className="sgpa-item">
-                              <span className="sgpa-sem">Sem {sr.semester}</span>
-                              <span className="sgpa-value">{Number(sr.sgpa).toFixed(2)}</span>
-                            </div>
-                          ))}
-                        </div>
+                  <div className="detail-row"><span className="detail-label">CGPA</span><span className="detail-value">{Number(s.cgpa).toFixed(2)}</span></div>
+                  <div className="detail-row"><span className="detail-label">Active Backlogs</span><span className="detail-value">{s.activeBacklogs}</span></div>
+                  <div className="detail-row"><span className="detail-label">Passive Backlogs</span><span className="detail-value">{s.passiveBacklogs}</span></div>
+                  <div className="detail-row"><span className="detail-label">LinkedIn</span><span className="detail-value">{s.linkedinUrl ? <a href={s.linkedinUrl} target="_blank" rel="noopener noreferrer" style={{color:'#1e3a8a'}}>{s.linkedinUrl}</a> : 'N/A'}</span></div>
+                  {s.semesterResults?.length > 0 && (
+                    <div className="sgpa-section">
+                      <span className="detail-label sgpa-title">Semester-wise SGPA</span>
+                      <div className="sgpa-grid">
+                        {s.semesterResults.map(sr => (
+                          <div key={sr.semester} className="sgpa-item">
+                            <span className="sgpa-sem">Sem {sr.semester}</span>
+                            <span className="sgpa-value">{Number(sr.sgpa).toFixed(2)}</span>
+                          </div>
+                        ))}
                       </div>
-                    )}
-                  </div>
+                    </div>
+                  )}
                 </>
               )}
             </div>
-            {!editing && <button className="view-details-btn" onClick={() => toggleSection('academic')}>{expanded.academic ? 'Show Less' : 'View Details'}</button>}
           </div>
 
           <div className="detail-card">
@@ -256,12 +248,9 @@ export default function StudentDetails() {
               <div className="detail-row"><span className="detail-label">College Email</span><span className="detail-value">{u?.collegeEmail}</span></div>
               <div className="detail-row"><span className="detail-label">Mobile Number</span><span className="detail-value">{s.phoneNumber}</span></div>
               <div className="detail-row"><span className="detail-label">WhatsApp Number</span><span className="detail-value">{s.whatsappNumber}</span></div>
-              <div className={`expanded-content ${expanded.contact ? 'show' : ''}`}>
-                {s.alternatePhone && <div className="detail-row"><span className="detail-label">Alternate Phone</span><span className="detail-value">{s.alternatePhone}</span></div>}
-                {s.alternateEmail && <div className="detail-row"><span className="detail-label">Personal Email</span><span className="detail-value">{s.alternateEmail}</span></div>}
-              </div>
+              <div className="detail-row"><span className="detail-label">Alternate Phone</span><span className="detail-value">{s.alternatePhone || 'N/A'}</span></div>
+              <div className="detail-row"><span className="detail-label">Personal Email</span><span className="detail-value">{s.alternateEmail || 'N/A'}</span></div>
             </div>
-            <button className="view-details-btn" onClick={() => toggleSection('contact')}>{expanded.contact ? 'Show Less' : 'View Details'}</button>
           </div>
 
           <div className="detail-card">
@@ -273,12 +262,9 @@ export default function StudentDetails() {
               <div className="detail-row"><span className="detail-label">Current Address</span><span className="detail-value">{s.currentAddress}</span></div>
               <div className="detail-row"><span className="detail-label">Permanent Address</span><span className="detail-value">{s.permanentAddress}</span></div>
               <div className="detail-row"><span className="detail-label">City</span><span className="detail-value">{s.nativeCity}</span></div>
-              <div className={`expanded-content ${expanded.address ? 'show' : ''}`}>
-                <div className="detail-row"><span className="detail-label">District</span><span className="detail-value">{s.nativeDistrict}</span></div>
-                <div className="detail-row"><span className="detail-label">State</span><span className="detail-value">{s.nativeState}</span></div>
-              </div>
+              <div className="detail-row"><span className="detail-label">District</span><span className="detail-value">{s.nativeDistrict}</span></div>
+              <div className="detail-row"><span className="detail-label">State</span><span className="detail-value">{s.nativeState}</span></div>
             </div>
-            <button className="view-details-btn" onClick={() => toggleSection('address')}>{expanded.address ? 'Show Less' : 'View Details'}</button>
           </div>
 
           <div className="detail-card">
@@ -293,14 +279,20 @@ export default function StudentDetails() {
               <div className="detail-row"><span className="detail-label">12th Board</span><span className="detail-value">{s.twelfthBoard}</span></div>
               <div className="detail-row"><span className="detail-label">12th Percentage</span><span className="detail-value">{Number(s.twelfthPercentage).toFixed(2)}%</span></div>
               <div className="detail-row"><span className="detail-label">12th Passing Year</span><span className="detail-value">{s.twelfthYear}</span></div>
-              <div className={`expanded-content ${expanded.school ? 'show' : ''}`}>
-                {s.diplomaPercentage != null && <div className="detail-row"><span className="detail-label">Diploma Percentage</span><span className="detail-value">{Number(s.diplomaPercentage).toFixed(2)}%</span></div>}
-                {s.diplomaYear != null && <div className="detail-row"><span className="detail-label">Diploma Year</span><span className="detail-value">{s.diplomaYear}</span></div>}
-              </div>
+              <div className="detail-row"><span className="detail-label">Diploma Percentage</span><span className="detail-value">{s.diplomaPercentage != null ? `${Number(s.diplomaPercentage).toFixed(2)}%` : 'N/A'}</span></div>
+              <div className="detail-row"><span className="detail-label">Diploma Year</span><span className="detail-value">{s.diplomaYear || 'N/A'}</span></div>
             </div>
-            {(s.diplomaPercentage != null || s.diplomaYear != null) && (
-              <button className="view-details-btn" onClick={() => toggleSection('school')}>{expanded.school ? 'Show Less' : 'View Details'}</button>
-            )}
+          </div>
+
+          <div className="detail-card">
+            <div className="detail-card-header">
+              <Calendar className="detail-icon" />
+              <h3>Profile Metadata</h3>
+            </div>
+            <div className="detail-card-body">
+              <div className="detail-row"><span className="detail-label">Profile Created</span><span className="detail-value">{formatDate(s.createdAt)}</span></div>
+              <div className="detail-row"><span className="detail-label">Last Updated</span><span className="detail-value">{formatDate(s.updatedAt)}</span></div>
+            </div>
           </div>
         </div>
       </div>

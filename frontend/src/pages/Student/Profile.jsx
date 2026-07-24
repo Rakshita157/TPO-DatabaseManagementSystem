@@ -1,10 +1,10 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { 
-  ChevronDown, ChevronLeft, ChevronRight, Calendar, FileText, 
+  ChevronDown, ChevronLeft, ChevronRight, Calendar, FileText,
   User, GraduationCap, Phone, Mail, MapPin,
   Edit, ChevronUp, X, Save, ExternalLink, CheckCircle,
-  Home, LogOut, Plus, PanelLeftClose, PanelLeftOpen
+  Home, LogOut, Plus, PanelLeftClose, PanelLeftOpen, Users
 } from 'lucide-react';
 import { 
   getStudentProfile, getSemesterResults, getDocument,
@@ -17,6 +17,7 @@ import {
 } from '../../config/studentFields';
 import tpoLogo from '../../assets/logos/TPO_Cell__LOGO.png';
 import './Profile.css';
+import '../Admin/Dashboard.css';
 
 const COURSE_OPTIONS = ['BTECH', 'MTECH', 'MBA', 'MCA'];
 const DEPARTMENTS_BY_COURSE = {
@@ -489,14 +490,13 @@ export default function StudentProfile() {
 
   const sidebarContent = (
     <>
-      <div className="sidebar-header">
-        <div className="sidebar-logo">
-          <img src={tpoLogo} alt="T&P Cell Logo" className="sidebar-logo-img" />
+      <div className="admin-sidebar-header">
+        <div className="admin-sidebar-logo">
+          <img src={tpoLogo} alt="T&P Cell Logo" className="admin-sidebar-logo-img" />
           {!sidebarCollapsed && (
-            <div className="logo-text">
-              <div className="logo-title">Training and</div>
-              <div className="logo-title">Placement Cell</div>
-              <div className="logo-subtitle">GWEC, Ajmer</div>
+            <div className="admin-sidebar-logo-text">
+              <div className="admin-sidebar-title">Training and<br />Placement Cell</div>
+              <div className="admin-sidebar-subtitle">GWEC, Ajmer</div>
             </div>
           )}
         </div>
@@ -509,25 +509,28 @@ export default function StudentProfile() {
         </button>
       </div>
 
-      <nav className="sidebar-nav">
-        <button 
-          className={`nav-item ${activeTab === 'dashboard' ? 'active' : ''}`}
-          onClick={() => navigate('/')}
-          title="Dashboard"
-        >
-          <Home size={18} />
-          {!sidebarCollapsed && 'Dashboard'}
+      <nav className="admin-sidebar-nav">
+        <button className="admin-nav-item active" title="Profile">
+          <Users size={18} />
+          {!sidebarCollapsed && 'Profile'}
         </button>
-        <button className="nav-item" onClick={handleLogout} title="Logout">
+        <button className="admin-nav-item" onClick={() => navigate('/')} title="Landing Page">
+          <Home size={18} />
+          {!sidebarCollapsed && 'Landing Page'}
+        </button>
+        <button className="admin-nav-item admin-nav-logout" onClick={handleLogout} title="Logout">
           <LogOut size={18} />
           {!sidebarCollapsed && 'Logout'}
         </button>
       </nav>
 
       {!sidebarCollapsed && (
-        <div className="sidebar-footer">
-          <p>&copy; 2025 T&P Cell</p>
-          <p>All rights reserved.</p>
+        <div className="admin-sidebar-footer">
+          <img src={tpoLogo} alt="T&P Cell Logo" className="admin-sidebar-footer-logo" />
+          <div className="admin-sidebar-footer-text">
+            <div className="admin-sidebar-title">Training and<br />Placement Cell</div>
+            <div className="admin-sidebar-subtitle">GWEC, Ajmer</div>
+          </div>
         </div>
       )}
     </>
@@ -553,7 +556,7 @@ export default function StudentProfile() {
       )}
 
       <aside
-        className={`profile-sidebar ${sidebarCollapsed ? 'collapsed' : ''}`}
+        className={`admin-sidebar ${sidebarCollapsed ? 'collapsed' : ''}`}
         style={!sidebarCollapsed ? { width: sidebarWidth } : undefined}
       >
         {sidebarContent}
@@ -565,7 +568,7 @@ export default function StudentProfile() {
         )}
       </aside>
 
-      <main className="profile-main" style={{ marginLeft: sidebarCollapsed ? 0 : sidebarWidth }}>
+      <main className="admin-main" style={{ marginLeft: sidebarCollapsed ? 0 : sidebarWidth }}>
         <header className="profile-header">
           <h1>Dashboard</h1>
           <div className="header-actions">

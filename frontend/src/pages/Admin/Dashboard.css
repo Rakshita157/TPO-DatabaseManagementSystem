@@ -1664,6 +1664,55 @@
   color: #dc2626;
 }
 
+.verified-icon-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  border: none;
+  background: #f1f5f9;
+  color: #94a3b8;
+  cursor: pointer;
+  transition: all 0.2s;
+  padding: 0;
+}
+
+.verified-icon-btn:hover {
+  background: #e2e8f0;
+  color: #475569;
+}
+
+.verified-icon-btn.active {
+  background: #dcfce7;
+  color: #16a34a;
+}
+
+.verified-icon-btn.active:hover {
+  background: #bbf7d0;
+}
+
+.delete-icon-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  border: none;
+  background: #fee2e2;
+  color: #dc2626;
+  cursor: pointer;
+  transition: all 0.2s;
+  padding: 0;
+}
+
+.delete-icon-btn:hover {
+  background: #fecaca;
+  color: #b91c1c;
+}
+
 /* Loading/Error States */
 .loading-state,
 .error-state {

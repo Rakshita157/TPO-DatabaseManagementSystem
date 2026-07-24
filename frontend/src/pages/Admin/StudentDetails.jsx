@@ -1,15 +1,17 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import {
   ArrowLeft, ChevronUp, Calendar, FileText,
   User, GraduationCap, Phone, Mail, MapPin,
-  Edit, X, Save, ExternalLink, CheckCircle, Trash2
+  Edit, X, Save, ExternalLink, CheckCircle, Trash2,
+  PanelLeftClose, PanelLeftOpen, Home, LogOut, Users
 } from 'lucide-react';
 import { getStudentById, updateStudentProfile, updateUser, deleteStudent } from '../../services/admin.service';
 import {
   FIELD_SECTIONS, COURSE_LABELS,
   formatFieldValue, getVisibleFields, getExtraFields
 } from '../../config/studentFields';
+import tpoLogo from '../../assets/logos/TPO_Cell__LOGO.png';
 import './Dashboard.css';
 import '../Student/Profile.css';
 
@@ -47,6 +49,36 @@ export default function StudentDetails() {
   const [editForm, setEditForm] = useState({});
   const [saving, setSaving] = useState(false);
   const [confirmDelete, setConfirmDelete] = useState(false);
+  const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
+  const [sidebarWidth, setSidebarWidth] = useState(240);
+  const isResizing = useRef(false);
+  const storedUser = JSON.parse(localStorage.getItem('user') || '{}');
+
+  const startResize = useCallback((e) => {
+    e.preventDefault();
+    isResizing.current = true;
+    document.body.style.cursor = 'col-resize';
+    document.body.style.userSelect = 'none';
+    const onMouseMove = (e) => {
+      if (isResizing.current) {
+        setSidebarWidth(Math.min(Math.max(e.clientX, 180), 400));
+      }
+    };
+    const onMouseUp = () => {
+      isResizing.current = false;
+      document.body.style.cursor = '';
+      document.body.style.userSelect = '';
+      document.removeEventListener('mousemove', onMouseMove);
+      document.removeEventListener('mouseup', onMouseUp);
+    };
+    document.addEventListener('mousemove', onMouseMove);
+    document.addEventListener('mouseup', onMouseUp);
+  }, []);
+
+  const handleLogout = () => {
+    localStorage.removeItem('user');
+    navigate('/');
+  };
 
   useEffect(() => {
     const fetchStudent = async () => {
@@ -74,8 +106,91 @@ export default function StudentDetails() {
     setExpanded(prev => ({ ...prev, [section]: !prev[section] }));
   };
 
+  const renderSidebar = () => (
+    <>
+      {sidebarCollapsed && (
+        <button className="sidebar-expand-btn" onClick={() => setSidebarCollapsed(false)} title="Expand sidebar">
+          <PanelLeftOpen size={18} />
+        </button>
+      )}
+      <aside className={`admin-sidebar ${sidebarCollapsed ? 'collapsed' : ''}`} style={!sidebarCollapsed ? { width: sidebarWidth } : undefined}>
+        <div className="admin-sidebar-header">
+          <div className="admin-sidebar-logo">
+            <img src={tpoLogo} alt="T&P Cell Logo" className="admin-sidebar-logo-img" />
+            {!sidebarCollapsed && (
+              <div className="admin-sidebar-logo-text">
+                <div className="admin-sidebar-title">Training and<br />Placement Cell</div>
+                <div className="admin-sidebar-subtitle">GWEC, Ajmer</div>
+              </div>
+            )}
+          </div>
+          <button className="sidebar-collapse-btn" onClick={() => setSidebarCollapsed(!sidebarCollapsed)} title={sidebarCollapsed ? 'Expand sidebar' : 'Collapse sidebar'}>
+            {sidebarCollapsed ? <PanelLeftOpen size={18} /> : <PanelLeftClose size={18} />}
+          </button>
+        </div>
+        <nav className="admin-sidebar-nav">
+          <button className="admin-nav-item" onClick={() => navigate('/admin/dashboard')} title="Students">
+            <Users size={18} />
+            {!sidebarCollapsed && 'Students'}
+          </button>
+          <button className="admin-nav-item active" title="Student Profile">
+            <User size={18} />
+            {!sidebarCollapsed && 'Student Profile'}
+          </button>
+          <button className="admin-nav-item" onClick={() => navigate('/')} title="Landing Page">
+            <Home size={18} />
+            {!sidebarCollapsed && 'Landing Page'}
+          </button>
+          <button className="admin-nav-item admin-nav-logout" onClick={handleLogout} title="Logout">
+            <LogOut size={18} />
+            {!sidebarCollapsed && 'Logout'}
+          </button>
+        </nav>
+        {!sidebarCollapsed && (
+          <div className="admin-sidebar-footer">
+            <img src={tpoLogo} alt="T&P Cell Logo" className="admin-sidebar-footer-logo" />
+            <div className="admin-sidebar-footer-text">
+              <div className="admin-sidebar-title">Training and<br />Placement Cell</div>
+              <div className="admin-sidebar-subtitle">GWEC, Ajmer</div>
+            </div>
+          </div>
+        )}
+        {!sidebarCollapsed && (
+          <div className="sidebar-resize-handle" onMouseDown={startResize} />
+        )}
+      </aside>
+    </>
+  );
+
+  if (loading) return (
+    <div className="admin-dashboard">
+      {renderSidebar()}
+      <main className="admin-main" style={{ marginLeft: sidebarCollapsed ? 0 : sidebarWidth }}>
+        <div className="loading-state">Loading student details...</div>
+      </main>
+    </div>
+  );
+  if (error) return (
+    <div className="admin-dashboard">
+      {renderSidebar()}
+      <main className="admin-main" style={{ marginLeft: sidebarCollapsed ? 0 : sidebarWidth }}>
+        <div className="error-state">{error}</div>
+      </main>
+    </div>
+  );
+  if (!student) return (
+    <div className="admin-dashboard">
+      {renderSidebar()}
+      <main className="admin-main" style={{ marginLeft: sidebarCollapsed ? 0 : sidebarWidth }}>
+        <div className="error-state">Student not found</div>
+      </main>
+    </div>
+  );
+
+  const s = student;
+  const u = s.user || {};
+
   const openEdit = (section) => {
-    const s = student;
     let form = {};
     switch (section) {
       case 'personal':
@@ -139,12 +254,6 @@ export default function StudentDetails() {
     }
   };
 
-  if (loading) return <div className="admin-dashboard"><div className="loading-state">Loading student details...</div></div>;
-  if (error) return <div className="admin-dashboard"><div className="error-state">{error}</div></div>;
-  if (!student) return <div className="admin-dashboard"><div className="error-state">Student not found</div></div>;
-
-  const s = student;
-  const u = s.user || {};
   const initial = u.fullName?.charAt(0)?.toUpperCase() || 'S';
   const fullName = u.fullName || '';
   const collegeEmail = u.collegeEmail || '';
@@ -155,30 +264,41 @@ export default function StudentDetails() {
 
   return (
     <div className="admin-dashboard">
-      <header className="detail-topbar">
-        <button className="back-btn" onClick={() => navigate('/admin/dashboard')}>
-          <ArrowLeft size={20} /> Back to Dashboard
-        </button>
-        <button className="delete-student-btn" onClick={() => setConfirmDelete(true)}>
-          <Trash2 size={18} /> Delete Student
-        </button>
-      </header>
+      {renderSidebar()}
+      <main className="admin-main" style={{ marginLeft: sidebarCollapsed ? 0 : sidebarWidth }}>
+        <header className="detail-topbar">
+          <button className="back-btn" onClick={() => navigate('/admin/dashboard')}>
+            <ArrowLeft size={20} /> Back to Dashboard
+          </button>
+        </header>
 
-      <div className="detail-content">
+        <div className="detail-content">
         <section className="profile-hero">
           <div className="profile-hero-left">
             <div className="avatar-initial">{initial}</div>
             <div className="profile-basic-info">
               <div className="profile-name-section">
                 <h2>{fullName}</h2>
-                {s.isVerified && (
-                  <span className="verified-badge">
-                    <CheckCircle size={13} /> Verified by TPO
-                  </span>
-                )}
+                <button
+                  className={`verified-icon-btn ${s.isVerified ? 'active' : ''}`}
+                  onClick={async () => {
+                    try {
+                      const newVal = !s.isVerified;
+                      await updateStudentProfile(userId, { isVerified: newVal });
+                      const res = await getStudentById(userId);
+                      setStudent(res.data);
+                    } catch {}
+                  }}
+                  title={s.isVerified ? 'Click to unverify' : 'Click to verify'}
+                >
+                  <CheckCircle size={15} />
+                </button>
                 <span className={`detail-badge ${s.placementStatus === 'PLACED' ? 'placed' : 'not-placed'}`}>
                   {s.placementStatus === 'PLACED' ? 'Placed' : 'Not Placed'}
                 </span>
+                <button className="delete-icon-btn" onClick={() => setConfirmDelete(true)} title="Delete Student">
+                  <Trash2 size={15} />
+                </button>
               </div>
 
               <div className="profile-details-grid">
@@ -291,7 +411,8 @@ export default function StudentDetails() {
             );
           })()}
         </section>
-      </div>
+        </div>
+      </main>
 
       {editingSection && (
         <div className="modal-overlay" onClick={() => setEditingSection(null)}>

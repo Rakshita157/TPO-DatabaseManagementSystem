@@ -70,9 +70,6 @@ model StudentProfile {
 
   department            String?
 
-  mbaSpecialization1    String?
-  mbaSpecialization2    String?
-
   admissionYear         Int
   graduationYear        Int
 

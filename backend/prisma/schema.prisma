@@ -1,6 +1,5 @@
 generator client {
   provider = "prisma-client-js"
-  
 }
 
 datasource db {
@@ -11,18 +10,18 @@ datasource db {
 // the Admin will simply have an Edit College Information page where these can be edited.
 
 model CollegeSettings {
-  id            Int      @id @default(autoincrement())
+  id Int @id @default(autoincrement())
 
-  tpoHeadName   String
-  tpoHeadPhoto  String?
-  tpoHeadEmail  String
-  tpoHeadPhone  String
+  tpoHeadName  String
+  tpoHeadPhoto String?
+  tpoHeadEmail String
+  tpoHeadPhone String
 
   officeAddress String?
   officeHours   String?
 
-  createdAt     DateTime @default(now())
-  updatedAt     DateTime @updatedAt
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 }
 
 // user for signup/login
@@ -50,82 +49,82 @@ enum ProfileStatus {
 }
 
 model User {
-  id             Int      @id @default(autoincrement())
-  fullName        String
-  collegeEmail   String   @unique
-  password       String
+  id           Int    @id @default(autoincrement())
+  fullName     String
+  collegeEmail String @unique
+  password     String
 
-  role           Role     @default(STUDENT)
+  role Role @default(STUDENT)
 
-  createdAt      DateTime @default(now())
-  updatedAt      DateTime @updatedAt
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
-  studentProfile StudentProfile?
+  studentProfile     StudentProfile?
+  studentCoordinator StudentCoordinator?
 }
 
 model StudentProfile {
-  userId                Int      @id
+  userId Int @id
 
-  course                Course
+  course Course
 
-  department            String?
+  department String?
 
-  admissionYear         Int
-  graduationYear        Int
+  admissionYear  Int
+  graduationYear Int
 
-  currentYear           Int
-  currentSemester       Int
+  currentYear     Int
+  currentSemester Int
 
-  collegeId             String   @unique
-  btuRollNumber         String  @unique
-  enrollmentNumber      String  @unique
+  collegeId        String @unique
+  btuRollNumber    String @unique
+  enrollmentNumber String @unique
 
-  dob                   DateTime
-  gender                String
+  dob    DateTime
+  gender String
 
-  phoneNumber           String   @unique
-  whatsappNumber        String
-  alternatePhone        String?
-  alternateEmail        String?
+  phoneNumber    String  @unique
+  whatsappNumber String
+  alternatePhone String?
+  alternateEmail String?
 
-  currentAddress        String
-  permanentAddress      String
+  currentAddress   String
+  permanentAddress String
 
-  nativeCity            String
-  nativeDistrict        String
-  nativeState           String
+  nativeCity     String
+  nativeDistrict String
+  nativeState    String
 
-  aadharNumber          String   @unique
-  panNumber             String?  @unique
+  aadharNumber String  @unique
+  panNumber    String? @unique
 
-  tenthPercentage       Decimal
-  tenthYear             Int
-  tenthBoard            String
+  tenthPercentage Decimal
+  tenthYear       Int
+  tenthBoard      String
 
-  twelfthPercentage     Decimal
-  twelfthYear           Int
-  twelfthBoard          String
+  twelfthPercentage Decimal
+  twelfthYear       Int
+  twelfthBoard      String
 
-  diplomaPercentage     Decimal?
-  diplomaYear           Int?
+  diplomaPercentage Decimal?
+  diplomaYear       Int?
 
-  cgpa                  Decimal
+  cgpa Decimal
 
-  activeBacklogs        Int
-  passiveBacklogs       Int
+  activeBacklogs  Int
+  passiveBacklogs Int
 
-  linkedinUrl           String?
+  linkedinUrl String?
 
-  placementStatus       PlacementStatus @default(NOT_PLACED)
-  profileStatus         ProfileStatus   @default(INCOMPLETE)
+  placementStatus PlacementStatus @default(NOT_PLACED)
+  profileStatus   ProfileStatus   @default(INCOMPLETE)
 
-  isVerified            Boolean @default(false)
+  isVerified Boolean @default(false)
 
-  createdAt             DateTime @default(now())
-  updatedAt             DateTime @updatedAt
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
-
 
   semesterResults SemesterResult[]
 
@@ -133,23 +132,38 @@ model StudentProfile {
 }
 
 model SemesterResult {
-  userId    Int
-  semester  Int
-  sgpa      Decimal
+  userId   Int
+  semester Int
+  sgpa     Decimal
 
- profile StudentProfile @relation(fields: [userId], references: [userId], onDelete: Cascade)
+  profile StudentProfile @relation(fields: [userId], references: [userId], onDelete: Cascade)
 
   @@id([userId, semester])
 }
 
 model Document {
-  userId      Int @id
+  userId Int @id
 
-  resumeUrl   String
+  resumeUrl String
 
-  uploadedAt  DateTime @default(now())
+  uploadedAt DateTime @default(now())
 
-profile StudentProfile @relation(fields: [userId], references: [userId], onDelete: Cascade)
+  profile StudentProfile @relation(fields: [userId], references: [userId], onDelete: Cascade)
+}
+
+model FacultyCoordinator {
+  id Int @id @default(autoincrement())
+
+  fullName String
+  photo    String
+}
+
+model StudentCoordinator {
+  userId Int @id
+
+  photo String
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 }
 
 model EmailVerification {

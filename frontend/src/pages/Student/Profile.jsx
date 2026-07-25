@@ -1,12 +1,13 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { 
+import { useForm, useFieldArray } from 'react-hook-form';
+import {
   ChevronDown, ChevronLeft, ChevronRight, Calendar, FileText,
   User, GraduationCap, Phone, Mail, MapPin,
   Edit, ChevronUp, X, Save, ExternalLink, CheckCircle,
   Home, LogOut, Plus, PanelLeftClose, PanelLeftOpen, Users
 } from 'lucide-react';
-import { 
+import {
   getStudentProfile, getSemesterResults, getDocument,
   updateStudentProfile, updateUser, uploadDocument,
   createSemesterResult, updateSemesterResult
@@ -15,6 +16,7 @@ import {
   FIELD_SECTIONS, COURSE_LABELS,
   formatFieldValue, getFieldValue, getVisibleFields, getExtraFields
 } from '../../config/studentFields';
+import * as V from '../../utils/validations';
 import tpoLogo from '../../assets/logos/TPO_Cell__LOGO.png';
 import './Profile.css';
 import '../Admin/Dashboard.css';
@@ -65,6 +67,19 @@ function renderFieldValue(fieldDef, value) {
   }
   const formatted = formatFieldValue(value, fieldDef.formatter);
   return formatted || fieldDef.fallback || '\u2014';
+}
+
+function uppercaseOnChange(setValue, fieldName) {
+  return (e) => {
+    setValue(fieldName, e.target.value.toUpperCase());
+  };
+}
+
+function digitsOnChange(setValue, fieldName, maxLen) {
+  return (e) => {
+    const cleaned = e.target.value.replace(/\D/g, '').slice(0, maxLen);
+    setValue(fieldName, cleaned);
+  };
 }
 
 export default function StudentProfile() {
@@ -255,74 +270,49 @@ export default function StudentProfile() {
     pendingCloseRef.current = false;
   };
 
-  const updateField = (field, value) => {
-    setEditForm(prev => ({ ...prev, [field]: value }));
-    setHasUnsavedChanges(true);
-  };
-
-  const addSgpaField = () => {
-    const current = editForm.sgpa || [];
-    const nextSem = current.length > 0 ? Math.max(...current.map(s => s.semester)) + 1 : 1;
-    setEditForm(prev => ({ ...prev, sgpa: [...prev.sgpa, { semester: nextSem, sgpa: '' }] }));
-    setHasUnsavedChanges(true);
-  };
-
-  const updateSgpaEntry = (index, value) => {
-    const updated = [...editForm.sgpa];
-    updated[index] = { ...updated[index], sgpa: value };
-    setEditForm(prev => ({ ...prev, sgpa: updated }));
-    setHasUnsavedChanges(true);
-  };
-
-  const removeSgpaEntry = (index) => {
-    const updated = editForm.sgpa.filter((_, i) => i !== index);
-    setEditForm(prev => ({ ...prev, sgpa: updated }));
-    setHasUnsavedChanges(true);
-  };
-
-  const handleSave = async () => {
+  const handleSave = async (section, data) => {
     setSaving(true);
     setSaveError('');
     try {
-      switch (editingSection) {
+      switch (section) {
         case 'personal': {
-          await updateUser(userId, { fullName: editForm.fullName });
-          const updatedUser = { ...storedUser, fullName: editForm.fullName };
+          await updateUser(userId, { fullName: data.fullName });
+          const updatedUser = { ...storedUser, fullName: data.fullName };
           localStorage.setItem('user', JSON.stringify(updatedUser));
           await updateStudentProfile(userId, {
-            dob: new Date(editForm.dob).toISOString(),
-            gender: editForm.gender,
-            aadharNumber: editForm.aadharNumber,
-            panNumber: editForm.panNumber || null,
+            dob: new Date(data.dob).toISOString(),
+            gender: data.gender,
+            aadharNumber: data.aadharNumber,
+            panNumber: data.panNumber || null,
           });
           break;
         }
         case 'academic': {
           const payload = {
-            btuRollNumber: editForm.btuRollNumber,
-            enrollmentNumber: editForm.enrollmentNumber,
-            course: editForm.course,
-            department: editForm.department || null,
-            admissionYear: parseInt(editForm.admissionYear),
-            graduationYear: parseInt(editForm.graduationYear),
-            currentYear: parseInt(editForm.currentYear || '1'),
-            currentSemester: parseInt(editForm.currentSemester),
-            tenthPercentage: parseFloat(editForm.tenthPercentage),
-            tenthYear: parseInt(editForm.tenthYear),
-            tenthBoard: editForm.tenthBoard,
-            twelfthPercentage: parseFloat(editForm.twelfthPercentage),
-            twelfthYear: parseInt(editForm.twelfthYear),
-            twelfthBoard: editForm.twelfthBoard,
-            diplomaPercentage: editForm.diplomaPercentage ? parseFloat(editForm.diplomaPercentage) : null,
-            diplomaYear: editForm.diplomaYear ? parseInt(editForm.diplomaYear) : null,
-            cgpa: parseFloat(editForm.cgpa),
-            activeBacklogs: parseInt(editForm.activeBacklogs || '0'),
-            passiveBacklogs: parseInt(editForm.passiveBacklogs || '0'),
+            btuRollNumber: data.btuRollNumber,
+            enrollmentNumber: data.enrollmentNumber,
+            course: data.course,
+            department: data.department || null,
+            admissionYear: parseInt(data.admissionYear),
+            graduationYear: parseInt(data.graduationYear),
+            currentYear: parseInt(data.currentYear || '1'),
+            currentSemester: parseInt(data.currentSemester),
+            tenthPercentage: parseFloat(data.tenthPercentage),
+            tenthYear: parseInt(data.tenthYear),
+            tenthBoard: data.tenthBoard,
+            twelfthPercentage: parseFloat(data.twelfthPercentage),
+            twelfthYear: parseInt(data.twelfthYear),
+            twelfthBoard: data.twelfthBoard,
+            diplomaPercentage: data.diplomaPercentage ? parseFloat(data.diplomaPercentage) : null,
+            diplomaYear: data.diplomaYear ? parseInt(data.diplomaYear) : null,
+            cgpa: parseFloat(data.cgpa),
+            activeBacklogs: parseInt(data.activeBacklogs || '0'),
+            passiveBacklogs: parseInt(data.passiveBacklogs || '0'),
           };
           await updateStudentProfile(userId, payload);
 
           const existingSemesters = new Set(semesterResults.map(sr => sr.semester));
-          const sgpaEntries = (editForm.sgpa || []).filter(s => s.sgpa !== '');
+          const sgpaEntries = (data.sgpa || []).filter(s => s.sgpa !== '');
           await Promise.all(
             sgpaEntries.map(entry => {
               if (existingSemesters.has(entry.semester)) {
@@ -335,30 +325,30 @@ export default function StudentProfile() {
         }
         case 'contact': {
           await updateStudentProfile(userId, {
-            phoneNumber: editForm.phoneNumber,
-            whatsappNumber: editForm.whatsappNumber,
-            alternatePhone: editForm.alternatePhone || null,
-            alternateEmail: editForm.alternateEmail || null,
+            phoneNumber: data.phoneNumber,
+            whatsappNumber: data.whatsappNumber,
+            alternatePhone: data.alternatePhone || null,
+            alternateEmail: data.alternateEmail || null,
           });
           break;
         }
         case 'address': {
           await updateStudentProfile(userId, {
-            currentAddress: editForm.currentAddress,
-            permanentAddress: editForm.permanentAddress,
-            nativeCity: editForm.nativeCity,
-            nativeDistrict: editForm.nativeDistrict,
-            nativeState: editForm.nativeState,
+            currentAddress: data.currentAddress,
+            permanentAddress: data.permanentAddress,
+            nativeCity: data.nativeCity,
+            nativeDistrict: data.nativeDistrict,
+            nativeState: data.nativeState,
           });
           break;
         }
         case 'resume': {
-          const url = editForm.resumeUrl?.trim();
+          const url = data.resumeUrl?.trim();
           if (url) {
             await uploadDocument({ resumeUrl: url });
           }
           await updateStudentProfile(userId, {
-            linkedinUrl: editForm.linkedinUrl || null,
+            linkedinUrl: data.linkedinUrl || null,
           });
           break;
         }
@@ -592,7 +582,7 @@ export default function StudentProfile() {
                   </span>
                 )}
               </div>
-              
+
               <div className="profile-details-grid">
                 <div className="detail-item">
                   <User size={16} />
@@ -677,7 +667,6 @@ export default function StudentProfile() {
         </section>
       </main>
 
-      {/* Edit Modal */}
       {editingSection && (
         <div className="modal-overlay" onClick={closeEdit}>
           <div className="modal-content" onClick={e => e.stopPropagation()}>
@@ -701,255 +690,56 @@ export default function StudentProfile() {
                 </div>
               )}
 
-              {/* Personal Info Form */}
               {editingSection === 'personal' && (
-                <div className="modal-form">
-                  <div className="modal-field">
-                    <label>Full Name</label>
-                    <input type="text" value={editForm.fullName || ''} onChange={e => updateField('fullName', e.target.value)} />
-                  </div>
-                  <div className="modal-field">
-                    <label>Date of Birth</label>
-                    <input type="date" value={editForm.dob || ''} onChange={e => updateField('dob', e.target.value)} />
-                  </div>
-                  <div className="modal-field">
-                    <label>Gender</label>
-                    <select value={editForm.gender || ''} onChange={e => updateField('gender', e.target.value)}>
-                      <option value="">Select gender</option>
-                      <option value="Female">Female</option>
-                      <option value="Male">Male</option>
-                      <option value="Other">Other</option>
-                    </select>
-                  </div>
-                  <div className="modal-field">
-                    <label>Aadhar Number</label>
-                    <input type="text" value={editForm.aadharNumber || ''} onChange={e => updateField('aadharNumber', e.target.value.replace(/\D/g, '').slice(0, 12))} placeholder="12-digit Aadhar number" />
-                  </div>
-                  <div className="modal-field">
-                    <label>PAN Number</label>
-                    <input type="text" value={editForm.panNumber || ''} onChange={e => updateField('panNumber', e.target.value.toUpperCase())} placeholder="e.g. ABCDE1234F" />
-                  </div>
-                </div>
+                <PersonalEditForm
+                  initialData={editForm}
+                  onSave={(data) => handleSave('personal', data)}
+                  onCancel={closeEdit}
+                  saving={saving}
+                  onDirtyChange={setHasUnsavedChanges}
+                />
               )}
-
-              {/* Academic Info Form */}
               {editingSection === 'academic' && (
-                <div className="modal-form">
-                  <div className="modal-field">
-                    <label>University Roll No.</label>
-                    <input type="text" value={editForm.btuRollNumber || ''} onChange={e => updateField('btuRollNumber', e.target.value)} />
-                  </div>
-                  <div className="modal-field">
-                    <label>Enrollment Number</label>
-                    <input type="text" value={editForm.enrollmentNumber || ''} onChange={e => updateField('enrollmentNumber', e.target.value)} />
-                  </div>
-                  <div className="modal-field">
-                    <label>Course</label>
-                    <select value={editForm.course || ''} onChange={e => { updateField('course', e.target.value); updateField('department', ''); }}>
-                      <option value="">Select course</option>
-                      {COURSE_OPTIONS.map(c => <option key={c} value={c}>{COURSE_LABELS[c]}</option>)}
-                    </select>
-                  </div>
-                  <div className="modal-field">
-                    <label>Department / Branch</label>
-                    <select value={editForm.department || ''} onChange={e => updateField('department', e.target.value)} disabled={!editForm.course}>
-                      <option value="">{editForm.course ? 'Select department' : 'Select a course first'}</option>
-                      {(DEPARTMENTS_BY_COURSE[editForm.course] || []).map(d => <option key={d} value={d}>{d}</option>)}
-                    </select>
-                  </div>
-                  <div className="modal-field">
-                    <label>Admission Year</label>
-                    <select value={editForm.admissionYear || ''} onChange={e => {
-                      updateField('admissionYear', e.target.value);
-                      const duration = editForm.course === 'BTECH' ? 4 : 2;
-                      if (e.target.value) updateField('graduationYear', String(parseInt(e.target.value) + duration));
-                    }}>
-                      <option value="">Select year</option>
-                      {Array.from({ length: 10 }, (_, i) => `${CURRENT_YEAR - 9 + i}`).map(y => <option key={y} value={y}>{y}</option>)}
-                    </select>
-                  </div>
-                  <div className="modal-field">
-                    <label>Graduation Year</label>
-                    <input type="text" value={editForm.graduationYear || ''} readOnly />
-                  </div>
-                  <div className="modal-field">
-                    <label>Current Year</label>
-                    <select value={editForm.currentYear || ''} onChange={e => updateField('currentYear', e.target.value)}>
-                      <option value="">Select year</option>
-                      {[1, 2, 3, 4].map(y => <option key={y} value={y}>{y}{y === 1 ? 'st' : y === 2 ? 'nd' : y === 3 ? 'rd' : 'th'} Year</option>)}
-                    </select>
-                  </div>
-                  <div className="modal-field">
-                    <label>Current Semester</label>
-                    <input type="number" min="1" max="8" value={editForm.currentSemester || ''} onChange={e => updateField('currentSemester', e.target.value)} />
-                  </div>
-                  <h4 className="modal-section-label">10th Standard</h4>
-                  <div className="modal-field">
-                    <label>Percentage</label>
-                    <input type="text" value={editForm.tenthPercentage || ''} onChange={e => updateField('tenthPercentage', e.target.value.replace(/[^0-9.]/g, ''))} placeholder="e.g. 85.5" />
-                  </div>
-                  <div className="modal-field">
-                    <label>Year of Passing</label>
-                    <select value={editForm.tenthYear || ''} onChange={e => updateField('tenthYear', e.target.value)}>
-                      <option value="">Select year</option>
-                      {Array.from({ length: 15 }, (_, i) => `${CURRENT_YEAR - 14 + i}`).map(y => <option key={y} value={y}>{y}</option>)}
-                    </select>
-                  </div>
-                  <div className="modal-field">
-                    <label>Board</label>
-                    <input type="text" value={editForm.tenthBoard || ''} onChange={e => updateField('tenthBoard', e.target.value)} placeholder="e.g. RBSE, CBSE" />
-                  </div>
-                  <h4 className="modal-section-label">12th Standard</h4>
-                  <div className="modal-field">
-                    <label>Percentage</label>
-                    <input type="text" value={editForm.twelfthPercentage || ''} onChange={e => updateField('twelfthPercentage', e.target.value.replace(/[^0-9.]/g, ''))} placeholder="e.g. 80.0" />
-                  </div>
-                  <div className="modal-field">
-                    <label>Year of Passing</label>
-                    <select value={editForm.twelfthYear || ''} onChange={e => updateField('twelfthYear', e.target.value)}>
-                      <option value="">Select year</option>
-                      {Array.from({ length: 15 }, (_, i) => `${CURRENT_YEAR - 14 + i}`).map(y => <option key={y} value={y}>{y}</option>)}
-                    </select>
-                  </div>
-                  <div className="modal-field">
-                    <label>Board</label>
-                    <input type="text" value={editForm.twelfthBoard || ''} onChange={e => updateField('twelfthBoard', e.target.value)} placeholder="e.g. RBSE, CBSE" />
-                  </div>
-                  <h4 className="modal-section-label">Diploma (if applicable)</h4>
-                  <div className="modal-field">
-                    <label>Percentage</label>
-                    <input type="text" value={editForm.diplomaPercentage || ''} onChange={e => updateField('diplomaPercentage', e.target.value.replace(/[^0-9.]/g, ''))} placeholder="e.g. 78.0" />
-                  </div>
-                  <div className="modal-field">
-                    <label>Year of Passing</label>
-                    <select value={editForm.diplomaYear || ''} onChange={e => updateField('diplomaYear', e.target.value)}>
-                      <option value="">Select year</option>
-                      {Array.from({ length: 15 }, (_, i) => `${CURRENT_YEAR - 14 + i}`).map(y => <option key={y} value={y}>{y}</option>)}
-                    </select>
-                  </div>
-                  <h4 className="modal-section-label">Current Performance</h4>
-                  <div className="modal-field">
-                    <label>CGPA</label>
-                    <input type="text" value={editForm.cgpa || ''} onChange={e => updateField('cgpa', e.target.value.replace(/[^0-9.]/g, ''))} placeholder="e.g. 8.5" />
-                  </div>
-                  <div className="modal-field">
-                    <label>Active Backlogs</label>
-                    <input type="text" value={editForm.activeBacklogs || ''} onChange={e => updateField('activeBacklogs', e.target.value.replace(/\D/g, ''))} placeholder="0" />
-                  </div>
-                  <div className="modal-field">
-                    <label>Passive Backlogs</label>
-                    <input type="text" value={editForm.passiveBacklogs || ''} onChange={e => updateField('passiveBacklogs', e.target.value.replace(/\D/g, ''))} placeholder="0" />
-                  </div>
-                  <h4 className="modal-section-label">Semester SGPA</h4>
-                  {(editForm.sgpa || []).length > 0 ? (
-                    <div className="modal-sgpa-grid">
-                      {(editForm.sgpa || []).map((entry, index) => (
-                        <div key={entry.semester} className="modal-sgpa-card">
-                          <div className="modal-sgpa-card-header">
-                            <span className="modal-sgpa-badge">Sem {entry.semester}</span>
-                            <button type="button" className="modal-sgpa-remove-btn" onClick={() => removeSgpaEntry(index)}>
-                              <X size={12} />
-                            </button>
-                          </div>
-                          <input
-                            type="text"
-                            className="modal-sgpa-input"
-                            value={entry.sgpa}
-                            onChange={e => updateSgpaEntry(index, e.target.value.replace(/[^0-9.]/g, ''))}
-                            placeholder="e.g. 8.5"
-                          />
-                        </div>
-                      ))}
-                    </div>
-                  ) : (
-                    <p className="modal-sgpa-empty">No SGPA entries yet. Add your semester-wise SGPA below.</p>
-                  )}
-                  <button type="button" className="modal-sgpa-add-btn" onClick={addSgpaField}>
-                    <Plus size={14} />
-                    Add Semester
-                  </button>
-                </div>
+                <AcademicEditForm
+                  initialData={editForm}
+                  onSave={(data) => handleSave('academic', data)}
+                  onCancel={closeEdit}
+                  saving={saving}
+                  onDirtyChange={setHasUnsavedChanges}
+                />
               )}
-
-              {/* Contact Info Form */}
               {editingSection === 'contact' && (
-                <div className="modal-form">
-                  <div className="modal-field">
-                    <label>Mobile Number</label>
-                    <input type="tel" value={editForm.phoneNumber || ''} onChange={e => updateField('phoneNumber', e.target.value.replace(/\D/g, '').slice(0, 10))} placeholder="9876543210" />
-                  </div>
-                  <div className="modal-field">
-                    <label>WhatsApp Number</label>
-                    <input type="tel" value={editForm.whatsappNumber || ''} onChange={e => updateField('whatsappNumber', e.target.value.replace(/\D/g, '').slice(0, 10))} placeholder="WhatsApp number" />
-                  </div>
-                  <div className="modal-field">
-                    <label>Alternate Phone</label>
-                    <input type="tel" value={editForm.alternatePhone || ''} onChange={e => updateField('alternatePhone', e.target.value.replace(/\D/g, '').slice(0, 10))} placeholder="Alternate phone (optional)" />
-                  </div>
-                  <div className="modal-field">
-                    <label>Personal Email</label>
-                    <input type="email" value={editForm.alternateEmail || ''} onChange={e => updateField('alternateEmail', e.target.value)} placeholder="your@email.com" />
-                  </div>
-                </div>
+                <ContactEditForm
+                  initialData={editForm}
+                  onSave={(data) => handleSave('contact', data)}
+                  onCancel={closeEdit}
+                  saving={saving}
+                  onDirtyChange={setHasUnsavedChanges}
+                />
               )}
-
-              {/* Address Form */}
               {editingSection === 'address' && (
-                <div className="modal-form">
-                  <div className="modal-field">
-                    <label>Current Address</label>
-                    <textarea value={editForm.currentAddress || ''} onChange={e => updateField('currentAddress', e.target.value)} rows={3} placeholder="Enter current address" />
-                  </div>
-                  <div className="modal-field">
-                    <label>Permanent Address</label>
-                    <textarea value={editForm.permanentAddress || ''} onChange={e => updateField('permanentAddress', e.target.value)} rows={3} placeholder="Enter permanent address" />
-                  </div>
-                  <div className="modal-field">
-                    <label>City</label>
-                    <input type="text" value={editForm.nativeCity || ''} onChange={e => updateField('nativeCity', e.target.value)} placeholder="Enter city" />
-                  </div>
-                  <div className="modal-field">
-                    <label>District</label>
-                    <input type="text" value={editForm.nativeDistrict || ''} onChange={e => updateField('nativeDistrict', e.target.value)} placeholder="Enter district" />
-                  </div>
-                  <div className="modal-field">
-                    <label>State</label>
-                    <select value={editForm.nativeState || ''} onChange={e => updateField('nativeState', e.target.value)}>
-                      <option value="">Select state</option>
-                      {INDIAN_STATES.map(s => <option key={s} value={s}>{s}</option>)}
-                    </select>
-                  </div>
-                </div>
+                <AddressEditForm
+                  initialData={editForm}
+                  onSave={(data) => handleSave('address', data)}
+                  onCancel={closeEdit}
+                  saving={saving}
+                  onDirtyChange={setHasUnsavedChanges}
+                />
               )}
-
-              {/* Resume Upload Form */}
               {editingSection === 'resume' && (
-                <div className="modal-form">
-                  <div className="modal-field">
-                    <label>Resume Link</label>
-                    <input
-                      type="url"
-                      value={editForm.resumeUrl || ''}
-                      onChange={e => updateField('resumeUrl', e.target.value)}
-                      placeholder="https://drive.google.com/file/d/..."
-                    />
-                    <span className="modal-field-hint">Paste your Google Drive or cloud storage link</span>
-                  </div>
-                  <div className="modal-field">
-                    <label>LinkedIn URL</label>
-                    <input type="url" value={editForm.linkedinUrl || ''} onChange={e => updateField('linkedinUrl', e.target.value)} placeholder="https://linkedin.com/in/username" />
-                  </div>
-                </div>
+                <ResumeEditForm
+                  initialData={editForm}
+                  onSave={(data) => handleSave('resume', data)}
+                  onCancel={closeEdit}
+                  saving={saving}
+                  onDirtyChange={setHasUnsavedChanges}
+                />
               )}
             </div>
 
             <div className="modal-footer">
               <button className="modal-cancel-btn" onClick={closeEdit} disabled={saving}>
                 Cancel
-              </button>
-              <button className="modal-save-btn" onClick={handleSave} disabled={saving}>
-                <Save size={16} />
-                {saving ? 'Saving...' : 'Save Changes'}
               </button>
             </div>
           </div>
@@ -973,5 +763,357 @@ export default function StudentProfile() {
         </div>
       )}
     </div>
+  );
+}
+
+function PersonalEditForm({ initialData, onSave, onCancel, saving, onDirtyChange }) {
+  const { register, handleSubmit, formState: { errors, isDirty } } = useForm({
+    mode: 'onSubmit',
+    defaultValues: initialData,
+  });
+
+  useEffect(() => { onDirtyChange(isDirty); }, [isDirty, onDirtyChange]);
+
+  return (
+    <form className="modal-form" onSubmit={handleSubmit(onSave)}>
+      <div className="modal-field">
+        <label>Full Name</label>
+        <input type="text" {...register('fullName', V.fullName())} />
+        {errors.fullName && <span className="field-error-msg">{errors.fullName.message}</span>}
+      </div>
+      <div className="modal-field">
+        <label>Date of Birth</label>
+        <input type="date" {...register('dob', V.ageRange(15, 30))} />
+        {errors.dob && <span className="field-error-msg">{errors.dob.message}</span>}
+      </div>
+      <div className="modal-field">
+        <label>Gender</label>
+        <select {...register('gender', V.genderSelect())}>
+          <option value="">Select gender</option>
+          <option value="Female">Female</option>
+          <option value="Male">Male</option>
+          <option value="Other">Other</option>
+        </select>
+        {errors.gender && <span className="field-error-msg">{errors.gender.message}</span>}
+      </div>
+      <div className="modal-field">
+        <label>Aadhar Number</label>
+        <input type="text" placeholder="12-digit Aadhar number" {...register('aadharNumber', V.aadhar())} />
+        {errors.aadharNumber && <span className="field-error-msg">{errors.aadharNumber.message}</span>}
+      </div>
+      <div className="modal-field">
+        <label>PAN Number</label>
+        <input type="text" placeholder="e.g. ABCDE1234F" {...register('panNumber', V.pan())} />
+        {errors.panNumber && <span className="field-error-msg">{errors.panNumber.message}</span>}
+      </div>
+      <button type="submit" className="modal-save-btn" disabled={saving}>
+        <Save size={16} />
+        {saving ? 'Saving...' : 'Save Changes'}
+      </button>
+    </form>
+  );
+}
+
+function AcademicEditForm({ initialData, onSave, onCancel, saving, onDirtyChange }) {
+  const { register, handleSubmit, watch, setValue, control, formState: { errors, isDirty } } = useForm({
+    mode: 'onSubmit',
+    defaultValues: initialData,
+  });
+
+  const { fields, append, remove } = useFieldArray({ control, name: 'sgpa' });
+
+  const watchedCourse = watch('course');
+  const watchedAdmissionYear = watch('admissionYear');
+
+  useEffect(() => { onDirtyChange(isDirty); }, [isDirty, onDirtyChange]);
+
+  useEffect(() => {
+    if (watchedAdmissionYear && watchedCourse) {
+      const duration = watchedCourse === 'BTECH' ? 4 : 2;
+      const gradYear = parseInt(watchedAdmissionYear) + duration;
+      setValue('graduationYear', String(gradYear));
+    }
+  }, [watchedAdmissionYear, watchedCourse, setValue]);
+
+  return (
+    <form className="modal-form" onSubmit={handleSubmit(onSave)}>
+      <div className="modal-field">
+        <label>University Roll No.</label>
+        <input type="text" {...register('btuRollNumber', V.selectRequired('BTU roll number'))} onChange={uppercaseOnChange(setValue, 'btuRollNumber')} />
+        {errors.btuRollNumber && <span className="field-error-msg">{errors.btuRollNumber.message}</span>}
+      </div>
+      <div className="modal-field">
+        <label>Enrollment Number</label>
+        <input type="text" {...register('enrollmentNumber', V.selectRequired('enrollment number'))} onChange={uppercaseOnChange(setValue, 'enrollmentNumber')} />
+        {errors.enrollmentNumber && <span className="field-error-msg">{errors.enrollmentNumber.message}</span>}
+      </div>
+      <div className="modal-field">
+        <label>Course</label>
+        <select {...register('course', V.selectRequired('course'))} onChange={(e) => {
+          register('course').onChange(e);
+          setValue('department', '');
+        }}>
+          <option value="">Select course</option>
+          {COURSE_OPTIONS.map(c => <option key={c} value={c}>{COURSE_LABELS[c]}</option>)}
+        </select>
+        {errors.course && <span className="field-error-msg">{errors.course.message}</span>}
+      </div>
+      <div className="modal-field">
+        <label>Department / Branch</label>
+        <select {...register('department', V.selectRequired('department'))} disabled={!watchedCourse}>
+          <option value="">{watchedCourse ? 'Select department' : 'Select a course first'}</option>
+          {(DEPARTMENTS_BY_COURSE[watchedCourse] || []).map(d => <option key={d} value={d}>{d}</option>)}
+        </select>
+        {errors.department && <span className="field-error-msg">{errors.department.message}</span>}
+      </div>
+      <div className="modal-field">
+        <label>Admission Year</label>
+        <select {...register('admissionYear', V.yearSelect('admission year'))}>
+          <option value="">Select year</option>
+          {Array.from({ length: 10 }, (_, i) => `${CURRENT_YEAR - 9 + i}`).map(y => <option key={y} value={y}>{y}</option>)}
+        </select>
+        {errors.admissionYear && <span className="field-error-msg">{errors.admissionYear.message}</span>}
+      </div>
+      <div className="modal-field">
+        <label>Graduation Year</label>
+        <input type="text" readOnly {...register('graduationYear', V.yearSelect('graduation year'))} />
+      </div>
+      <div className="modal-field">
+        <label>Current Year</label>
+        <select {...register('currentYear', V.selectRequired('current year'))}>
+          <option value="">Select year</option>
+          {[1, 2, 3, 4].map(y => <option key={y} value={y}>{y}{y === 1 ? 'st' : y === 2 ? 'nd' : y === 3 ? 'rd' : 'th'} Year</option>)}
+        </select>
+        {errors.currentYear && <span className="field-error-msg">{errors.currentYear.message}</span>}
+      </div>
+      <div className="modal-field">
+        <label>Current Semester</label>
+        <select {...register('currentSemester', V.selectRequired('semester'))}>
+          <option value="">Select semester</option>
+          {[1,2,3,4,5,6,7,8].map(s => <option key={s} value={s}>{s}</option>)}
+        </select>
+        {errors.currentSemester && <span className="field-error-msg">{errors.currentSemester.message}</span>}
+      </div>
+
+      <h4 className="modal-section-label">10th Standard</h4>
+      <div className="modal-field">
+        <label>Percentage</label>
+        <input type="text" placeholder="e.g. 85.5" {...register('tenthPercentage', V.percentage('10th percentage'))} />
+        {errors.tenthPercentage && <span className="field-error-msg">{errors.tenthPercentage.message}</span>}
+      </div>
+      <div className="modal-field">
+        <label>Year of Passing</label>
+        <select {...register('tenthYear', V.yearSelect('10th year'))}>
+          <option value="">Select year</option>
+          {Array.from({ length: 15 }, (_, i) => `${CURRENT_YEAR - 14 + i}`).map(y => <option key={y} value={y}>{y}</option>)}
+        </select>
+        {errors.tenthYear && <span className="field-error-msg">{errors.tenthYear.message}</span>}
+      </div>
+      <div className="modal-field">
+        <label>Board</label>
+        <input type="text" placeholder="e.g. RBSE, CBSE" {...register('tenthBoard', V.selectRequired('10th board'))} onChange={uppercaseOnChange(setValue, 'tenthBoard')} />
+        {errors.tenthBoard && <span className="field-error-msg">{errors.tenthBoard.message}</span>}
+      </div>
+
+      <h4 className="modal-section-label">12th Standard</h4>
+      <div className="modal-field">
+        <label>Percentage</label>
+        <input type="text" placeholder="e.g. 80.0" {...register('twelfthPercentage', V.percentage('12th percentage'))} />
+        {errors.twelfthPercentage && <span className="field-error-msg">{errors.twelfthPercentage.message}</span>}
+      </div>
+      <div className="modal-field">
+        <label>Year of Passing</label>
+        <select {...register('twelfthYear', V.yearSelect('12th year'))}>
+          <option value="">Select year</option>
+          {Array.from({ length: 15 }, (_, i) => `${CURRENT_YEAR - 14 + i}`).map(y => <option key={y} value={y}>{y}</option>)}
+        </select>
+        {errors.twelfthYear && <span className="field-error-msg">{errors.twelfthYear.message}</span>}
+      </div>
+      <div className="modal-field">
+        <label>Board</label>
+        <input type="text" placeholder="e.g. RBSE, CBSE" {...register('twelfthBoard', V.selectRequired('12th board'))} onChange={uppercaseOnChange(setValue, 'twelfthBoard')} />
+        {errors.twelfthBoard && <span className="field-error-msg">{errors.twelfthBoard.message}</span>}
+      </div>
+
+      <h4 className="modal-section-label">Diploma (if applicable)</h4>
+      <div className="modal-field">
+        <label>Percentage</label>
+        <input type="text" placeholder="e.g. 78.0" {...register('diplomaPercentage', V.optionalPercentage())} />
+        {errors.diplomaPercentage && <span className="field-error-msg">{errors.diplomaPercentage.message}</span>}
+      </div>
+      <div className="modal-field">
+        <label>Year of Passing</label>
+        <select {...register('diplomaYear')}>
+          <option value="">Select year</option>
+          {Array.from({ length: 15 }, (_, i) => `${CURRENT_YEAR - 14 + i}`).map(y => <option key={y} value={y}>{y}</option>)}
+        </select>
+      </div>
+
+      <h4 className="modal-section-label">Current Performance</h4>
+      <div className="modal-field">
+        <label>CGPA</label>
+        <input type="text" placeholder="e.g. 8.5" {...register('cgpa', V.cgpa())} />
+        {errors.cgpa && <span className="field-error-msg">{errors.cgpa.message}</span>}
+      </div>
+      <div className="modal-field">
+        <label>Active Backlogs</label>
+        <input type="text" placeholder="0" {...register('activeBacklogs', V.nonNegativeInt('Active backlogs'))} />
+        {errors.activeBacklogs && <span className="field-error-msg">{errors.activeBacklogs.message}</span>}
+      </div>
+      <div className="modal-field">
+        <label>Passive Backlogs</label>
+        <input type="text" placeholder="0" {...register('passiveBacklogs', V.nonNegativeInt('Passive backlogs'))} />
+        {errors.passiveBacklogs && <span className="field-error-msg">{errors.passiveBacklogs.message}</span>}
+      </div>
+
+      <h4 className="modal-section-label">Semester SGPA</h4>
+      {fields.length > 0 ? (
+        <div className="modal-sgpa-grid">
+          {fields.map((field, index) => (
+            <div key={field.id} className="modal-sgpa-card">
+              <div className="modal-sgpa-card-header">
+                <span className="modal-sgpa-badge">Sem {field.semester}</span>
+                <button type="button" className="modal-sgpa-remove-btn" onClick={() => remove(index)}>
+                  <X size={12} />
+                </button>
+              </div>
+              <input
+                type="text"
+                className="modal-sgpa-input"
+                {...register(`sgpa.${index}.sgpa`, V.sgpa())}
+                placeholder="e.g. 8.5"
+              />
+            </div>
+          ))}
+        </div>
+      ) : (
+        <p className="modal-sgpa-empty">No SGPA entries yet. Add your semester-wise SGPA below.</p>
+      )}
+      <button type="button" className="modal-sgpa-add-btn" onClick={() => {
+        const nextSem = fields.length > 0 ? Math.max(...fields.map(f => f.semester)) + 1 : 1;
+        append({ semester: nextSem, sgpa: '' });
+      }}>
+        <Plus size={14} />
+        Add Semester
+      </button>
+
+      <button type="submit" className="modal-save-btn" disabled={saving}>
+        <Save size={16} />
+        {saving ? 'Saving...' : 'Save Changes'}
+      </button>
+    </form>
+  );
+}
+
+function ContactEditForm({ initialData, onSave, onCancel, saving, onDirtyChange }) {
+  const { register, handleSubmit, formState: { errors, isDirty } } = useForm({
+    mode: 'onSubmit',
+    defaultValues: initialData,
+  });
+
+  useEffect(() => { onDirtyChange(isDirty); }, [isDirty, onDirtyChange]);
+
+  return (
+    <form className="modal-form" onSubmit={handleSubmit(onSave)}>
+      <div className="modal-field">
+        <label>Mobile Number</label>
+        <input type="tel" placeholder="9876543210" {...register('phoneNumber', V.phone10('Mobile number'))} />
+        {errors.phoneNumber && <span className="field-error-msg">{errors.phoneNumber.message}</span>}
+      </div>
+      <div className="modal-field">
+        <label>WhatsApp Number</label>
+        <input type="tel" placeholder="WhatsApp number" {...register('whatsappNumber', V.phone10('WhatsApp number'))} />
+        {errors.whatsappNumber && <span className="field-error-msg">{errors.whatsappNumber.message}</span>}
+      </div>
+      <div className="modal-field">
+        <label>Alternate Phone</label>
+        <input type="tel" placeholder="Alternate phone (optional)" {...register('alternatePhone', V.optionalPhone10())} />
+        {errors.alternatePhone && <span className="field-error-msg">{errors.alternatePhone.message}</span>}
+      </div>
+      <div className="modal-field">
+        <label>Personal Email</label>
+        <input type="email" placeholder="your@email.com" {...register('alternateEmail', V.optionalEmail())} />
+        {errors.alternateEmail && <span className="field-error-msg">{errors.alternateEmail.message}</span>}
+      </div>
+      <button type="submit" className="modal-save-btn" disabled={saving}>
+        <Save size={16} />
+        {saving ? 'Saving...' : 'Save Changes'}
+      </button>
+    </form>
+  );
+}
+
+function AddressEditForm({ initialData, onSave, onCancel, saving, onDirtyChange }) {
+  const { register, handleSubmit, formState: { errors, isDirty } } = useForm({
+    mode: 'onSubmit',
+    defaultValues: initialData,
+  });
+
+  useEffect(() => { onDirtyChange(isDirty); }, [isDirty, onDirtyChange]);
+
+  return (
+    <form className="modal-form" onSubmit={handleSubmit(onSave)}>
+      <div className="modal-field">
+        <label>Current Address</label>
+        <textarea rows={3} placeholder="Enter current address" {...register('currentAddress', V.address('Current address'))} />
+        {errors.currentAddress && <span className="field-error-msg">{errors.currentAddress.message}</span>}
+      </div>
+      <div className="modal-field">
+        <label>Permanent Address</label>
+        <textarea rows={3} placeholder="Enter permanent address" {...register('permanentAddress', V.address('Permanent address'))} />
+        {errors.permanentAddress && <span className="field-error-msg">{errors.permanentAddress.message}</span>}
+      </div>
+      <div className="modal-field">
+        <label>City</label>
+        <input type="text" placeholder="Enter city" {...register('nativeCity', V.city('City'))} />
+        {errors.nativeCity && <span className="field-error-msg">{errors.nativeCity.message}</span>}
+      </div>
+      <div className="modal-field">
+        <label>District</label>
+        <input type="text" placeholder="Enter district" {...register('nativeDistrict', V.city('District'))} />
+        {errors.nativeDistrict && <span className="field-error-msg">{errors.nativeDistrict.message}</span>}
+      </div>
+      <div className="modal-field">
+        <label>State</label>
+        <select {...register('nativeState', V.stateSelect())}>
+          <option value="">Select state</option>
+          {INDIAN_STATES.map(s => <option key={s} value={s}>{s}</option>)}
+        </select>
+        {errors.nativeState && <span className="field-error-msg">{errors.nativeState.message}</span>}
+      </div>
+      <button type="submit" className="modal-save-btn" disabled={saving}>
+        <Save size={16} />
+        {saving ? 'Saving...' : 'Save Changes'}
+      </button>
+    </form>
+  );
+}
+
+function ResumeEditForm({ initialData, onSave, onCancel, saving, onDirtyChange }) {
+  const { register, handleSubmit, formState: { errors, isDirty } } = useForm({
+    mode: 'onSubmit',
+    defaultValues: initialData,
+  });
+
+  useEffect(() => { onDirtyChange(isDirty); }, [isDirty, onDirtyChange]);
+
+  return (
+    <form className="modal-form" onSubmit={handleSubmit(onSave)}>
+      <div className="modal-field">
+        <label>Resume Link</label>
+        <input type="url" placeholder="https://drive.google.com/file/d/..." {...register('resumeUrl', V.resumeUrl())} />
+        <span className="modal-field-hint">Paste your Google Drive or cloud storage link</span>
+        {errors.resumeUrl && <span className="field-error-msg">{errors.resumeUrl.message}</span>}
+      </div>
+      <div className="modal-field">
+        <label>LinkedIn URL</label>
+        <input type="url" placeholder="https://linkedin.com/in/username" {...register('linkedinUrl', V.linkedinUrl())} />
+        {errors.linkedinUrl && <span className="field-error-msg">{errors.linkedinUrl.message}</span>}
+      </div>
+      <button type="submit" className="modal-save-btn" disabled={saving}>
+        <Save size={16} />
+        {saving ? 'Saving...' : 'Save Changes'}
+      </button>
+    </form>
   );
 }

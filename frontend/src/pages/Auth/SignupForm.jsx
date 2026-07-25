@@ -1,14 +1,13 @@
 import { useState } from 'react';
+import { useForm } from 'react-hook-form';
 import { signup, sendOTP, verifyOTP } from '../../services/auth.service';
+import * as V from '../../utils/validations';
 
 export default function SignupForm({ onSwitchToLogin }) {
-  const [fullName, setFullName] = useState('');
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
-  const [confirmPassword, setConfirmPassword] = useState('');
+  const { register, handleSubmit, watch, formState: { errors } } = useForm({ mode: 'onSubmit' });
+
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
-  const [errors, setErrors] = useState({});
   const [apiError, setApiError] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [isSuccess, setIsSuccess] = useState(false);
@@ -22,11 +21,11 @@ export default function SignupForm({ onSwitchToLogin }) {
   const [otpSuccess, setOtpSuccess] = useState('');
   const [lastVerifiedEmail, setLastVerifiedEmail] = useState('');
 
-  const isValidEmail = email && /^[^\s@]+@gweca\.ac\.in$/.test(email);
+  const emailValue = watch('email');
+  const isValidEmail = emailValue && /^[^\s@]+@gweca\.ac\.in$/.test(emailValue);
 
   const handleEmailChange = (e) => {
     const newEmail = e.target.value;
-    setEmail(newEmail);
     if (newEmail !== lastVerifiedEmail) {
       setOtpVerified(false);
       setOtpSent(false);
@@ -41,7 +40,7 @@ export default function SignupForm({ onSwitchToLogin }) {
     setOtpSuccess('');
     setOtpLoading(true);
     try {
-      await sendOTP({ collegeEmail: email });
+      await sendOTP({ collegeEmail: emailValue });
       setOtpSent(true);
       setOtpSuccess('OTP sent to your email');
     } catch (error) {
@@ -58,10 +57,10 @@ export default function SignupForm({ onSwitchToLogin }) {
     setOtpSuccess('');
     setVerifyLoading(true);
     try {
-      await verifyOTP({ collegeEmail: email, otp });
+      await verifyOTP({ collegeEmail: emailValue, otp });
       setOtpVerified(true);
       setOtpSuccess('Email verified successfully');
-      setLastVerifiedEmail(email);
+      setLastVerifiedEmail(emailValue);
     } catch (error) {
       const message =
         error.response?.data?.message || 'Verification failed. Please try again.';
@@ -71,51 +70,14 @@ export default function SignupForm({ onSwitchToLogin }) {
     }
   };
 
-  const validateForm = () => {
-    const newErrors = {};
-
-    if (!fullName) {
-      newErrors.fullName = 'Full name is required';
-    } else if (fullName.length < 2) {
-      newErrors.fullName = 'Full name must be at least 2 characters';
-    }
-
-    if (!email) {
-      newErrors.email = 'Email is required';
-    } else if (!/^[^\s@]+@gweca\.ac\.in$/.test(email)) {
-      newErrors.email = 'Only @gweca.ac.in email addresses are allowed';
-    }
-
-    if (!password) {
-      newErrors.password = 'Password is required';
-    } else if (password.length < 6) {
-      newErrors.password = 'Password must be at least 6 characters';
-    } else if (!/(?=.*[a-z])(?=.*[A-Z])(?=.*\d)/.test(password)) {
-      newErrors.password = 'Password must contain uppercase, lowercase, and numbers';
-    }
-
-    if (!confirmPassword) {
-      newErrors.confirmPassword = 'Please confirm your password';
-    } else if (password !== confirmPassword) {
-      newErrors.confirmPassword = 'Passwords do not match';
-    }
-
-    setErrors(newErrors);
-    return Object.keys(newErrors).length === 0;
-  };
-
-  const handleSubmit = async (e) => {
-    e.preventDefault();
+  const onSubmit = async (data) => {
     setApiError('');
-
-    if (!validateForm()) return;
-
     setIsLoading(true);
     try {
       await signup({
-        fullName,
-        collegeEmail: email,
-        password,
+        fullName: data.fullName,
+        collegeEmail: data.email,
+        password: data.password,
       });
       setIsSuccess(true);
       setTimeout(() => {
@@ -146,7 +108,7 @@ export default function SignupForm({ onSwitchToLogin }) {
   }
 
   return (
-    <form className="auth-form" onSubmit={handleSubmit}>
+    <form className="auth-form" onSubmit={handleSubmit(onSubmit)}>
       <div className="form-header">
         <h2>Create Account</h2>
         <p>Join us to get started with your placement journey</p>
@@ -170,11 +132,10 @@ export default function SignupForm({ onSwitchToLogin }) {
             type="text"
             className={`form-input ${errors.fullName ? 'error' : ''}`}
             placeholder="John Doe"
-            value={fullName}
-            onChange={(e) => setFullName(e.target.value)}
+            {...register('fullName', V.fullName())}
           />
         </div>
-        {errors.fullName && <span className="error-message">{errors.fullName}</span>}
+        {errors.fullName && <span className="error-message">{errors.fullName.message}</span>}
       </div>
 
       <div className="form-group">
@@ -193,8 +154,11 @@ export default function SignupForm({ onSwitchToLogin }) {
             type="email"
             className={`form-input ${errors.email || otpError ? 'error' : ''} ${otpVerified ? 'verified' : ''}`}
             placeholder="@gweca.ac.in"
-            value={email}
-            onChange={handleEmailChange}
+            {...register('email', V.collegeEmail())}
+            onChange={(e) => {
+              register('email').onChange(e);
+              handleEmailChange(e);
+            }}
             disabled={otpVerified}
           />
           {isValidEmail && !otpVerified && (
@@ -211,7 +175,7 @@ export default function SignupForm({ onSwitchToLogin }) {
             <span className="verified-badge">✓</span>
           )}
         </div>
-        {errors.email && <span className="error-message">{errors.email}</span>}
+        {errors.email && <span className="error-message">{errors.email.message}</span>}
         {otpError && !errors.email && <span className="error-message">{otpError}</span>}
         {otpSuccess && <span className="success-text">{otpSuccess}</span>}
       </div>
@@ -271,8 +235,7 @@ export default function SignupForm({ onSwitchToLogin }) {
             type={showPassword ? 'text' : 'password'}
             className={`form-input ${errors.password ? 'error' : ''}`}
             placeholder="Enter a strong password"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
+            {...register('password', V.password())}
           />
           <button
             type="button"
@@ -293,7 +256,7 @@ export default function SignupForm({ onSwitchToLogin }) {
             )}
           </button>
         </div>
-        {errors.password && <span className="error-message">{errors.password}</span>}
+        {errors.password && <span className="error-message">{errors.password.message}</span>}
         <span className="password-hint">
           At least 6 characters with uppercase, lowercase, and numbers
         </span>
@@ -315,8 +278,7 @@ export default function SignupForm({ onSwitchToLogin }) {
             type={showConfirmPassword ? 'text' : 'password'}
             className={`form-input ${errors.confirmPassword ? 'error' : ''}`}
             placeholder="Confirm your password"
-            value={confirmPassword}
-            onChange={(e) => setConfirmPassword(e.target.value)}
+            {...register('confirmPassword', V.confirmPassword(() => watch('password')))}
           />
           <button
             type="button"
@@ -338,7 +300,7 @@ export default function SignupForm({ onSwitchToLogin }) {
           </button>
         </div>
         {errors.confirmPassword && (
-          <span className="error-message">{errors.confirmPassword}</span>
+          <span className="error-message">{errors.confirmPassword.message}</span>
         )}
       </div>
 

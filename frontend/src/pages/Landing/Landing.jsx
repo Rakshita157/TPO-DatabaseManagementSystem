@@ -26,7 +26,7 @@ export default function Landing() {
     const fetchSettings = async () => {
       try {
         const { data } = await axios.get(`${API_URL}/college-settings`);
-        setSettings(data);
+        setSettings(data.collegeSettings);
       } catch (error) {
         console.error('Unable to load college settings', error);
       } finally {

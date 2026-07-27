@@ -13,6 +13,8 @@ const {
   updateDocument: updateDocumentService,
 } = require("../services/studentProfile.service");
 
+const prisma = require("../config/prisma");
+
 const getStudentProfile = async (req, res) => {
   try {
     const { userId } = req.params;
@@ -37,6 +39,11 @@ const data = {
   ...req.body,
   userId: req.user.userId,
 };
+
+const user = await prisma.user.findUnique({ where: { id: data.userId } });
+if (!user) {
+  return res.status(404).json({ message: "User not found. Please log in again." });
+}
 
 console.log(data);
 

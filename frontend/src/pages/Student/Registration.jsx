@@ -84,6 +84,7 @@ export default function Registration() {
   const [submitted, setSubmitted] = useState(false)
   const [submitting, setSubmitting] = useState(false)
   const [submitError, setSubmitError] = useState('')
+  const [consentGiven, setConsentGiven] = useState(false)
 
   const watchedCourse = watch('course')
   const watchedAdmissionYear = watch('admissionYear')
@@ -338,6 +339,26 @@ export default function Registration() {
             )}
           </div>
 
+          {currentStep === STEPS.length - 1 && (
+            <div className="consent-section">
+              <label className="consent-label">
+                <input
+                  type="checkbox"
+                  className="consent-checkbox"
+                  checked={consentGiven}
+                  onChange={(e) => {
+                    setConsentGiven(e.target.checked)
+                    if (e.target.checked) setSubmitError('')
+                  }}
+                />
+                <span className="consent-text">
+                  I hereby confirm that all the information provided by me is true and accurate.
+                  I understand that I am solely responsible for the correctness of the information submitted.
+                </span>
+              </label>
+            </div>
+          )}
+
           <div className="form-footer">
             {currentStep > 0 && (
               <button className="btn-outline" onClick={handleBack} disabled={submitting}>
@@ -352,7 +373,17 @@ export default function Registration() {
                   <ChevronRight size={18} />
                 </button>
               ) : (
-                <button className="btn-primary" onClick={handleSubmit(onSubmitForm)} disabled={submitting}>
+                <button
+                  className="btn-primary"
+                  onClick={() => {
+                    if (!consentGiven) {
+                      setSubmitError('Please accept the declaration to continue with your registration.')
+                      return
+                    }
+                    handleSubmit(onSubmitForm)()
+                  }}
+                  disabled={submitting}
+                >
                   {submitting ? 'Submitting...' : 'Submit'}
                   <ChevronRight size={18} />
                 </button>

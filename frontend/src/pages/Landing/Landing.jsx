@@ -53,7 +53,7 @@ export default function Landing() {
       />
       <main className="main-content">
         <HighlightsSection />
-        <AboutSection collegeImage={collegeImage} />
+        <AboutSection />
         <RecruitersSection recruiters={placeholderRecruiters} />
       </main>
       <FooterSection settings={settings} />

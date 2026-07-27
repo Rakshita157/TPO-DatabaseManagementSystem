@@ -1,52 +1,58 @@
-import { MessageSquare, Building, BarChart3, Briefcase } from 'lucide-react';
+import { Eye, Target, CheckCircle } from 'lucide-react';
 import useScrollAnimation from '../../../hooks/useScrollAnimation';
 import './AboutSection.css';
 
-const aboutFeatures = [
-  { title: 'Career Guidance', description: 'End-to-end guidance for your career path', icon: MessageSquare },
-  { title: 'Industry Connect', description: 'Strong network with top recruiters', icon: Building },
-  { title: 'Training & Development', description: 'Comprehensive training for skill enhancement', icon: BarChart3 },
-  { title: 'Placement Support', description: 'End-to-end support till you get placed', icon: Briefcase },
+const missionPoints = [
+  'To make the students aware about the corporate culture by organizing guest lectures, workshops, seminars and industrial trainings by experienced personnel from the Industry.',
+  'To organize placement and internship drives for our students within and outside the campus.',
+  'To provide equal opportunity to all eligible students for placements and internships.',
 ];
 
-export default function AboutSection({ collegeImage }) {
+export default function AboutSection() {
   const [ref, isVisible] = useScrollAnimation({ threshold: 0.1 });
 
   return (
     <section className="about-section" id="about">
       <div
         ref={ref}
-        className={`about-content ${isVisible ? 'about-animated' : ''}`}
+        className={`vm-wrapper ${isVisible ? 'vm-animated' : ''}`}
       >
-        <div className="about-text">
-          <h2 className="section-heading-left">ABOUT OUR TPO</h2>
-          <p className="about-description">
-            The Training and Placement (TPO) at GWECA acts as a bridge
-            between industry and academia. We work closely with students to
-            enhance their skills, provide training, and create excellent placement
-            opportunities.
-          </p>
-          <div className="about-features">
-            {aboutFeatures.map((feature) => {
-              const Icon = feature.icon;
-              return (
-                <div key={feature.title} className="about-feature">
-                  <div className="about-feature-icon">
-                    <Icon size={24} />
-                  </div>
-                  <div className="about-feature-text">
-                    <h4>{feature.title}</h4>
-                    <p>{feature.description}</p>
-                  </div>
-                </div>
-              );
-            })}
+        <h2 className="vm-main-heading">
+          VISION & MISSION OF<br />TRAINING & PLACEMENT CELL
+        </h2>
+
+        <div className="vm-content">
+          <div className="vm-card vm-vision-card">
+            <div className="vm-card-header">
+              <div className="vm-icon-circle vm-vision-icon">
+                <Eye size={22} />
+              </div>
+              <h3 className="vm-card-title">VISION</h3>
+            </div>
+            <p className="vm-vision-text">
+              &ldquo;To provide necessary training and skill set to students to
+              make them Industry ready and to achieve 100% placement by
+              providing them adequate job opportunities.&rdquo;
+            </p>
           </div>
-        </div>
-        <div className="about-image">
-          <img src={collegeImage} alt="Training and Placement Office" />
-          <div className="about-image-label">
-            TRAINING &<br />PLACEMENT OFFICE
+
+          <div className="vm-card vm-mission-card">
+            <div className="vm-card-header">
+              <div className="vm-icon-circle vm-mission-icon">
+                <Target size={22} />
+              </div>
+              <h3 className="vm-card-title">MISSION</h3>
+            </div>
+            <ol className="vm-mission-list">
+              {missionPoints.map((point, index) => (
+                <li key={index} className="vm-mission-item">
+                  <div className="vm-mission-check">
+                    <CheckCircle size={16} />
+                  </div>
+                  <span>{point}</span>
+                </li>
+              ))}
+            </ol>
           </div>
         </div>
       </div>

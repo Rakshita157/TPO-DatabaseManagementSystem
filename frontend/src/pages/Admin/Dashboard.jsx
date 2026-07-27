@@ -45,6 +45,7 @@ export default function AdminDashboard() {
   const [showFilters, setShowFilters] = useState(false);
   const [hasSearched, setHasSearched] = useState(false);
   const [hasResults, setHasResults] = useState(false);
+  const [searchTrigger, setSearchTrigger] = useState(0);
   const [confirmDelete, setConfirmDelete] = useState(null);
   const [filterOptions, setFilterOptions] = useState({
     departments: [], courses: [], years: [], admissionYears: [], graduationYears: [],
@@ -60,6 +61,7 @@ export default function AdminDashboard() {
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [sidebarWidth, setSidebarWidth] = useState(240);
   const isResizing = useRef(false);
+  const fetchIdRef = useRef(0);
 
   const startResize = useCallback((e) => {
     e.preventDefault();
@@ -87,6 +89,7 @@ export default function AdminDashboard() {
   }, []);
 
   const fetchData = useCallback(async () => {
+    const fetchId = ++fetchIdRef.current;
     setLoading(true);
     try {
       const params = {
@@ -102,6 +105,9 @@ export default function AdminDashboard() {
         getStudents({ ...params, placementStatus: 'PLACED', page: 1, limit: 1 }),
         getStudents({ ...params, placementStatus: 'NOT_PLACED', page: 1, limit: 1 }),
       ]);
+
+      if (fetchId !== fetchIdRef.current) return;
+
       setStudents(studentsRes.data.students);
       setTotal(studentsRes.data.total);
       setTotalPages(studentsRes.data.totalPages);
@@ -112,12 +118,14 @@ export default function AdminDashboard() {
     } catch (err) {
       console.error('Failed to fetch data:', err);
     } finally {
-      setLoading(false);
-      setSearching(false);
+      if (fetchId === fetchIdRef.current) {
+        setLoading(false);
+        setSearching(false);
+      }
     }
   }, [page, limit, sortBy, sortOrder, searchField, filters]);
 
-  useEffect(() => { if (hasSearched) fetchData(); }, [fetchData, hasSearched]);
+  useEffect(() => { if (hasSearched) fetchData(); }, [fetchData, hasSearched, searchTrigger]);
 
   useEffect(() => {
     const loadFilters = async () => {
@@ -331,6 +339,7 @@ export default function AdminDashboard() {
     setSearchField(searchQuery);
     setPage(1);
     setHasSearched(true);
+    setSearchTrigger(prev => prev + 1);
   };
 
   const handleDiscardConfirm = () => {

@@ -7,6 +7,7 @@ import AboutSection from './components/AboutSection';
 import RecruitersSection from './components/RecruitersSection';
 import FooterSection from './components/FooterSection';
 import ScrollToTop from './components/ScrollToTop';
+import CoordinatorsSection from './components/CoordinatorsSection';
 import './Landing.css';
 import collegeImage from '../../assets/logos/College Image.jpg';
 
@@ -20,6 +21,8 @@ const placeholderRecruiters = Object.entries(recruiterLogos)
 
 export default function Landing() {
   const [settings, setSettings] = useState(null);
+  const [facultyCoordinators, setFacultyCoordinators] = useState([]);
+  const [studentCoordinators, setStudentCoordinators] = useState([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -27,13 +30,25 @@ export default function Landing() {
       try {
         const { data } = await axios.get(`${API_URL}/college-settings`);
         setSettings(data.collegeSettings);
+        setFacultyCoordinators(data.facultyCoordinators || []);
+        setStudentCoordinators(data.studentCoordinators || []);
       } catch (error) {
         console.error('Unable to load college settings', error);
       } finally {
         setLoading(false);
       }
     };
+
     fetchSettings();
+
+    const interval = setInterval(fetchSettings, 30000);
+    const onFocus = () => fetchSettings();
+    window.addEventListener('focus', onFocus);
+
+    return () => {
+      clearInterval(interval);
+      window.removeEventListener('focus', onFocus);
+    };
   }, []);
 
   const getImageUrl = (photoPath) => {
@@ -54,6 +69,12 @@ export default function Landing() {
       <main className="main-content">
         <HighlightsSection />
         <AboutSection />
+        <CoordinatorsSection
+          settings={settings}
+          facultyCoordinators={facultyCoordinators}
+          studentCoordinators={studentCoordinators}
+          getImageUrl={getImageUrl}
+        />
         <RecruitersSection recruiters={placeholderRecruiters} />
       </main>
       <FooterSection settings={settings} />

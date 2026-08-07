@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import {
   ArrowLeft, ChevronUp, Calendar, FileText,
   User, GraduationCap, Phone, Mail, MapPin,
@@ -41,6 +41,8 @@ function renderFieldValue(fieldDef, value) {
 export default function StudentDetails() {
   const { userId } = useParams();
   const navigate = useNavigate();
+  const location = useLocation();
+  const from = location.state?.from;
   const [student, setStudent] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
@@ -97,7 +99,7 @@ export default function StudentDetails() {
   const handleDelete = async () => {
     try {
       await deleteStudent(userId);
-      navigate('/admin/dashboard');
+      navigate(from || '/admin/dashboard');
     } catch {
     }
   };
@@ -129,7 +131,7 @@ export default function StudentDetails() {
           </button>
         </div>
         <nav className="admin-sidebar-nav">
-          <button className="admin-nav-item" onClick={() => navigate('/admin/dashboard')} title="Students">
+          <button className="admin-nav-item" onClick={() => navigate(from || '/admin/dashboard')} title="Students">
             <Users size={18} />
             {!sidebarCollapsed && 'Students'}
           </button>
@@ -267,7 +269,7 @@ export default function StudentDetails() {
       {renderSidebar()}
       <main className="admin-main" style={{ marginLeft: sidebarCollapsed ? 0 : sidebarWidth }}>
         <header className="detail-topbar">
-          <button className="back-btn" onClick={() => navigate('/admin/dashboard')}>
+          <button className="back-btn" onClick={() => navigate(from || '/admin/dashboard')}>
             <ArrowLeft size={20} /> Back to Dashboard
           </button>
         </header>

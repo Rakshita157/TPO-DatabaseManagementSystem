@@ -47,7 +47,6 @@ const getStudents = async ({
         user: {
           fullName: {
             contains: keyword,
-            mode: "insensitive",
           },
         },
       },
@@ -55,20 +54,17 @@ const getStudents = async ({
         user: {
           collegeEmail: {
             contains: keyword,
-            mode: "insensitive",
           },
         },
       },
       {
         collegeId: {
           contains: keyword,
-          mode: "insensitive",
         },
       },
       {
         btuRollNumber: {
           contains: keyword,
-          mode: "insensitive",
         },
       },
     ];

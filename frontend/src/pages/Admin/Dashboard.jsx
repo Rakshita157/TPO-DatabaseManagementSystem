@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams, useLocation } from 'react-router-dom';
 import {
   Search, Filter, Download, ChevronDown, ChevronUp,
   Trash2, Eye, X, LogOut, ArrowUpDown, Users, Home, Loader2,
@@ -13,6 +13,23 @@ import './Dashboard.css';
 
 const COURSE_LABELS = { BTECH: 'B.Tech', MTECH: 'M.Tech', MBA: 'MBA', MCA: 'MCA' };
 const COURSE_SEMESTERS = { BTECH: 8, MTECH: 4, MBA: 4, MCA: 4 };
+const DEFAULT_FILTERS = {
+  department: '', course: '', currentYear: '', currentSemester: '',
+  admissionYear: '', graduationYear: '',
+  cgpaMin: '', cgpaMax: '', resumeUploaded: '', linkedinAdded: '', placementEligible: '',
+};
+const FILTER_KEYS = Object.keys(DEFAULT_FILTERS);
+
+function parseDashboardParams(searchParams) {
+  const filters = { ...DEFAULT_FILTERS };
+  FILTER_KEYS.forEach(k => { const v = searchParams.get(k); if (v) filters[k] = v; });
+  const search = searchParams.get('search') || '';
+  const page = Math.max(1, parseInt(searchParams.get('page') || '1', 10));
+  const sortBy = searchParams.get('sortBy') || 'fullName';
+  const sortOrder = searchParams.get('sortOrder') || 'asc';
+  const hasQuery = !!(search || page > 1 || sortBy !== 'fullName' || sortOrder !== 'asc' || FILTER_KEYS.some(k => filters[k]));
+  return { search, page, sortBy, sortOrder, filters, hasQuery };
+}
 
 function formatDate(dateStr) {
   if (!dateStr) return 'N/A';
@@ -26,6 +43,9 @@ const getSemesterOptions = (course) => {
 
 export default function AdminDashboard() {
   const navigate = useNavigate();
+  const location = useLocation();
+  const [searchParams, setSearchParams] = useSearchParams();
+  const parsed = parseDashboardParams(searchParams);
   const storedUser = JSON.parse(localStorage.getItem('user') || '{}');
 
   const [students, setStudents] = useState([]);
@@ -33,28 +53,24 @@ export default function AdminDashboard() {
   const [totalPages, setTotalPages] = useState(0);
   const [placedCount, setPlacedCount] = useState(0);
   const [unplacedCount, setUnplacedCount] = useState(0);
-  const [page, setPage] = useState(1);
+  const [page, setPage] = useState(parsed.page);
   const [limit] = useState(15);
   const [loading, setLoading] = useState(true);
   const [searching, setSearching] = useState(false);
-  const [searchQuery, setSearchQuery] = useState('');
-  const [searchField, setSearchField] = useState('');
-  const [sortBy, setSortBy] = useState('fullName');
-  const [sortOrder, setSortOrder] = useState('asc');
+  const [searchQuery, setSearchQuery] = useState(parsed.search);
+  const [executedSearch, setExecutedSearch] = useState(parsed.search);
+  const [sortBy, setSortBy] = useState(parsed.sortBy);
+  const [sortOrder, setSortOrder] = useState(parsed.sortOrder);
   const [selectedIds, setSelectedIds] = useState([]);
   const [showFilters, setShowFilters] = useState(false);
-  const [hasSearched, setHasSearched] = useState(false);
-  const [hasResults, setHasResults] = useState(false);
+  const [hasSearched, setHasSearched] = useState(parsed.hasQuery);
+  const [hasResults, setHasResults] = useState(parsed.hasQuery);
   const [searchTrigger, setSearchTrigger] = useState(0);
   const [confirmDelete, setConfirmDelete] = useState(null);
   const [filterOptions, setFilterOptions] = useState({
     departments: [], courses: [], years: [], admissionYears: [], graduationYears: [],
   });
-  const [filters, setFilters] = useState({
-    department: '', course: '', currentYear: '', currentSemester: '',
-    admissionYear: '', graduationYear: '',
-    cgpaMin: '', cgpaMax: '', resumeUploaded: '', linkedinAdded: '', placementEligible: '',
-  });
+  const [filters, setFilters] = useState(parsed.filters);
   const [pendingChanges, setPendingChanges] = useState({});
   const [toasts, setToasts] = useState([]);
   const [confirmDiscard, setConfirmDiscard] = useState(null);
@@ -96,7 +112,7 @@ export default function AdminDashboard() {
         page, limit, sortBy, sortOrder,
       };
 
-      if (searchField) params.search = searchField;
+      if (executedSearch) params.search = executedSearch;
       Object.entries(filters).forEach(([k, v]) => { if (v) params[k] = v; });
 
       const [studentsRes, filtersRes, placedRes, unplacedRes] = await Promise.all([
@@ -123,9 +139,21 @@ export default function AdminDashboard() {
         setSearching(false);
       }
     }
-  }, [page, limit, sortBy, sortOrder, searchField, filters]);
+  }, [page, limit, sortBy, sortOrder, executedSearch, filters]);
 
-  useEffect(() => { if (hasSearched) fetchData(); }, [fetchData, hasSearched, searchTrigger]);
+  useEffect(() => {
+    if (hasSearched) fetchData();
+  }, [fetchData, hasSearched, searchTrigger]);
+
+  useEffect(() => {
+    const params = new URLSearchParams();
+    if (page > 1) params.set('page', String(page));
+    if (executedSearch) params.set('search', executedSearch);
+    if (sortBy && sortBy !== 'fullName') params.set('sortBy', sortBy);
+    if (sortOrder && sortOrder !== 'asc') params.set('sortOrder', sortOrder);
+    FILTER_KEYS.forEach(k => { if (filters[k]) params.set(k, filters[k]); });
+    setSearchParams(params.toString() ? params : new URLSearchParams(), { replace: true });
+  }, [page, executedSearch, sortBy, sortOrder, filters, setSearchParams]);
 
   useEffect(() => {
     const loadFilters = async () => {
@@ -138,13 +166,6 @@ export default function AdminDashboard() {
     };
     loadFilters();
   }, []);
-
-  useEffect(() => {
-    const timer = setTimeout(() => {
-      setSearchField(searchQuery);
-    }, 400);
-    return () => clearTimeout(timer);
-  }, [searchQuery]);
 
   const handleSort = (field) => {
     if (sortBy === field) {
@@ -215,7 +236,7 @@ export default function AdminDashboard() {
     try {
       const params = {};
       Object.entries(filters).forEach(([k, v]) => { if (v) params[k] = v; });
-      if (searchField) params.search = searchField;
+      if (executedSearch) params.search = executedSearch;
       const res = await exportStudents(params);
       const url = window.URL.createObjectURL(new Blob([res.data]));
       const link = document.createElement('a');
@@ -323,7 +344,7 @@ export default function AdminDashboard() {
       cgpaMin: '', cgpaMax: '', resumeUploaded: '', linkedinAdded: '', placementEligible: '',
   });
   setSearchQuery('');
-  setSearchField('');
+  setExecutedSearch('');
   setPage(1);
   setSelectedIds([]);
     setSortBy('fullName');
@@ -336,7 +357,7 @@ export default function AdminDashboard() {
   const handleSearchInner = () => {
     if (!canSearch) return;
     setSearching(true);
-    setSearchField(searchQuery);
+    setExecutedSearch(searchQuery);
     setPage(1);
     setHasSearched(true);
     setSearchTrigger(prev => prev + 1);
@@ -748,7 +769,7 @@ export default function AdminDashboard() {
                           <Save size={16} />
                         </button>
                       )}
-                      <button className="action-btn view" title="View Profile" onClick={() => navigate(`/admin/student/${s.userId}`)}>
+                      <button className="action-btn view" title="View Profile" onClick={() => navigate(`/admin/student/${s.userId}`, { state: { from: location.pathname + location.search } })}>
                         <Eye size={16} />
                       </button>
                     </div>

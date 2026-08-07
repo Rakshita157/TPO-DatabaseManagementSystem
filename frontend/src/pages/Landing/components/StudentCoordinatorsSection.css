@@ -1,0 +1,151 @@
+.student-coordinators-section {
+  padding: 80px 40px;
+  background: #f5f7fa;
+}
+
+.student-coordinators-inner {
+  max-width: 1100px;
+  margin: 0 auto;
+}
+
+.student-coordinators-banner {
+  text-align: center;
+  margin-bottom: 40px;
+  padding: 0 20px;
+}
+
+.student-coordinators-banner-heading {
+  font-size: 28px;
+  font-weight: 700;
+  color: #1a3a5c;
+  position: relative;
+  display: inline-block;
+  margin: 0;
+}
+
+.student-coordinators-banner-heading::after {
+  content: '';
+  display: block;
+  width: 80px;
+  height: 4px;
+  background: #2563eb;
+  border-radius: 2px;
+  margin: 12px auto 0;
+}
+
+.student-coordinators-table-container {
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  overflow: auto;
+  box-shadow: 0 4px 16px rgba(15, 23, 42, 0.06);
+  opacity: 0;
+  transform: translateY(30px);
+  transition: opacity 0.6s ease, transform 0.6s ease;
+}
+
+.student-coordinators-animated {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+.student-coordinators-table {
+  width: 100%;
+  border-collapse: separate;
+  border-spacing: 0;
+  font-size: 0.9rem;
+  min-width: 640px;
+}
+
+.student-coordinators-table thead tr {
+  border-bottom: 2px solid #e2e8f0;
+}
+
+.student-coordinators-table th {
+  padding: 14px 18px;
+  text-align: left;
+  font-size: 0.78rem;
+  font-weight: 700;
+  color: #475569;
+  white-space: nowrap;
+  text-transform: uppercase;
+  letter-spacing: 0.4px;
+  background: #f8fafc;
+  border-bottom: 2px solid #e2e8f0;
+}
+
+.student-coordinators-table th:first-child {
+  width: 60px;
+}
+
+.student-coordinators-table tbody tr {
+  transition: background 0.15s ease;
+}
+
+.student-coordinators-table tbody tr:hover {
+  background: #f0f7ff;
+}
+
+.student-coordinators-table td {
+  padding: 14px 18px;
+  color: #0f172a;
+  vertical-align: middle;
+  border-bottom: 1px solid #f1f5f9;
+}
+
+.student-coordinators-table tbody tr:last-child td {
+  border-bottom: none;
+}
+
+.student-coordinators-toggle {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  width: 100%;
+  padding: 12px 18px;
+  border: none;
+  border-top: 1px solid #e2e8f0;
+  background: #f8fafc;
+  color: #1e3a8a;
+  font-size: 0.85rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.2s ease, color 0.2s ease;
+  border-radius: 0 0 12px 12px;
+}
+
+.student-coordinators-toggle:hover {
+  background: #eff6ff;
+  color: #1e40af;
+}
+
+.student-name-cell {
+  font-weight: 600;
+  color: #1e293b;
+  white-space: nowrap;
+}
+
+.student-email-cell {
+  color: #2563eb;
+}
+
+.student-contact-cell {
+  white-space: nowrap;
+}
+
+@media (max-width: 820px) {
+  .student-coordinators-section {
+    padding: 60px 24px;
+  }
+}
+
+@media (max-width: 520px) {
+  .student-coordinators-section {
+    padding: 40px 16px;
+  }
+
+  .student-coordinators-banner-heading {
+    font-size: 20px;
+  }
+}

@@ -8,6 +8,7 @@ import RecruitersSection from './components/RecruitersSection';
 import FooterSection from './components/FooterSection';
 import ScrollToTop from './components/ScrollToTop';
 import CoordinatorsSection from './components/CoordinatorsSection';
+import StudentCoordinatorsSection from './components/StudentCoordinatorsSection';
 import './Landing.css';
 import collegeImage from '../../assets/logos/College Image.jpg';
 
@@ -72,9 +73,9 @@ export default function Landing() {
         <CoordinatorsSection
           settings={settings}
           facultyCoordinators={facultyCoordinators}
-          studentCoordinators={studentCoordinators}
           getImageUrl={getImageUrl}
         />
+        <StudentCoordinatorsSection studentCoordinators={studentCoordinators} />
         <RecruitersSection recruiters={placeholderRecruiters} />
       </main>
       <FooterSection settings={settings} />

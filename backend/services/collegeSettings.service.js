@@ -42,7 +42,33 @@ const deleteFacultyCoordinator = async (id) => {
 
 // ================= STUDENT COORDINATORS =================
 
+const AUTO_ASSIGN_COUNT = 20;
+
+const ensureAutoAssignedStudentCoordinators = async () => {
+  const firstStudents = await prisma.user.findMany({
+    where: {
+      role: "STUDENT",
+    },
+    orderBy: {
+      id: "asc",
+    },
+    take: AUTO_ASSIGN_COUNT,
+    select: {
+      id: true,
+    },
+  });
+
+  if (firstStudents.length > 0) {
+    await prisma.studentCoordinator.createMany({
+      data: firstStudents.map(({ id }) => ({ userId: id })),
+      skipDuplicates: true,
+    });
+  }
+};
+
 const getStudentCoordinators = async () => {
+  await ensureAutoAssignedStudentCoordinators();
+
   return await prisma.studentCoordinator.findMany({
     include: {
       user: {

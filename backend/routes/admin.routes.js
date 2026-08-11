@@ -10,11 +10,13 @@ const {
   editUser,
   removeStudent,
   exportData,
+  exportFieldOptions,
   filters,
 } = require("../controllers/admin.controller");
 
 router.get("/students", requireAdmin, listStudents);
 router.get("/students/export", requireAdmin, exportData);
+router.get("/export-fields", requireAdmin, exportFieldOptions);
 router.get("/filters", requireAdmin, filters);
 router.get("/students/:userId", requireAdmin, getStudent);
 

@@ -6,7 +6,7 @@ import {
   Save, CheckCircle, AlertCircle, FileText, PanelLeftClose, PanelLeftOpen
 } from 'lucide-react';
 import {
-  getStudents, deleteStudent, exportStudents, getFilterOptions, updatePlacementStatus
+  getStudents, deleteStudent, exportStudents, getFilterOptions, updatePlacementStatus, getExportFields
 } from '../../services/admin.service';
 import tpoLogo from '../../assets/logos/TPO_Cell__LOGO.png';
 import './Dashboard.css';
@@ -78,6 +78,12 @@ export default function AdminDashboard() {
   const [sidebarWidth, setSidebarWidth] = useState(240);
   const isResizing = useRef(false);
   const fetchIdRef = useRef(0);
+  const [showExportSheet, setShowExportSheet] = useState(false);
+  const [exporting, setExporting] = useState(false);
+  const [exportCategories, setExportCategories] = useState([]);
+  const [exportFields, setExportFields] = useState([]);
+  const [selectedExportKeys, setSelectedExportKeys] = useState(new Set());
+  const exportFieldsLoadedRef = useRef(false);
 
   const startResize = useCallback((e) => {
     e.preventDefault();
@@ -167,6 +173,22 @@ export default function AdminDashboard() {
     loadFilters();
   }, []);
 
+  useEffect(() => {
+    let cancelled = false;
+    getExportFields()
+      .then(res => {
+        if (cancelled) return;
+        setExportCategories(res.data.categories || []);
+        setExportFields(res.data.fields || []);
+        if (!exportFieldsLoadedRef.current) {
+          setSelectedExportKeys(new Set((res.data.fields || []).map(f => f.key)));
+          exportFieldsLoadedRef.current = true;
+        }
+      })
+      .catch(err => console.error('Failed to load export fields:', err));
+    return () => { cancelled = true; };
+  }, []);
+
   const handleSort = (field) => {
     if (sortBy === field) {
       setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc');
@@ -232,20 +254,54 @@ export default function AdminDashboard() {
     }
   };
 
-  const handleExport = async () => {
+  const toggleExportField = (key) => {
+    setSelectedExportKeys(prev => {
+      const next = new Set(prev);
+      if (next.has(key)) {
+        next.delete(key);
+      } else {
+        next.add(key);
+      }
+      return next;
+    });
+  };
+
+  const selectAllExportFields = () => {
+    setSelectedExportKeys(new Set(exportFields.map(f => f.key)));
+  };
+
+  const deselectAllExportFields = () => {
+    setSelectedExportKeys(new Set());
+  };
+
+  const handleExport = async (format) => {
+    if (selectedExportKeys.size === 0) {
+      addToast('Please select at least one field to export', 'error');
+      return;
+    }
+    setExporting(true);
     try {
+      const orderedKeys = exportFields.filter(f => selectedExportKeys.has(f.key)).map(f => f.key);
       const params = {};
       Object.entries(filters).forEach(([k, v]) => { if (v) params[k] = v; });
       if (executedSearch) params.search = executedSearch;
+      params.fields = orderedKeys.join(',');
+      params.format = format;
       const res = await exportStudents(params);
       const url = window.URL.createObjectURL(new Blob([res.data]));
       const link = document.createElement('a');
       link.href = url;
-      link.setAttribute('download', 'students_export.xlsx');
+      link.setAttribute('download', format === 'csv' ? 'students_export.csv' : 'students_export.xlsx');
       document.body.appendChild(link);
       link.click();
       link.remove();
-    } catch {
+      setShowExportSheet(false);
+      addToast('Export completed successfully', 'success');
+    } catch (err) {
+      console.error('Export failed:', err);
+      addToast('Export failed. Please try again.', 'error');
+    } finally {
+      setExporting(false);
     }
   };
 
@@ -473,9 +529,9 @@ export default function AdminDashboard() {
             <button className="reset-filters-btn" onClick={clearFilters}>
               <X size={16} /> Reset Filters
             </button>
-            <button className="export-btn" onClick={handleExport}>
+            <button className="export-btn" onClick={() => setShowExportSheet(true)}>
               <Download size={18} />
-              Download Excel
+              Export
             </button>
           </div>
         </div>
@@ -835,6 +891,69 @@ export default function AdminDashboard() {
             <div className="confirm-actions">
               <button className="confirm-cancel" onClick={() => setConfirmDiscard(null)}>Cancel</button>
               <button className="confirm-delete" onClick={handleDiscardConfirm}>Discard</button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {showExportSheet && (
+        <div className="modal-overlay" onClick={() => setShowExportSheet(false)}>
+          <div className="export-sheet" onClick={e => e.stopPropagation()}>
+            <div className="export-sheet-header">
+              <div>
+                <h3>Export Students</h3>
+                <p>Select the fields to include in the exported file.</p>
+              </div>
+              <button className="export-sheet-close" onClick={() => setShowExportSheet(false)} title="Close">
+                <X size={18} />
+              </button>
+            </div>
+            <div className="export-sheet-actions">
+              <button className="export-sheet-selectall" onClick={selectAllExportFields}>
+                Select All
+              </button>
+              <button className="export-sheet-selectall" onClick={deselectAllExportFields}>
+                Deselect All
+              </button>
+              <span className="export-sheet-count">{selectedExportKeys.size} field(s) selected</span>
+            </div>
+            <div className="export-sheet-body">
+              {exportCategories.length === 0 && (
+                <div className="export-sheet-empty">Loading available fields...</div>
+              )}
+              {exportCategories.map(category => (
+                <div className="export-field-group" key={category}>
+                  <h4>{category}</h4>
+                  <div className="export-field-list">
+                    {exportFields.filter(f => f.category === category).map(field => (
+                      <label key={field.key} className="export-field-item">
+                        <input
+                          type="checkbox"
+                          checked={selectedExportKeys.has(field.key)}
+                          onChange={() => toggleExportField(field.key)}
+                        />
+                        <span>{field.label}</span>
+                      </label>
+                    ))}
+                  </div>
+                </div>
+              ))}
+            </div>
+            <div className="export-sheet-footer">
+              <button
+                className="export-sheet-btn csv"
+                onClick={() => handleExport('csv')}
+                disabled={exporting}
+              >
+                <Download size={16} /> Export CSV
+              </button>
+              <button
+                className="export-sheet-btn excel"
+                onClick={() => handleExport('excel')}
+                disabled={exporting}
+              >
+                <Download size={16} /> Export Excel
+              </button>
             </div>
           </div>
         </div>

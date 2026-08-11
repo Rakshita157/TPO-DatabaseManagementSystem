@@ -1,4 +1,5 @@
 const prisma = require("../config/prisma");
+const { getAvailableFields } = require("../constants/exportFields");
 
 const getStudents = async ({
   search,
@@ -338,6 +339,13 @@ const exportStudents = async (filters) => {
   return result.students;
 };
 
+const getExportFieldOptions = async () => {
+  const maxSem = await prisma.semesterResult
+    .aggregate({ _max: { semester: true } })
+    .catch(() => null);
+  return getAvailableFields(maxSem?._max?.semester || 0);
+};
+
 const getFilterOptions = async () => {
   const safeQuery = (promise) => promise.catch(() => []);
 
@@ -410,5 +418,6 @@ module.exports = {
   updateUser,
   deleteStudent,
   exportStudents,
+  getExportFieldOptions,
   getFilterOptions,
 };

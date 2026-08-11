@@ -12,6 +12,8 @@ export const deleteStudent = (userId) => api.delete(`/admin/students/${userId}`)
 
 export const exportStudents = (params) => api.get('/admin/students/export', { params, responseType: 'blob' });
 
+export const getExportFields = () => api.get('/admin/export-fields');
+
 export const getFilterOptions = () => api.get('/admin/filters');
 
 export const updatePlacementStatus = (userId, status) =>

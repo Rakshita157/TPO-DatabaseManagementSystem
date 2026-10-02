@@ -1,4 +1,16 @@
+const fs = require("fs");
+const path = require("path");
 const prisma = require("../config/prisma");
+
+const COORDINATORS_DIR = path.join(__dirname, "..", "uploads", "coordinators");
+
+const deleteFile = (filePath) => {
+  if (!filePath) return;
+  const fullPath = path.isAbsolute(filePath)
+    ? filePath
+    : path.join(__dirname, "..", filePath);
+  fs.unlink(fullPath, () => {});
+};
 
 const getCollegeSettings = async () => {
   return await prisma.collegeSettings.findFirst();

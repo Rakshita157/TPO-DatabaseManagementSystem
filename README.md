@@ -109,10 +109,4 @@ TPO-PORTAL
 
 - **Ritu Saini**
 - **Rakshita Dadhich**
-
-
 ---
-
-## 📄 License
-
-This project is developed for educational purposes and is intended for deployment within academic institutions.

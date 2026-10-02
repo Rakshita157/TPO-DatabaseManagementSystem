@@ -1,5 +1,6 @@
 const express = require("express");
 const router = express.Router();
+const { uploadImage } = require("../middleware/upload.middleware");
 
 const {
   getCollegeSettings,
@@ -17,7 +18,7 @@ router.get("/", getCollegeSettings);
 router.put("/", updateCollegeSettings);
 
 // Faculty Coordinators
-router.post("/faculty", addFacultyCoordinator);
+router.post("/faculty", uploadImage.single("photo"), addFacultyCoordinator);
 router.delete("/faculty/:id", deleteFacultyCoordinator);
 
 // Student Coordinators

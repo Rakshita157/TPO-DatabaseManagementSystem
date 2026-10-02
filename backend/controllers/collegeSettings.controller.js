@@ -1,3 +1,5 @@
+const path = require("path");
+const fs = require("fs");
 const {
   getCollegeSettings: getCollegeSettingsService,
   updateCollegeSettings: updateCollegeSettingsService,
@@ -30,7 +32,12 @@ const getCollegeSettings = async (req, res) => {
 
 const addFacultyCoordinator = async (req, res) => {
   try {
-    const faculty = await addFacultyCoordinatorService(req.body);
+    const data = {
+      fullName: req.body.fullName,
+      photo: req.file ? req.file.path.replace(/\\/g, "/") : null,
+    };
+
+    const faculty = await addFacultyCoordinatorService(data);
 
     res.status(201).json({
       message: "Faculty Coordinator added successfully",
@@ -45,7 +52,14 @@ const addFacultyCoordinator = async (req, res) => {
 
 const deleteFacultyCoordinator = async (req, res) => {
   try {
-    await deleteFacultyCoordinatorService(Number(req.params.id));
+    const deleted = await deleteFacultyCoordinatorService(Number(req.params.id));
+
+    if (deleted.photo) {
+      const filePath = path.join(__dirname, "..", deleted.photo);
+      if (fs.existsSync(filePath)) {
+        fs.unlinkSync(filePath);
+      }
+    }
 
     res.json({
       message: "Faculty Coordinator deleted successfully",

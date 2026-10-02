@@ -1,7 +1,8 @@
 const multer = require("multer");
 const path = require("path");
+const fs = require("fs");
 
-const storage = multer.diskStorage({
+const resumeStorage = multer.diskStorage({
   destination: (req, file, cb) => {
     cb(null, "uploads/resumes");
   },
@@ -13,7 +14,7 @@ const storage = multer.diskStorage({
 });
 
 const upload = multer({
-  storage,
+  storage: resumeStorage,
   limits: {
     fileSize: 5 * 1024 * 1024, // 5 MB
   },
@@ -26,4 +27,29 @@ const upload = multer({
   },
 });
 
-module.exports = upload;
+const imageStorage = multer.diskStorage({
+  destination: (req, file, cb) => {
+    const dir = "uploads/faculty";
+    fs.mkdirSync(dir, { recursive: true });
+    cb(null, dir);
+  },
+  filename: (req, file, cb) => {
+    const uniqueSuffix = Date.now() + "-" + Math.round(Math.random() * 1e9);
+    cb(null, uniqueSuffix + path.extname(file.originalname));
+  },
+});
+
+const uploadImage = multer({
+  storage: imageStorage,
+  limits: { fileSize: 2 * 1024 * 1024 },
+  fileFilter: (req, file, cb) => {
+    const allowed = ["image/jpeg", "image/png", "image/webp"];
+    if (allowed.includes(file.mimetype)) {
+      cb(null, true);
+    } else {
+      cb(new Error("Only JPEG, PNG, and WebP images are allowed"));
+    }
+  },
+});
+
+module.exports = { upload, uploadImage };

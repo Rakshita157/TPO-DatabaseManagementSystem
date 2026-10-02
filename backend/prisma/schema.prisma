@@ -155,7 +155,7 @@ model FacultyCoordinator {
   id Int @id @default(autoincrement())
 
   fullName String
-  photo    String
+  photo    String?
 }
 
 model StudentCoordinator {

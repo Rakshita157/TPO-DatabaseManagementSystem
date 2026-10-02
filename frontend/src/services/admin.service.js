@@ -18,3 +18,11 @@ export const getFilterOptions = () => api.get('/admin/filters');
 
 export const updatePlacementStatus = (userId, status) =>
   api.put(`/admin/students/${userId}/profile`, { placementStatus: status });
+
+export const getCollegeSettings = () => api.get('/college-settings');
+
+export const addFacultyCoordinator = (formData) => api.post('/college-settings/faculty', formData, {
+  headers: { 'Content-Type': 'multipart/form-data' },
+});
+
+export const deleteFacultyCoordinator = (id) => api.delete(`/college-settings/faculty/${id}`);

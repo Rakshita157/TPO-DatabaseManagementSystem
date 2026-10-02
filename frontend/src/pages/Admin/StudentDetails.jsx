@@ -4,7 +4,7 @@ import {
   ArrowLeft, ChevronUp, Calendar, FileText,
   User, GraduationCap, Phone, Mail, MapPin,
   Edit, X, Save, ExternalLink, CheckCircle, Trash2,
-  PanelLeftClose, PanelLeftOpen, Home, LogOut, Users
+  PanelLeftClose, PanelLeftOpen, Home, LogOut, Users, Settings
 } from 'lucide-react';
 import { getStudentById, updateStudentProfile, updateUser, deleteStudent } from '../../services/admin.service';
 import {
@@ -51,10 +51,23 @@ export default function StudentDetails() {
   const [editForm, setEditForm] = useState({});
   const [saving, setSaving] = useState(false);
   const [confirmDelete, setConfirmDelete] = useState(false);
+  const [showSettingsPopup, setShowSettingsPopup] = useState(false);
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [sidebarWidth, setSidebarWidth] = useState(240);
   const isResizing = useRef(false);
+  const settingsWrapRef = useRef(null);
   const storedUser = JSON.parse(localStorage.getItem('user') || '{}');
+
+  useEffect(() => {
+    if (!showSettingsPopup) return;
+    const handleClickOutside = (e) => {
+      if (settingsWrapRef.current && !settingsWrapRef.current.contains(e.target)) {
+        setShowSettingsPopup(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, [showSettingsPopup]);
 
   const startResize = useCallback((e) => {
     e.preventDefault();
@@ -148,6 +161,34 @@ export default function StudentDetails() {
             {!sidebarCollapsed && 'Logout'}
           </button>
         </nav>
+
+        <div className="admin-sidebar-settings-wrap" ref={settingsWrapRef}>
+          <button
+            className={`admin-nav-item admin-nav-settings ${showSettingsPopup ? 'active' : ''}`}
+            onClick={() => setShowSettingsPopup(prev => !prev)}
+            title="Settings"
+          >
+            <Settings size={18} />
+            {!sidebarCollapsed && 'Settings'}
+          </button>
+          {showSettingsPopup && !sidebarCollapsed && (
+            <div className="settings-popup">
+              <div className="settings-popup-header">
+                <button className="settings-popup-close" onClick={() => setShowSettingsPopup(false)}>
+                  <X size={14} />
+                </button>
+              </div>
+              <div className="settings-popup-item" onClick={() => { navigate('/admin/faculty-coordinators', { state: { from: location.pathname } }); setShowSettingsPopup(false); }}>
+                <Users size={16} />
+                <span>Faculty Coordinators</span>
+              </div>
+              <div className="settings-popup-item">
+                <GraduationCap size={16} />
+                <span>Student Coordinators</span>
+              </div>
+            </div>
+          )}
+        </div>
         {!sidebarCollapsed && (
           <div className="admin-sidebar-footer">
             <img src={tpoLogo} alt="T&P Cell Logo" className="admin-sidebar-footer-logo" />

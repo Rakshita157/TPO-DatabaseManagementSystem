@@ -3,7 +3,7 @@ import { useNavigate, useSearchParams, useLocation } from 'react-router-dom';
 import {
   Search, Filter, Download, ChevronDown, ChevronUp,
   Trash2, Eye, X, LogOut, ArrowUpDown, Users, Home, Loader2,
-  Save, CheckCircle, AlertCircle, FileText, PanelLeftClose, PanelLeftOpen
+  Save, CheckCircle, AlertCircle, FileText, PanelLeftClose, PanelLeftOpen, Settings, GraduationCap
 } from 'lucide-react';
 import {
   getStudents, deleteStudent, exportStudents, getFilterOptions, updatePlacementStatus, getExportFields
@@ -74,6 +74,7 @@ export default function AdminDashboard() {
   const [pendingChanges, setPendingChanges] = useState({});
   const [toasts, setToasts] = useState([]);
   const [confirmDiscard, setConfirmDiscard] = useState(null);
+  const [showSettingsPopup, setShowSettingsPopup] = useState(false);
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [sidebarWidth, setSidebarWidth] = useState(240);
   const isResizing = useRef(false);
@@ -84,6 +85,18 @@ export default function AdminDashboard() {
   const [exportFields, setExportFields] = useState([]);
   const [selectedExportKeys, setSelectedExportKeys] = useState(new Set());
   const exportFieldsLoadedRef = useRef(false);
+  const settingsWrapRef = useRef(null);
+
+  useEffect(() => {
+    if (!showSettingsPopup) return;
+    const handleClickOutside = (e) => {
+      if (settingsWrapRef.current && !settingsWrapRef.current.contains(e.target)) {
+        setShowSettingsPopup(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, [showSettingsPopup]);
 
   const startResize = useCallback((e) => {
     e.preventDefault();
@@ -488,6 +501,34 @@ export default function AdminDashboard() {
             {!sidebarCollapsed && 'Logout'}
           </button>
         </nav>
+
+        <div className="admin-sidebar-settings-wrap" ref={settingsWrapRef}>
+          <button
+            className={`admin-nav-item admin-nav-settings ${showSettingsPopup ? 'active' : ''}`}
+            onClick={() => setShowSettingsPopup(prev => !prev)}
+            title="Settings"
+          >
+            <Settings size={18} />
+            {!sidebarCollapsed && 'Settings'}
+          </button>
+          {showSettingsPopup && !sidebarCollapsed && (
+            <div className="settings-popup">
+              <div className="settings-popup-header">
+                <button className="settings-popup-close" onClick={() => setShowSettingsPopup(false)}>
+                  <X size={14} />
+                </button>
+              </div>
+              <div className="settings-popup-item" onClick={() => { navigate('/admin/faculty-coordinators', { state: { from: location.pathname } }); setShowSettingsPopup(false); }}>
+                <Users size={16} />
+                <span>Faculty Coordinators</span>
+              </div>
+              <div className="settings-popup-item">
+                <GraduationCap size={16} />
+                <span>Student Coordinators</span>
+              </div>
+            </div>
+          )}
+        </div>
 
         {!sidebarCollapsed && (
           <div className="admin-sidebar-footer">

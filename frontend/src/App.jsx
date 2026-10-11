@@ -6,6 +6,7 @@ import StudentProfile from './pages/Student/Profile'
 import AdminDashboard from './pages/Admin/Dashboard'
 import StudentDetails from './pages/Admin/StudentDetails'
 import FacultyCoordinators from './pages/Admin/FacultyCoordinators'
+import StudentCoordinators from './pages/Admin/StudentCoordinators'
 import './App.css'
 
 function ProtectedRoute({ children, allowedRoles }) {
@@ -36,6 +37,9 @@ function App() {
         } />
         <Route path="/admin/faculty-coordinators" element={
           <ProtectedRoute allowedRoles={['ADMIN']}><FacultyCoordinators /></ProtectedRoute>
+        } />
+        <Route path="/admin/student-coordinators" element={
+          <ProtectedRoute allowedRoles={['ADMIN']}><StudentCoordinators /></ProtectedRoute>
         } />
       </Routes>
     </Router>

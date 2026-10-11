@@ -519,10 +519,10 @@ export default function AdminDashboard() {
                   <Users size={16} />
                   <span>Faculty Coordinators</span>
                 </div>
-                <div className="settings-popup-item">
-                  <GraduationCap size={16} />
-                  <span>Student Coordinators</span>
-                </div>
+<div className="settings-popup-item" onClick={() => { navigate('/admin/student-coordinators', { state: { from: location.pathname } }); setShowSettingsPopup(false); }}>
+                <GraduationCap size={16} />
+                <span>Student Coordinators</span>
+              </div>
               </div>
             )}
           </div>

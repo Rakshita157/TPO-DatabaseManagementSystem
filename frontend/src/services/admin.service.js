@@ -26,3 +26,11 @@ export const addFacultyCoordinator = (formData) => api.post('/college-settings/f
 });
 
 export const deleteFacultyCoordinator = (id) => api.delete(`/college-settings/faculty/${id}`);
+
+export const getAvailableStudents = (params) => api.get('/college-settings/available-students', { params });
+
+export const addStudentCoordinator = (userId) =>
+  api.post('/college-settings/student-coordinators', { userId });
+
+export const deleteStudentCoordinator = (userId) =>
+  api.delete(`/college-settings/student-coordinators/${userId}`);

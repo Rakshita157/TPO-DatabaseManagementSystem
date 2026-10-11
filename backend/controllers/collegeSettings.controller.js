@@ -9,6 +9,7 @@ const {
   deleteFacultyCoordinator: deleteFacultyCoordinatorService,
 
   getStudentCoordinators: getStudentCoordinatorsService,
+  getAvailableStudents: getAvailableStudentsService,
   addStudentCoordinator: addStudentCoordinatorService,
   deleteStudentCoordinator: deleteStudentCoordinatorService,
 } = require("../services/collegeSettings.service");
@@ -102,6 +103,20 @@ const deleteStudentCoordinator = async (req, res) => {
   }
 };
 
+const getAvailableStudents = async (req, res) => {
+  try {
+    const { search, page, limit } = req.query;
+    const result = await getAvailableStudentsService({ search, page, limit });
+
+    res.json(result);
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({
+      message: error.message,
+    });
+  }
+};
+
 
 const updateCollegeSettings = async (req, res) => {
   try {
@@ -127,4 +142,6 @@ module.exports = {
 
   addStudentCoordinator,
   deleteStudentCoordinator,
+
+  getAvailableStudents,
 };

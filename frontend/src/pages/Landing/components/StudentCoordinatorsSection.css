@@ -33,15 +33,16 @@
   margin: 12px auto 0;
 }
 
-.student-coordinators-table-container {
-  background: #ffffff;
-  border: 1px solid #e2e8f0;
-  border-radius: 12px;
-  overflow: auto;
-  box-shadow: 0 4px 16px rgba(15, 23, 42, 0.06);
+.student-coordinators-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 24px;
+  max-width: 1100px;
+  margin: 0 auto 24px;
   opacity: 0;
   transform: translateY(30px);
   transition: opacity 0.6s ease, transform 0.6s ease;
+  align-items: stretch;
 }
 
 .student-coordinators-animated {
@@ -49,89 +50,106 @@
   transform: translateY(0);
 }
 
-.student-coordinators-table {
-  width: 100%;
-  border-collapse: separate;
-  border-spacing: 0;
-  font-size: 0.9rem;
-  min-width: 640px;
+.student-coordinator-card {
+  background: #ffffff;
+  border-radius: 12px;
+  padding: 24px 16px 20px;
+  text-align: center;
+  box-shadow: 0 6px 20px rgba(15, 23, 42, 0.08);
+  border: 1px solid #e2e8f0;
+  transition: transform 0.25s ease, box-shadow 0.25s ease;
+  animation: studentCoordinatorFadeIn 0.5s ease forwards;
+  opacity: 0;
+  display: flex;
+  flex-direction: column;
+  min-height: 190px;
+  justify-content: center;
 }
 
-.student-coordinators-table thead tr {
-  border-bottom: 2px solid #e2e8f0;
+.student-coordinator-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 10px 30px rgba(15, 23, 42, 0.12);
 }
 
-.student-coordinators-table th {
-  padding: 14px 18px;
-  text-align: left;
-  font-size: 0.78rem;
-  font-weight: 700;
-  color: #475569;
-  white-space: nowrap;
-  text-transform: uppercase;
-  letter-spacing: 0.4px;
-  background: #f8fafc;
-  border-bottom: 2px solid #e2e8f0;
+@keyframes studentCoordinatorFadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(16px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
-.student-coordinators-table th:first-child {
-  width: 60px;
-}
-
-.student-coordinators-table tbody tr {
-  transition: background 0.15s ease;
-}
-
-.student-coordinators-table tbody tr:hover {
-  background: #f0f7ff;
-}
-
-.student-coordinators-table td {
-  padding: 14px 18px;
-  color: #0f172a;
-  vertical-align: middle;
-  border-bottom: 1px solid #f1f5f9;
-}
-
-.student-coordinators-table tbody tr:last-child td {
-  border-bottom: none;
-}
-
-.student-coordinators-toggle {
+.student-coordinator-avatar {
+  width: 64px;
+  height: 64px;
+  margin: 0 auto 14px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #1e3a8a, #3b82f6);
+  color: #ffffff;
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 8px;
-  width: 100%;
-  padding: 12px 18px;
-  border: none;
-  border-top: 1px solid #e2e8f0;
-  background: #f8fafc;
-  color: #1e3a8a;
-  font-size: 0.85rem;
-  font-weight: 600;
-  cursor: pointer;
-  transition: background 0.2s ease, color 0.2s ease;
-  border-radius: 0 0 12px 12px;
+  box-shadow: 0 4px 12px rgba(30, 58, 138, 0.25);
 }
 
-.student-coordinators-toggle:hover {
-  background: #eff6ff;
-  color: #1e40af;
-}
-
-.student-name-cell {
+.student-coordinator-name {
+  font-size: 16px;
   font-weight: 600;
   color: #1e293b;
-  white-space: nowrap;
+  margin: 0 0 6px 0;
+  line-height: 1.4;
 }
 
-.student-email-cell {
+.student-coordinator-email {
+  font-size: 13px;
   color: #2563eb;
+  margin: 0 0 8px 0;
+  word-break: break-word;
 }
 
-.student-contact-cell {
-  white-space: nowrap;
+.student-coordinator-course {
+  font-size: 13px;
+  color: #475569;
+  margin: 0;
+  line-height: 1.5;
+}
+
+.student-coordinators-actions {
+  display: flex;
+  justify-content: center;
+  margin-top: 8px;
+}
+
+.student-coordinators-viewall-btn {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 24px;
+  background: #1e3a8a;
+  border: 1px solid #1e3a8a;
+  border-radius: 8px;
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: white;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  box-shadow: 0 4px 12px rgba(30, 58, 138, 0.2);
+}
+
+.student-coordinators-viewall-btn:hover {
+  background: #1e40af;
+  transform: translateY(-1px);
+  box-shadow: 0 6px 16px rgba(30, 58, 138, 0.25);
+}
+
+@media (max-width: 1100px) {
+  .student-coordinators-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    max-width: 760px;
+  }
 }
 
 @media (max-width: 820px) {
@@ -147,5 +165,10 @@
 
   .student-coordinators-banner-heading {
     font-size: 20px;
+  }
+
+  .student-coordinators-grid {
+    grid-template-columns: 1fr;
+    max-width: 100%;
   }
 }

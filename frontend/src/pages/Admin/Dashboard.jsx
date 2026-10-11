@@ -496,38 +496,41 @@ export default function AdminDashboard() {
             <Home size={18} />
             {!sidebarCollapsed && 'Landing Page'}
           </button>
+        </nav>
+
+        <div className="admin-sidebar-bottom">
+          <div className="admin-sidebar-settings-wrap" ref={settingsWrapRef}>
+            <button
+              className={`admin-nav-item admin-nav-settings ${showSettingsPopup ? 'active' : ''}`}
+              onClick={() => setShowSettingsPopup(prev => !prev)}
+              title="Settings"
+            >
+              <Settings size={18} />
+              {!sidebarCollapsed && 'Settings'}
+            </button>
+            {showSettingsPopup && !sidebarCollapsed && (
+              <div className="settings-popup">
+                <div className="settings-popup-header">
+                  <button className="settings-popup-close" onClick={() => setShowSettingsPopup(false)}>
+                    <X size={14} />
+                  </button>
+                </div>
+                <div className="settings-popup-item" onClick={() => { navigate('/admin/faculty-coordinators', { state: { from: location.pathname } }); setShowSettingsPopup(false); }}>
+                  <Users size={16} />
+                  <span>Faculty Coordinators</span>
+                </div>
+                <div className="settings-popup-item">
+                  <GraduationCap size={16} />
+                  <span>Student Coordinators</span>
+                </div>
+              </div>
+            )}
+          </div>
+
           <button className="admin-nav-item admin-nav-logout" onClick={handleLogout} title="Logout">
             <LogOut size={18} />
             {!sidebarCollapsed && 'Logout'}
           </button>
-        </nav>
-
-        <div className="admin-sidebar-settings-wrap" ref={settingsWrapRef}>
-          <button
-            className={`admin-nav-item admin-nav-settings ${showSettingsPopup ? 'active' : ''}`}
-            onClick={() => setShowSettingsPopup(prev => !prev)}
-            title="Settings"
-          >
-            <Settings size={18} />
-            {!sidebarCollapsed && 'Settings'}
-          </button>
-          {showSettingsPopup && !sidebarCollapsed && (
-            <div className="settings-popup">
-              <div className="settings-popup-header">
-                <button className="settings-popup-close" onClick={() => setShowSettingsPopup(false)}>
-                  <X size={14} />
-                </button>
-              </div>
-              <div className="settings-popup-item" onClick={() => { navigate('/admin/faculty-coordinators', { state: { from: location.pathname } }); setShowSettingsPopup(false); }}>
-                <Users size={16} />
-                <span>Faculty Coordinators</span>
-              </div>
-              <div className="settings-popup-item">
-                <GraduationCap size={16} />
-                <span>Student Coordinators</span>
-              </div>
-            </div>
-          )}
         </div>
 
         {!sidebarCollapsed && (

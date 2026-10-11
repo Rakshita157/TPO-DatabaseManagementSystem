@@ -178,8 +178,13 @@
   color: #dc2626;
 }
 
-.admin-nav-settings {
+.admin-sidebar-bottom {
   margin-top: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding-top: 12px;
+  border-top: 1px solid #e2e8f0;
 }
 
 .admin-nav-settings:hover {
@@ -189,7 +194,6 @@
 
 /* Sidebar Footer */
 .admin-sidebar-footer {
-  margin-top: auto;
   padding-top: 14px;
   border-top: 1px solid #e2e8f0;
   display: flex;
@@ -232,10 +236,10 @@
 
 .settings-popup {
   position: absolute;
-  top: 100%;
+  bottom: 100%;
   left: 0;
   right: 0;
-  margin-top: 6px;
+  margin-bottom: 6px;
   background: white;
   border: 1px solid #e2e8f0;
   border-radius: 10px;
@@ -2050,6 +2054,15 @@
     flex-direction: row;
     margin-bottom: 0;
     gap: 4px;
+    flex-shrink: 0;
+  }
+
+  .admin-sidebar-bottom {
+    flex-direction: row;
+    align-items: center;
+    margin-top: 0;
+    padding-top: 0;
+    border-top: none;
     flex-shrink: 0;
   }
 

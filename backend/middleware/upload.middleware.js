@@ -52,4 +52,29 @@ const uploadImage = multer({
   },
 });
 
-module.exports = { upload, uploadImage };
+const tpoImageStorage = multer.diskStorage({
+  destination: (req, file, cb) => {
+    const dir = "uploads/tpo";
+    fs.mkdirSync(dir, { recursive: true });
+    cb(null, dir);
+  },
+  filename: (req, file, cb) => {
+    const uniqueSuffix = Date.now() + "-" + Math.round(Math.random() * 1e9);
+    cb(null, uniqueSuffix + path.extname(file.originalname));
+  },
+});
+
+const uploadTpoImage = multer({
+  storage: tpoImageStorage,
+  limits: { fileSize: 2 * 1024 * 1024 },
+  fileFilter: (req, file, cb) => {
+    const allowed = ["image/jpeg", "image/png", "image/webp"];
+    if (allowed.includes(file.mimetype)) {
+      cb(null, true);
+    } else {
+      cb(new Error("Only JPEG, PNG, and WebP images are allowed"));
+    }
+  },
+});
+
+module.exports = { upload, uploadImage, uploadTpoImage };

@@ -3,7 +3,7 @@ import { useNavigate, useSearchParams, useLocation } from 'react-router-dom';
 import {
   Search, Filter, Download, ChevronDown, ChevronUp,
   Trash2, Eye, X, LogOut, ArrowUpDown, Users, Home, Loader2,
-  Save, CheckCircle, AlertCircle, FileText, PanelLeftClose, PanelLeftOpen, Settings, GraduationCap
+  Save, CheckCircle, AlertCircle, FileText, PanelLeftClose, PanelLeftOpen, Settings, GraduationCap, UserCircle
 } from 'lucide-react';
 import {
   getStudents, deleteStudent, exportStudents, getFilterOptions, updatePlacementStatus, getExportFields
@@ -523,6 +523,10 @@ export default function AdminDashboard() {
                 <GraduationCap size={16} />
                 <span>Student Coordinators</span>
               </div>
+                <div className="settings-popup-item" onClick={() => { navigate('/admin/admin-details', { state: { from: location.pathname } }); setShowSettingsPopup(false); }}>
+                  <UserCircle size={16} />
+                  <span>Admin Details</span>
+                </div>
               </div>
             )}
           </div>

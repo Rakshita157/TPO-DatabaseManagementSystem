@@ -17,14 +17,23 @@ const getCollegeSettings = async () => {
 };
 
 const updateCollegeSettings = async (data) => {
-  const collegeSettings = await prisma.collegeSettings.update({
-    where: {
-      id: 1,
-    },
-    data,
-  });
+  const existing = await prisma.collegeSettings.findFirst();
 
-  return collegeSettings;
+  if (existing) {
+    return await prisma.collegeSettings.update({
+      where: { id: existing.id },
+      data,
+    });
+  }
+
+  return await prisma.collegeSettings.create({
+    data: {
+      tpoHeadName: data.tpoHeadName || "",
+      tpoHeadEmail: data.tpoHeadEmail || "",
+      tpoHeadPhone: data.tpoHeadPhone || "",
+      ...data,
+    },
+  });
 };
 
 // ================= FACULTY =================

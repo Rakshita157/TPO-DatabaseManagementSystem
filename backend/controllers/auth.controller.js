@@ -78,6 +78,11 @@ const getMe = async (req, res) => {
 const updateUser = async (req, res) => {
   try {
     const { userId } = req.params;
+
+    if (String(req.user.userId) !== String(userId)) {
+      return res.status(403).json({ message: "Access denied" });
+    }
+
     const user = await updateUserService(Number(userId), req.body);
     res.json({ message: "User updated successfully", user });
   } catch (error) {

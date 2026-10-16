@@ -188,13 +188,42 @@ const getMe = async (userId) => {
 };
 
 const updateUser = async (userId, data) => {
-  const { fullName } = data;
-  const user = await prisma.user.update({
-    where: { id: userId },
-    data: { fullName },
-  });
-  const { password: _, ...userWithoutPassword } = user;
-  return userWithoutPassword;
+  const { fullName, collegeEmail } = data;
+  const updateData = {};
+
+  if (fullName !== undefined) {
+    const trimmedName = String(fullName).trim();
+    if (!trimmedName) {
+      throw new Error("Full name is required");
+    }
+    updateData.fullName = trimmedName;
+  }
+
+  if (collegeEmail !== undefined) {
+    const email = String(collegeEmail).trim().toLowerCase();
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+      throw new Error("Please enter a valid email address");
+    }
+    updateData.collegeEmail = email;
+  }
+
+  if (Object.keys(updateData).length === 0) {
+    throw new Error("No valid fields to update");
+  }
+
+  try {
+    const user = await prisma.user.update({
+      where: { id: userId },
+      data: updateData,
+    });
+    const { password: _, ...userWithoutPassword } = user;
+    return userWithoutPassword;
+  } catch (error) {
+    if (error.code === "P2002") {
+      throw new Error("Email is already in use");
+    }
+    throw error;
+  }
 };
 
 

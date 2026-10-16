@@ -120,7 +120,35 @@ const getAvailableStudents = async (req, res) => {
 
 const updateCollegeSettings = async (req, res) => {
   try {
-    const collegeSettings = await updateCollegeSettingsService(req.body);
+    const current = await getCollegeSettingsService();
+
+    const data = { ...req.body };
+
+    // Empty string values for optional text fields should not be persisted
+    ["officeAddress", "officeHours"].forEach((key) => {
+      if (data[key] === "") delete data[key];
+    });
+
+    const hasFile = Boolean(req.file);
+    const clearPhoto = req.body.tpoHeadPhoto === "";
+
+    if (hasFile || clearPhoto) {
+      // Delete the previous photo file when it is replaced or removed
+      if (current && current.tpoHeadPhoto) {
+        const oldPath = path.join(__dirname, "..", current.tpoHeadPhoto);
+        if (fs.existsSync(oldPath)) {
+          fs.unlinkSync(oldPath);
+        }
+      }
+
+      data.tpoHeadPhoto = hasFile
+        ? req.file.path.replace(/\\/g, "/")
+        : null;
+    } else {
+      delete data.tpoHeadPhoto;
+    }
+
+    const collegeSettings = await updateCollegeSettingsService(data);
 
     res.json({
       message: "College settings updated successfully",

@@ -4,7 +4,7 @@ import {
   ArrowLeft, ChevronUp, Calendar, FileText,
   User, GraduationCap, Phone, Mail, MapPin,
   Edit, X, Save, ExternalLink, CheckCircle, Trash2,
-  PanelLeftClose, PanelLeftOpen, Home, LogOut, Users, Settings
+  PanelLeftClose, PanelLeftOpen, Home, LogOut, Users, Settings, UserCircle
 } from 'lucide-react';
 import { getStudentById, updateStudentProfile, updateUser, deleteStudent } from '../../services/admin.service';
 import {
@@ -185,6 +185,10 @@ export default function StudentDetails() {
               <div className="settings-popup-item">
                 <GraduationCap size={16} />
                 <span>Student Coordinators</span>
+              </div>
+              <div className="settings-popup-item" onClick={() => { navigate('/admin/admin-details', { state: { from: location.pathname } }); setShowSettingsPopup(false); }}>
+                <UserCircle size={16} />
+                <span>Admin Details</span>
               </div>
             </div>
           )}

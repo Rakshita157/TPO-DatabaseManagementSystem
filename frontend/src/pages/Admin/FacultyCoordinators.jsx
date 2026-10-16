@@ -194,6 +194,10 @@ export default function FacultyCoordinators() {
                 <GraduationCap size={16} />
                 <span>Student Coordinators</span>
               </div>
+                <div className="settings-popup-item" onClick={() => { navigate('/admin/admin-details', { state: { from: location.pathname } }); setShowSettingsPopup(false); }}>
+                  <UserCircle size={16} />
+                  <span>Admin Details</span>
+                </div>
               </div>
             )}
           </div>

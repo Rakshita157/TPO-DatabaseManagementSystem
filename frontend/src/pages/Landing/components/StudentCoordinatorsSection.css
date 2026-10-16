@@ -33,16 +33,17 @@
   margin: 12px auto 0;
 }
 
-.student-coordinators-grid {
-  display: grid;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
-  gap: 24px;
+.student-coordinators-table-wrap {
   max-width: 1100px;
   margin: 0 auto 24px;
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 14px;
+  box-shadow: 0 6px 20px rgba(15, 23, 42, 0.08);
+  overflow-x: auto;
   opacity: 0;
   transform: translateY(30px);
   transition: opacity 0.6s ease, transform 0.6s ease;
-  align-items: stretch;
 }
 
 .student-coordinators-animated {
@@ -50,71 +51,66 @@
   transform: translateY(0);
 }
 
-.student-coordinator-card {
-  background: #ffffff;
-  border-radius: 12px;
-  padding: 24px 16px 20px;
-  text-align: center;
-  box-shadow: 0 6px 20px rgba(15, 23, 42, 0.08);
-  border: 1px solid #e2e8f0;
-  transition: transform 0.25s ease, box-shadow 0.25s ease;
-  animation: studentCoordinatorFadeIn 0.5s ease forwards;
-  opacity: 0;
-  display: flex;
-  flex-direction: column;
-  min-height: 190px;
-  justify-content: center;
+.student-coordinators-table {
+  width: 100%;
+  border-collapse: collapse;
+  min-width: 640px;
 }
 
-.student-coordinator-card:hover {
-  transform: translateY(-4px);
-  box-shadow: 0 10px 30px rgba(15, 23, 42, 0.12);
-}
-
-@keyframes studentCoordinatorFadeIn {
-  from {
-    opacity: 0;
-    transform: translateY(16px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
-
-.student-coordinator-avatar {
-  width: 64px;
-  height: 64px;
-  margin: 0 auto 14px;
-  border-radius: 50%;
-  background: linear-gradient(135deg, #1e3a8a, #3b82f6);
+.student-coordinators-table thead th {
+  background: #1e3a8a;
   color: #ffffff;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  box-shadow: 0 4px 12px rgba(30, 58, 138, 0.25);
+  font-size: 0.82rem;
+  font-weight: 600;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+  text-align: left;
+  padding: 14px 18px;
+  white-space: nowrap;
 }
 
-.student-coordinator-name {
-  font-size: 16px;
+.student-coordinators-table thead th:first-child {
+  border-top-left-radius: 13px;
+}
+
+.student-coordinators-table thead th:last-child {
+  border-top-right-radius: 13px;
+}
+
+.student-coordinators-table tbody td {
+  padding: 14px 18px;
+  font-size: 0.9rem;
+  color: #334155;
+  border-bottom: 1px solid #eef2f7;
+  vertical-align: middle;
+}
+
+.student-coordinators-table tbody tr:last-child td {
+  border-bottom: none;
+}
+
+.student-coordinators-table tbody tr:nth-child(even) {
+  background: #f8fafc;
+}
+
+.student-coordinators-table tbody tr:hover {
+  background: #eff6ff;
+}
+
+.student-coordinators-table .sc-col-sno {
+  width: 64px;
+  color: #64748b;
+  font-weight: 600;
+}
+
+.student-coordinators-table .sc-cell-name {
   font-weight: 600;
   color: #1e293b;
-  margin: 0 0 6px 0;
-  line-height: 1.4;
 }
 
-.student-coordinator-email {
-  font-size: 13px;
+.student-coordinators-table .sc-cell-email {
   color: #2563eb;
-  margin: 0 0 8px 0;
   word-break: break-word;
-}
-
-.student-coordinator-course {
-  font-size: 13px;
-  color: #475569;
-  margin: 0;
-  line-height: 1.5;
 }
 
 .student-coordinators-actions {
@@ -146,8 +142,7 @@
 }
 
 @media (max-width: 1100px) {
-  .student-coordinators-grid {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
+  .student-coordinators-table-wrap {
     max-width: 760px;
   }
 }
@@ -167,8 +162,12 @@
     font-size: 20px;
   }
 
-  .student-coordinators-grid {
-    grid-template-columns: 1fr;
-    max-width: 100%;
+  .student-coordinators-table {
+    min-width: 520px;
+  }
+
+  .student-coordinators-table thead th,
+  .student-coordinators-table tbody td {
+    padding: 12px 14px;
   }
 }

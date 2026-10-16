@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { User, Eye, EyeOff } from 'lucide-react';
+import { Eye, EyeOff } from 'lucide-react';
 import useScrollAnimation from '../../../hooks/useScrollAnimation';
 import './StudentCoordinatorsSection.css';
 
@@ -39,22 +39,28 @@ export default function StudentCoordinatorsSection({ studentCoordinators }) {
 
         <div
           ref={ref}
-          className={`student-coordinators-grid ${isVisible ? 'student-coordinators-animated' : ''}`}
+          className={`student-coordinators-table-wrap ${isVisible ? 'student-coordinators-animated' : ''}`}
         >
-          {visibleCoordinators.map((coord, index) => (
-            <div
-              className="student-coordinator-card"
-              key={`student-coord-${coord.id}-${index}`}
-              style={{ animationDelay: `${index * 0.08}s` }}
-            >
-              <div className="student-coordinator-avatar">
-                <User size={28} />
-              </div>
-              <h3 className="student-coordinator-name">{coord.name}</h3>
-              <p className="student-coordinator-email">{coord.email}</p>
-              <p className="student-coordinator-course">{coord.courseBranch}</p>
-            </div>
-          ))}
+          <table className="student-coordinators-table">
+            <thead>
+              <tr>
+                <th className="sc-col-sno">S.No</th>
+                <th>Name</th>
+                <th>Email</th>
+                <th>Course / Branch</th>
+              </tr>
+            </thead>
+            <tbody>
+              {visibleCoordinators.map((coord, index) => (
+                <tr key={`student-coord-${coord.id}-${index}`}>
+                  <td className="sc-col-sno">{index + 1}</td>
+                  <td className="sc-cell-name">{coord.name}</td>
+                  <td className="sc-cell-email">{coord.email}</td>
+                  <td className="sc-cell-course">{coord.courseBranch}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
         </div>
 
         {hasMore && (

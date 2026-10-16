@@ -6,6 +6,8 @@ export const login = (data) => api.post('/login', data);
 
 export const getMe = () => api.get('/me');
 
+export const updateUser = (userId, data) => api.put(`/user/${userId}`, data);
+
 export const sendOTP = (data) => api.post('/send-otp', data);
 
 export const verifyOTP = (data) => api.post('/verify-otp', data);

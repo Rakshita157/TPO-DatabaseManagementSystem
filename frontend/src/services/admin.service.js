@@ -21,6 +21,10 @@ export const updatePlacementStatus = (userId, status) =>
 
 export const getCollegeSettings = () => api.get('/college-settings');
 
+export const updateCollegeSettings = (formData) => api.put('/college-settings', formData, {
+  headers: { 'Content-Type': 'multipart/form-data' },
+});
+
 export const addFacultyCoordinator = (formData) => api.post('/college-settings/faculty', formData, {
   headers: { 'Content-Type': 'multipart/form-data' },
 });

@@ -67,8 +67,17 @@ const getStudentCoordinators = async () => {
   return await prisma.studentCoordinator.findMany({
     include: {
       user: {
-        include: {
-          studentProfile: true,
+        select: {
+          id: true,
+          fullName: true,
+          collegeEmail: true,
+          studentProfile: {
+            select: {
+              course: true,
+              department: true,
+              currentYear: true,
+            },
+          },
         },
       },
     },
@@ -146,8 +155,17 @@ const addStudentCoordinator = async (userId) => {
     },
     include: {
       user: {
-        include: {
-          studentProfile: true,
+        select: {
+          id: true,
+          fullName: true,
+          collegeEmail: true,
+          studentProfile: {
+            select: {
+              course: true,
+              department: true,
+              currentYear: true,
+            },
+          },
         },
       },
     },

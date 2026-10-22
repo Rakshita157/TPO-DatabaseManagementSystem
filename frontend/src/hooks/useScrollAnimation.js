@@ -1,11 +1,10 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useState } from 'react';
 
 export default function useScrollAnimation(options = {}) {
-  const ref = useRef(null);
+  const [element, setElement] = useState(null);
   const [isVisible, setIsVisible] = useState(false);
 
   useEffect(() => {
-    const element = ref.current;
     if (!element) return;
 
     const observer = new IntersectionObserver(
@@ -20,7 +19,7 @@ export default function useScrollAnimation(options = {}) {
 
     observer.observe(element);
     return () => observer.disconnect();
-  }, []);
+  }, [element]);
 
-  return [ref, isVisible];
+  return [setElement, isVisible];
 }

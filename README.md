@@ -5,6 +5,21 @@ A web-based platform developed for Government Women’s Engineering College, Ajm
 ## Overview
 
 TPO Portal provides a centralized system for students and the Training & Placement Office to manage placement-related activities efficiently.
+## Screenshots
+
+<p align="center">
+  <img src="docs/assets/Homepage.jpeg" width="48%" alt="Homepage">
+  <img src="docs/assets/Registrationform.jpeg" width="48%" alt="Registration Form">
+</p>
+
+<p align="center">
+  <img src="docs/assets/Studentprofile.jpeg" width="48%" alt="Student Profile">
+  <img src="docs/assets/Studentcoordinator.jpeg" width="48%" alt="Student Coordinator Management">
+</p>
+
+<p align="center">
+  <img src="docs/assets/Exportfunction.jpeg" width="48%" alt="Data Export">
+</p>
 
 ## Features
 

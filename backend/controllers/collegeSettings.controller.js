@@ -33,8 +33,24 @@ const getCollegeSettings = async (req, res) => {
 
 const addFacultyCoordinator = async (req, res) => {
   try {
+    const fullName = (req.body.fullName || "").trim();
+    const email = (req.body.email || "").trim().toLowerCase();
+
+    if (!fullName) {
+      throw new Error("Full name is required");
+    }
+
+    if (!email) {
+      throw new Error("Email is required");
+    }
+
+    if (!/^[^\s@]+@gweca\.ac\.in$/i.test(email)) {
+      throw new Error("Email must end with @gweca.ac.in");
+    }
+
     const data = {
-      fullName: req.body.fullName,
+      fullName,
+      email,
       photo: req.file ? req.file.path.replace(/\\/g, "/") : null,
     };
 
@@ -45,8 +61,13 @@ const addFacultyCoordinator = async (req, res) => {
       faculty,
     });
   } catch (error) {
+    const message =
+      error.code === "P2002"
+        ? "A coordinator with this email already exists"
+        : error.message;
+
     res.status(400).json({
-      message: error.message,
+      message,
     });
   }
 };

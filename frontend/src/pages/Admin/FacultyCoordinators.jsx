@@ -8,6 +8,7 @@ import {
 import {
   getCollegeSettings, addFacultyCoordinator, deleteFacultyCoordinator
 } from '../../services/admin.service';
+import { REGEX } from '../../constants/regex';
 import tpoLogo from '../../assets/logos/TPO_Cell__LOGO.png';
 import './Dashboard.css';
 
@@ -21,7 +22,7 @@ export default function FacultyCoordinators() {
   const [coordinators, setCoordinators] = useState([]);
   const [loading, setLoading] = useState(true);
   const [showAddModal, setShowAddModal] = useState(false);
-  const [formData, setFormData] = useState({ fullName: '' });
+  const [formData, setFormData] = useState({ fullName: '', email: '' });
   const [photoFile, setPhotoFile] = useState(null);
   const [photoPreview, setPhotoPreview] = useState(null);
   const [submitting, setSubmitting] = useState(false);
@@ -95,17 +96,23 @@ export default function FacultyCoordinators() {
     navigate('/auth');
   };
 
+  const trimmedEmail = formData.email.trim();
+  const emailValid = REGEX.EMAIL_GWECA.test(trimmedEmail);
+  const emailError = trimmedEmail.length > 0 && !emailValid;
+  const canSubmit = Boolean(formData.fullName.trim()) && emailValid;
+
   const handleAdd = async (e) => {
     e.preventDefault();
-    if (!formData.fullName.trim()) return;
+    if (!formData.fullName.trim() || !emailValid) return;
     try {
       setSubmitting(true);
       const fd = new FormData();
       fd.append('fullName', formData.fullName.trim());
+      fd.append('email', trimmedEmail);
       if (photoFile) fd.append('photo', photoFile);
       await addFacultyCoordinator(fd);
       setShowAddModal(false);
-      setFormData({ fullName: '' });
+      setFormData({ fullName: '', email: '' });
       setPhotoFile(null);
       setPhotoPreview(null);
       addToast('Faculty Coordinator added successfully');
@@ -269,6 +276,7 @@ export default function FacultyCoordinators() {
                 <tr>
                   <th>Photo</th>
                   <th>Full Name</th>
+                  <th>Email</th>
                   <th>Action</th>
                 </tr>
               </thead>
@@ -285,6 +293,7 @@ export default function FacultyCoordinators() {
                       )}
                     </td>
                     <td className="faculty-name">{fc.fullName}</td>
+                    <td>{fc.email}</td>
                     <td>
                       <button className="action-btn delete" onClick={() => setConfirmDelete(fc)}>
                         <Trash2 size={15} />
@@ -320,6 +329,23 @@ export default function FacultyCoordinators() {
                 />
               </div>
               <div className="form-group">
+                <label>Email *</label>
+                <input
+                  type="email"
+                  className="form-input"
+                  placeholder="name@gweca.ac.in"
+                  value={formData.email}
+                  onChange={(e) => setFormData(prev => ({ ...prev, email: e.target.value }))}
+                  style={emailError ? { borderColor: '#dc2626' } : undefined}
+                  required
+                />
+                {emailError && (
+                  <span style={{ display: 'block', marginTop: 6, fontSize: '0.78rem', color: '#dc2626' }}>
+                    Only @gweca.ac.in emails are allowed
+                  </span>
+                )}
+              </div>
+              <div className="form-group">
                 <label>Photo</label>
                 <div className="photo-upload-area">
                   {photoPreview ? (
@@ -350,8 +376,8 @@ export default function FacultyCoordinators() {
                 </div>
               </div>
               <div className="confirm-actions" style={{ marginTop: 20 }}>
-                <button type="button" className="confirm-cancel" onClick={() => { setShowAddModal(false); setPhotoFile(null); setPhotoPreview(null); }}>Cancel</button>
-                <button type="submit" className="confirm-delete" disabled={submitting || !formData.fullName.trim()}>
+                <button type="button" className="confirm-cancel" onClick={() => { setShowAddModal(false); setFormData({ fullName: '', email: '' }); setPhotoFile(null); setPhotoPreview(null); }}>Cancel</button>
+                <button type="submit" className="confirm-delete" disabled={submitting || !canSubmit}>
                   {submitting ? <><Loader2 size={14} className="spin" /> Adding...</> : 'Add'}
                 </button>
               </div>

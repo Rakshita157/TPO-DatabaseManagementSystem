@@ -48,7 +48,11 @@ const getFacultyCoordinators = async () => {
 
 const addFacultyCoordinator = async (data) => {
   return await prisma.facultyCoordinator.create({
-    data,
+    data: {
+      fullName: data.fullName,
+      email: data.email,
+      photo: data.photo,
+    },
   });
 };
 

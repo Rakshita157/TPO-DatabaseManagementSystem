@@ -9,7 +9,7 @@ TPO Portal provides a centralized system for students and the Training & Placeme
 
 <p align="center">
   <img src="docs/assets/Homepage.jpeg" width="48%" alt="Homepage">
-  <img src="docs/assets/Registrationform.jpeg" width="48%" alt="Registration Form">
+  <img src="docs/assets/Registrationform .jpeg" width="48%" alt="Registration Form">
 </p>
 
 <p align="center">
